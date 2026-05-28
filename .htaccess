@@ -1,0 +1,11 @@
+# جلوگیری از دسترسی مستقیم به فایل‌های حساس
+<FilesMatch "^\.(htaccess|htpasswd|ini|log|sh|sql|bak)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# جلوگیری از لیست شدن محتویات پوشه
+Options -Indexes
+
+# تنظیم پیش‌فرصت charset
+AddDefaultCharset UTF-8

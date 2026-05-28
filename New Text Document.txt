@@ -1,0 +1,20 @@
+git add .
+git commit -m "آپدیت کلی پروژه"
+git push origin main
+
+
+
+# وارد مسیر پروژه شو
+cd /c/xampp/htdocs/document_system
+
+# افزودن فایل خاص (مثلاً index.php)
+git add index.php
+
+# یا افزودن همه فایل‌های تغییر کرده
+git add .
+
+# کامیت با توضیح تغییرات
+git commit -m "اصلاح و به روزرسانی فایل index.php"
+
+# آپلود به گیت‌هاب
+git push origin main
