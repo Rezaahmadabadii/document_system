@@ -608,6 +608,7 @@ if ($is_admin) {
                 <div class="user-panel-buttons">
                     <button class="user-panel-btn active" onclick="toggleUserPanel('form')">📝 ثبت سند جدید</button>
                     <button class="user-panel-btn" onclick="toggleUserPanel('search')">🔍 جستجوی اسناد</button>
+					<button class="user-panel-btn" onclick="toggleUserPanel('archive')">📦 بایگانی</button>
                 </div>
                 
                 <div id="userFormPanel" class="user-form-panel">
@@ -674,6 +675,18 @@ if ($is_admin) {
                             <input type="text" id="filter_delivery" placeholder="1404/01/01" oninput="autoSearchDocuments()">
                         </div>
                         <button class="btn-secondary" style="width:100%; margin-top:8px;" onclick="resetUserFilters()"><i class="fas fa-undo"></i> نمایش همه</button>
+                    </div>
+                </div>
+                
+                <!-- پنل بایگانی کاربر -->
+                <div id="userArchivePanel" class="user-search-panel" style="display:none;">
+                    <div style="padding: 14px 16px;">
+                        <div class="left-section-title" style="margin-top:0;">
+                            <i class="fas fa-archive"></i> تاریخ‌های تایید شده
+                        </div>
+                        <div id="userArchiveList">
+                            <div class="empty-state">در حال بارگذاری...</div>
+                        </div>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -856,7 +869,26 @@ document.addEventListener('DOMContentLoaded', function() {
             dateInput.value = deliveryYear + '/' + monthStr + '/' + dayStr;
         }
     }
-
+    
+    // ========== تابع بررسی قفل بودن تاریخ ==========
+    async function checkLockStatus(deliveryDate) {
+        try {
+            let res = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`);
+            let data = await res.json();
+            
+            if (data.has_admin_approval === true) {
+                document.getElementById('doc_number').disabled = true;
+                document.getElementById('doc_description').disabled = true;
+            } else {
+                document.getElementById('doc_number').disabled = false;
+                document.getElementById('doc_description').disabled = false;
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
+    // ================================================
+    
     function addDaysToDelivery(days) {
         deliveryDay += days;
         let daysInMonth = getDaysInMonth(deliveryYear, deliveryMonth);
@@ -877,6 +909,12 @@ document.addEventListener('DOMContentLoaded', function() {
             deliveryDay = getDaysInMonth(deliveryYear, deliveryMonth);
         }
         updateDeliveryDate();
+        
+        // ========== بعد از تغییر تاریخ، قفل را بررسی کن ==========
+        let newDate = deliveryYear + '/' + (deliveryMonth < 10 ? '0'+deliveryMonth : deliveryMonth) + '/' + (deliveryDay < 10 ? '0'+deliveryDay : deliveryDay);
+        checkLockStatus(newDate);
+        loadDocumentsForDisplay(newDate);
+        // ======================================================
     }
 
     let initialDelivery = '<?php echo $today; ?>'.split('/');
@@ -886,11 +924,17 @@ document.addEventListener('DOMContentLoaded', function() {
         deliveryDay = parseInt(initialDelivery[2]);
     }
     updateDeliveryDate();
+    
+    // ========== بررسی قفل برای تاریخ اولیه ==========
+    let initialDate = deliveryYear + '/' + (deliveryMonth < 10 ? '0'+deliveryMonth : deliveryMonth) + '/' + (deliveryDay < 10 ? '0'+deliveryDay : deliveryDay);
+    checkLockStatus(initialDate);
+    // ================================================
 
     let minusBtn = document.getElementById('dateMinus');
     let plusBtn = document.getElementById('datePlus');
     if (minusBtn) minusBtn.addEventListener('click', function() { addDaysToDelivery(-1); });
     if (plusBtn) plusBtn.addEventListener('click', function() { addDaysToDelivery(1); });
+    
     // ========== اضافه کردن رویداد برای دکمه ثبت توضیح ==========
     const descBtn = document.getElementById('submitDescriptionBtn');
     if (descBtn) {
@@ -899,7 +943,6 @@ document.addEventListener('DOMContentLoaded', function() {
             saveReport();
         });
     }
-});
 // ========== انتخاب خودکار شرکت با شماره ==========
 const companyNumberInput = document.getElementById('company_number');
 const companySelect = document.getElementById('company_id');
@@ -982,6 +1025,7 @@ async function loadLastDeliveryDate() {
             currentDeliveryDate = today;
             document.getElementById('delivery_date').value = today;
             await loadDocumentsForDisplay(today);
+            await checkLockStatus(today);  // ========== اضافه شد ==========
             return;
         }
         
@@ -990,11 +1034,13 @@ async function loadLastDeliveryDate() {
             currentDeliveryDate = data.last_date;
             document.getElementById('delivery_date').value = currentDeliveryDate;
             await loadDocumentsForDisplay(currentDeliveryDate);
+            await checkLockStatus(currentDeliveryDate);  // ========== اضافه شد ==========
         } else {
             let today = '<?php echo $today; ?>';
             currentDeliveryDate = today;
             document.getElementById('delivery_date').value = today;
             await loadDocumentsForDisplay(today);
+            await checkLockStatus(today);  // ========== اضافه شد ==========
         }
     } catch(e) { 
         console.error(e);
@@ -1002,6 +1048,7 @@ async function loadLastDeliveryDate() {
         currentDeliveryDate = today;
         document.getElementById('delivery_date').value = today;
         await loadDocumentsForDisplay(today);
+        await checkLockStatus(today);  // ========== اضافه شد ==========
     }
 }
 
@@ -1012,13 +1059,24 @@ async function loadDocumentsForDisplay(deliveryDate) {
         let res = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`);
         let data = await res.json();
         let container = document.getElementById('documents_list');
+        
+        // ========== قفل کردن فیلدها در صورت تایید نهایی ==========
+        if (data.has_admin_approval === true) {
+            document.getElementById('doc_number').disabled = true;
+            document.getElementById('doc_description').disabled = true;
+        } else {
+            document.getElementById('doc_number').disabled = false;
+            document.getElementById('doc_description').disabled = false;
+        }
+        // =======================================================
+        
         if (data.success && data.documents && data.documents.length > 0) {
-            // ساخت دکمه بازیابی در صورت نیاز
             let revertButton = '';
-            if (data.has_user_approved && !data.has_admin_approved) {
-                revertButton = `<button class="print-btn" onclick="revertApproval()" style="background:#f59e0b;"><i class="fas fa-undo"></i> بازیابی</button>`;
-            } else if (data.has_user_approved && data.has_admin_approved) {
-                revertButton = `<button class="print-btn" onclick="requestRevert()" style="background:#ef4444;"><i class="fas fa-envelope"></i> درخواست بازیابی</button>`;
+            // اصلاح: has_user_approval به جای has_user_approved
+            if (data.has_user_approval && !data.has_admin_approval) {
+                revertButton = `<button class="print-btn" onclick="revertApproval('${deliveryDate}')" style="background:#f59e0b;"><i class="fas fa-undo"></i> بازیابی</button>`;
+            } else if (data.has_user_approval && data.has_admin_approval) {
+                revertButton = `<button class="print-btn" onclick="requestRevert('${deliveryDate}')" style="background:#ef4444;"><i class="fas fa-envelope"></i> درخواست بازیابی</button>`;
             }
             
             let html = `<div class="doc-group"><div class="group-title"><div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(deliveryDate)} <span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${data.documents.length} سند</span></div><div style="display:flex; gap:8px;"><a href="print.php?delivery_date=${encodeURIComponent(deliveryDate)}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a>${revertButton}</div></div><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead><tbody>`;
@@ -1026,7 +1084,7 @@ async function loadDocumentsForDisplay(deliveryDate) {
                 let doc = data.documents[i];
                 let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
                 let actions = '';
-                if (doc.can_edit) {
+                if (doc.can_edit && !data.has_admin_approval) {
                     actions = `<button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button>`;
                 }
                 html += `<tr><td>${i+1}</td><td>${escapeHtml(doc.doc_number)}</td><td>${docDate}</td><td>${escapeHtml(doc.company_name)}</td><td>${actions}</td></tr>`;
@@ -1050,13 +1108,29 @@ async function loadDocumentsForDisplay(deliveryDate) {
 
 async function submitDocument() {
     let delivery_date = document.getElementById('delivery_date').value;
+    
+    // بررسی قفل بودن تاریخ
+    let checkRes = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(delivery_date)}`);
+    let checkData = await checkRes.json();
+    if (checkData.has_admin_approval === true) {
+        showToast('این تاریخ تحویل تایید نهایی شده است. امکان ثبت سند وجود ندارد.', true);
+        return;
+    }
+    
     let company_id = document.getElementById('company_id').value;
     let doc_number = document.getElementById('doc_number').value.trim();
     let doc_date = document.getElementById('doc_date')?.value.trim() || '';
+    
     if (!doc_number) { showToast('شماره سند الزامی است', true); return; }
     if (requireDocDate && !doc_date) { showToast('تاریخ سند الزامی است', true); return; }
-    let res = await fetch(`${apiUrl}?action=save_document`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({delivery_date, company_id, doc_number, doc_date: doc_date || '-', description: ''}) });
+    
+    let res = await fetch(`${apiUrl}?action=save_document`, { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({delivery_date, company_id, doc_number, doc_date: doc_date || '-', description: ''}) 
+    });
     let result = await res.json();
+    
     if (result.success) { 
         showToast('سند با موفقیت ثبت شد'); 
         document.getElementById('doc_number').value = ''; 
@@ -1204,7 +1278,11 @@ window.openEditModal = function(id, number, date, description) {
     let modal = document.getElementById('editModal');
     if (modal) modal.classList.add('active');
 }
-window.closeEditModal = function() { document.getElementById('editModal').classList.remove('active'); }
+
+window.closeEditModal = function() { 
+    document.getElementById('editModal').classList.remove('active'); 
+}
+
 window.saveEdit = async function() {
     let id = document.getElementById('edit_id').value;
     let number = document.getElementById('edit_number').value.trim();
@@ -1240,30 +1318,46 @@ window.saveEdit = async function() {
         showToast(result.error || 'خطا در ویرایش', true);
     }
 }
+
 window.deleteDocument = async function(id) {
     if (!confirm('حذف شود؟')) return;
-    let res = await fetch(`${apiUrl}?action=delete_document`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+    let res = await fetch(`${apiUrl}?action=delete_document`, { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({id}) 
+    });
     let result = await res.json();
-    if (result.success) { showToast('حذف شد'); await loadDocumentsForDisplay(currentDeliveryDate); }
+    if (result.success) { 
+        showToast('حذف شد'); 
+        await loadDocumentsForDisplay(currentDeliveryDate); 
+    }
 }
 
 function toggleUserPanel(panel) {
     currentPanel = panel;
     let formPanel = document.getElementById('userFormPanel');
     let searchPanel = document.getElementById('userSearchPanel');
+    let archivePanel = document.getElementById('userArchivePanel');
     let btns = document.querySelectorAll('.user-panel-btn');
+    
     btns.forEach(btn => btn.classList.remove('active'));
+    formPanel.style.display = 'none';
+    searchPanel.style.display = 'none';
+    if (archivePanel) archivePanel.style.display = 'none';
+    
     if (panel === 'form') {
         formPanel.style.display = 'block';
-        searchPanel.style.display = 'none';
         btns[0].classList.add('active');
         loadLastDeliveryDate();
         document.getElementById('company_id').focus();
-    } else {
-        formPanel.style.display = 'none';
+    } else if (panel === 'search') {
         searchPanel.style.display = 'block';
         btns[1].classList.add('active');
         loadSearchDocuments();
+    } else if (panel === 'archive') {
+        archivePanel.style.display = 'block';
+        btns[2].classList.add('active');
+        loadUserArchive();
     }
 }
 
@@ -1282,11 +1376,14 @@ async function loadSearchDocuments() {
             let html = '';
             for (let group of data.groups) {
                 let printUrl = `print.php?delivery_date=${encodeURIComponent(group.delivery_date)}`;
-                html += `<div class="doc-group"><div class="group-title"><div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(group.delivery_date)} <span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${group.count} سند</span></div><a href="${printUrl}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a></div><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead><tbody>`;
+                let isArchived = group.is_archived || false;
+                let archiveBadge = isArchived ? '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:0.6rem; margin-right:8px;">تایید شده</span>' : '';
+                
+                html += `<div class="doc-group"><div class="group-title"><div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(group.delivery_date)} ${archiveBadge}<span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${group.count} سند</span></div><a href="${printUrl}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a></div><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead><tbody>`;
                 for (let doc of group.documents) {
                     let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
                     let actions = '';
-                    if (doc.can_edit) {
+                    if (doc.can_edit && !isArchived) {
                         actions = `<button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button>`;
                     }
                     html += `<tr><td>${doc.row_num}</td><td>${escapeHtml(doc.doc_number)}</td><td>${docDate}</td><td>${escapeHtml(doc.company_name)}</td><td>${actions}</td></tr>`;
@@ -1309,7 +1406,11 @@ async function loadSearchDocuments() {
     } catch(e) { console.error(e); }
 }
 
-function autoSearchDocuments() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => loadSearchDocuments(), 400); }
+function autoSearchDocuments() { 
+    clearTimeout(searchTimeout); 
+    searchTimeout = setTimeout(() => loadSearchDocuments(), 400); 
+}
+
 function resetUserFilters() {
     document.getElementById('filter_number').value = '';
     document.getElementById('filter_date').value = '';
@@ -1317,19 +1418,98 @@ function resetUserFilters() {
     document.getElementById('filter_delivery').value = '';
     loadSearchDocuments();
 }
-function showChangePasswordModal() { document.getElementById('passwordModal').classList.add('active'); }
-function closePasswordModal() { document.getElementById('passwordModal').classList.remove('active'); }
+
+function showChangePasswordModal() { 
+    document.getElementById('passwordModal').classList.add('active'); 
+}
+
+function closePasswordModal() { 
+    document.getElementById('passwordModal').classList.remove('active'); 
+}
 
 async function changePassword() {
     let old_pass = document.getElementById('old_password').value;
     let new_pass = document.getElementById('new_password').value;
     let confirm_pass = document.getElementById('confirm_password').value;
-    if (!old_pass || !new_pass) { showToast('تمامی فیلدها را پر کنید', true); return; }
-    if (new_pass !== confirm_pass) { showToast('رمز جدید مطابقت ندارد', true); return; }
-    let res = await fetch(`${apiUrl}?action=change_password`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({old_password: old_pass, new_password: new_pass}) });
+    if (!old_pass || !new_pass) { 
+        showToast('تمامی فیلدها را پر کنید', true); 
+        return; 
+    }
+    if (new_pass !== confirm_pass) { 
+        showToast('رمز جدید مطابقت ندارد', true); 
+        return; 
+    }
+    let res = await fetch(`${apiUrl}?action=change_password`, { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({old_password: old_pass, new_password: new_pass}) 
+    });
     let result = await res.json();
-    if (result.success) { showToast('رمز تغییر کرد'); closePasswordModal(); document.getElementById('old_password').value = ''; document.getElementById('new_password').value = ''; document.getElementById('confirm_password').value = ''; }
-    else { showToast(result.error || 'خطا', true); }
+    if (result.success) { 
+        showToast('رمز تغییر کرد'); 
+        closePasswordModal(); 
+        document.getElementById('old_password').value = ''; 
+        document.getElementById('new_password').value = ''; 
+        document.getElementById('confirm_password').value = ''; 
+    } else { 
+        showToast(result.error || 'خطا', true); 
+    }
+}
+
+// ========== توابع بایگانی ==========
+async function loadUserArchive() {
+    let container = document.getElementById('userArchiveList');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+    
+    try {
+        let res = await fetch(`${apiUrl}?action=get_archived_delivery_dates`);
+        let data = await res.json();
+        
+        if (data.success && data.dates && data.dates.length > 0) {
+            let html = '';
+            for (let item of data.dates) {
+                html += `
+                    <div style="background:#f8fafc; border-radius:12px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fas fa-calendar-check" style="color:#10b981;"></i> ${escapeHtml(item.delivery_date)}</span>
+                        <div>
+                            <button onclick="window.open('print.php?delivery_date=${encodeURIComponent(item.delivery_date_raw)}', '_blank')" style="background:#10b98120; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; margin-left:5px;"><i class="fas fa-eye" style="color:#10b981;"></i></button>
+                            <button onclick="requestArchiveRevert('${escapeHtml(item.delivery_date_raw)}')" style="background:#ef444420; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer;"><i class="fas fa-undo-alt" style="color:#ef4444;"></i></button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<div class="empty-state">هیچ تاریخ تایید شده‌ای وجود ندارد</div>';
+        }
+    } catch(e) {
+        console.error(e);
+        container.innerHTML = '<div class="empty-state">خطا در بارگذاری</div>';
+    }
+}
+
+async function requestArchiveRevert(deliveryDate) {
+    if (!confirm('آیا از ادمین درخواست بازیابی می‌کنید؟')) return;
+    
+    try {
+        let res = await fetch(`${apiUrl}?action=request_revert_from_archive`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ delivery_date: deliveryDate })
+        });
+        let result = await res.json();
+        
+        if (result.success) {
+            showToast('✅ درخواست بازیابی ارسال شد');
+        } else {
+            showToast(result.error || '❌ خطا', true);
+        }
+    } catch(e) {
+        console.error(e);
+        showToast('❌ خطا در ارتباط با سرور', true);
+    }
 }
 
 <?php else: ?>
