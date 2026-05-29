@@ -45,7 +45,7 @@ if ($action == 'get_last_delivery_date') {
     exit;
 }
 
-// ========== دریافت اسناد برای نمایش در لیست ==========
+// ========== دریافت اسناد برای نمایش در لیست (تاریخ مشخص) ==========
 if ($action == 'get_documents_for_display') {
     $target_user_id = isset($_GET['admin_user_id']) && $is_admin && $_GET['admin_user_id'] !== '' ? (int)$_GET['admin_user_id'] : $user_id;
     $delivery_date = $_GET['delivery_date'] ?? '';
@@ -56,15 +56,12 @@ if ($action == 'get_documents_for_display') {
         exit;
     }
     
-    // دریافت وضعیت تایید بر اساس تاریخ تحویل
     $stmt = $db->prepare("SELECT user_approved_at, admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$target_user_id, $delivery_date]);
     $approval = $stmt->fetch();
     
-    // ========== تعریف متغیرهای وضعیت امضا ==========
     $has_user_approval = $approval && !empty($approval['user_approved_at']);
     $has_admin_approval = $approval && !empty($approval['admin_approved_at']);
-    // =============================================
     
     $sql = "SELECT d.*, c.name as company_name 
             FROM documents d 
@@ -101,6 +98,79 @@ if ($action == 'get_documents_for_display') {
         'has_user_approval' => $has_user_approval,
         'has_admin_approval' => $has_admin_approval
     ]);
+    exit;
+}
+
+// ========== جستجوی اسناد (کاربر عادی) ==========
+if ($action == 'get_documents') {
+    $doc_number = $_GET['doc_number'] ?? '';
+    $doc_date = $_GET['doc_date'] ?? '';
+    $company_id = $_GET['company_id'] ?? '';
+    $delivery_date = $_GET['delivery_date'] ?? '';
+    $search_user_id = $user_id;
+
+    $sql = "SELECT d.*, c.name as company_name 
+            FROM documents d 
+            JOIN companies c ON d.company_id = c.id 
+            WHERE d.user_id = :user_id";
+    $params = [':user_id' => $search_user_id];
+
+    if (!empty($doc_number)) {
+        $sql .= " AND d.doc_number LIKE :doc_number";
+        $params[':doc_number'] = "%$doc_number%";
+    }
+    if (!empty($doc_date)) {
+        $doc_date = toEnglishNumber($doc_date);
+        $sql .= " AND d.doc_date = :doc_date";
+        $params[':doc_date'] = $doc_date;
+    }
+    if (!empty($company_id)) {
+        $sql .= " AND d.company_id = :company_id";
+        $params[':company_id'] = $company_id;
+    }
+    if (!empty($delivery_date)) {
+        $delivery_date = toEnglishNumber($delivery_date);
+        $sql .= " AND d.delivery_date = :delivery_date";
+        $params[':delivery_date'] = $delivery_date;
+    }
+
+    $sql .= " ORDER BY d.delivery_date DESC, d.id DESC";
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $groups = [];
+    foreach ($docs as $doc) {
+        $date = toPersianNumber($doc['delivery_date']);
+        if (!isset($groups[$date])) {
+            $stmt_check = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
+            $stmt_check->execute([$search_user_id, $doc['delivery_date']]);
+            $is_archived = !empty($stmt_check->fetchColumn());
+
+            $groups[$date] = [
+                'delivery_date' => $date,
+                'count' => 0,
+                'is_archived' => $is_archived,
+                'documents' => []
+            ];
+        }
+        $groups[$date]['documents'][] = [
+            'id' => $doc['id'],
+            'doc_number' => $doc['doc_number'],
+            'doc_date' => $doc['doc_date'] == '-' ? '-' : toPersianNumber($doc['doc_date']),
+            'company_name' => $doc['company_name'],
+            'description' => $doc['description'],
+            'row_num' => count($groups[$date]['documents']),
+            'can_edit' => true
+        ];
+        $groups[$date]['count']++;
+    }
+
+    echo json_encode(['success' => true, 'groups' => array_values($groups)]);
     exit;
 }
 
@@ -252,17 +322,14 @@ if ($action == 'revert_approval') {
     $delivery_date = $_GET['delivery_date'] ?? '';
     
     if (!empty($delivery_date)) {
-        // فقط برای یک تاریخ خاص
         $stmt = $db->prepare("UPDATE delivery_approvals SET user_approved_at = NULL, user_reverted_at = NOW() WHERE user_id = ? AND delivery_date = ? AND admin_approved_at IS NULL");
         $result = $stmt->execute([$user_id, $delivery_date]);
         
-        // حذف فایل امضا
         $signature_file = 'storage/signatures/users/' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
         if (file_exists($signature_file)) {
             unlink($signature_file);
         }
     } else {
-        // برای همه تاریخ‌ها
         $stmt = $db->prepare("UPDATE delivery_approvals SET user_approved_at = NULL, user_reverted_at = NOW() WHERE user_id = ? AND admin_approved_at IS NULL");
         $result = $stmt->execute([$user_id]);
     }
@@ -271,14 +338,13 @@ if ($action == 'revert_approval') {
     exit;
 }
 
-// ========== درخواست بازیابی از ادمین ==========
+// ========== درخواست بازیابی از ادمین (برای تاریخ تایید شده) ==========
 if ($action == 'request_revert') {
     if ($is_admin) {
         echo json_encode(['success' => false, 'error' => 'Admin cannot request revert']);
         exit;
     }
     
-    // پشتیبانی از GET و POST JSON (هر دو روش)
     $delivery_date = $_GET['delivery_date'] ?? '';
     if (empty($delivery_date)) {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -290,13 +356,11 @@ if ($action == 'request_revert') {
         exit;
     }
     
-    // بررسی اینکه ادمین برای این تاریخ خاص تایید کرده است
     $stmt = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$user_id, $delivery_date]);
     $admin_approved = $stmt->fetchColumn();
     
     if ($admin_approved) {
-        // بررسی درخواست تکراری
         $stmt = $db->prepare("SELECT id FROM revert_requests WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
         $stmt->execute([$user_id, $delivery_date]);
         if ($stmt->fetch()) {
@@ -341,7 +405,9 @@ if ($action == 'change_password') {
     exit;
 }
 
-// ========== فقط ادمین از اینجا به بعد ==========
+// ============================================================
+// ========== فقط ادمین از اینجا به بعد =======================
+// ============================================================
 if (!$is_admin) {
     echo json_encode(['success' => false, 'error' => 'Access denied']);
     exit;
@@ -589,18 +655,85 @@ if ($action == 'search_admin_documents') {
     exit;
 }
 
-// ========== دریافت لیست کاربران دارای تایید pending ==========
-if ($action == 'get_users_with_pending_approvals') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
+// ========== دریافت تاریخ‌های بایگانی شده کاربر عادی ==========
+if ($action == 'get_archived_delivery_dates') {
+    // این اکشن برای کاربر عادی است - بدون شرط ادمین
+    $sql = "SELECT DISTINCT da.delivery_date 
+            FROM delivery_approvals da 
+            WHERE da.user_id = :user_id 
+            AND da.user_approved_at IS NOT NULL 
+            AND da.admin_approved_at IS NOT NULL 
+            ORDER BY da.delivery_date DESC";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':user_id' => $user_id]);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $formatted = [];
+    foreach ($results as $row) {
+        $formatted[] = [
+            'delivery_date' => toPersianNumber($row['delivery_date']),
+            'delivery_date_raw' => $row['delivery_date']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'dates' => $formatted]);
+    exit;
+}
+
+// ========== درخواست بازیابی از بایگانی (کاربر عادی) ==========
+if ($action == 'request_revert_from_archive') {
+    // فقط کاربر عادی می‌تواند درخواست دهد
+    if ($is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Admin cannot request revert from archive']);
         exit;
     }
     
+    $data = json_decode(file_get_contents('php://input'), true);
+    $delivery_date = $data['delivery_date'] ?? '';
+    $delivery_date = toEnglishNumber($delivery_date);
+    
+    if (empty($delivery_date)) {
+        echo json_encode(['success' => false, 'error' => 'تاریخ تحویل مشخص نشده']);
+        exit;
+    }
+    
+    // بررسی اینکه آیا این تاریخ واقعاً تایید نهایی شده است
+    $stmt = $db->prepare("SELECT id FROM delivery_approvals WHERE user_id = ? AND delivery_date = ? AND user_approved_at IS NOT NULL AND admin_approved_at IS NOT NULL");
+    $stmt->execute([$user_id, $delivery_date]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'error' => 'این تاریخ تحویل هنوز تایید نهایی نشده است']);
+        exit;
+    }
+    
+    // بررسی درخواست تکراری
+    $stmt = $db->prepare("SELECT id FROM revert_requests WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
+    $stmt->execute([$user_id, $delivery_date]);
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => false, 'error' => 'درخواست بازیابی قبلاً ارسال شده و در انتظار تایید است']);
+        exit;
+    }
+    
+    // ثبت درخواست بازیابی
+    $stmt = $db->prepare("INSERT INTO revert_requests (user_id, delivery_date, requested_at, status) VALUES (?, ?, NOW(), 'pending')");
+    $result = $stmt->execute([$user_id, $delivery_date]);
+    
+    if ($result) {
+        echo json_encode(['success' => true, 'message' => 'درخواست بازیابی با موفقیت ارسال شد']);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'خطا در ثبت درخواست']);
+    }
+    exit;
+}
+
+// ========== دریافت لیست کاربران دارای تایید pending ==========
+if ($action == 'get_users_with_pending_approvals') {
     $stmt = $db->query("
-        SELECT DISTINCT da.user_id, u.fullname, u.unit_name
+        SELECT DISTINCT da.user_id, u.fullname, u.unit_name, COUNT(da.id) as pending_count
         FROM delivery_approvals da
         JOIN users u ON da.user_id = u.id
         WHERE da.user_approved_at IS NOT NULL AND da.admin_approved_at IS NULL
+        GROUP BY da.user_id
         ORDER BY u.fullname ASC
     ");
     $users = $stmt->fetchAll();
@@ -611,35 +744,33 @@ if ($action == 'get_users_with_pending_approvals') {
 
 // ========== دریافت لیست تاریخ‌های تایید نشده یک کاربر خاص ==========
 if ($action == 'get_user_pending_dates') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
+    $target_user_id = $_GET['user_id'] ?? 0;
+    if (empty($target_user_id)) {
+        echo json_encode(['success' => false, 'error' => 'User ID required']);
         exit;
     }
     
-    $user_id = $_GET['user_id'] ?? 0;
-    
     $stmt = $db->prepare("
-        SELECT DISTINCT d.delivery_date, da.user_approved_at
-        FROM delivery_approvals da
-        JOIN documents d ON d.user_id = da.user_id
-        WHERE da.user_id = ? AND da.user_approved_at IS NOT NULL AND da.admin_approved_at IS NULL
-        ORDER BY d.delivery_date DESC
+        SELECT delivery_date, user_approved_at 
+        FROM delivery_approvals 
+        WHERE user_id = ? AND user_approved_at IS NOT NULL AND admin_approved_at IS NULL
+        ORDER BY delivery_date DESC
     ");
-    $stmt->execute([$user_id]);
+    $stmt->execute([$target_user_id]);
     $dates = $stmt->fetchAll();
     
-    // بدون تبدیل تاریخ
+    foreach ($dates as &$date) {
+        $date['delivery_date_persian'] = toPersianNumber($date['delivery_date']);
+        $date['has_user_approval'] = true;
+        $date['user_approved'] = true;
+    }
+    
     echo json_encode(['success' => true, 'dates' => $dates]);
     exit;
 }
 
 // ========== دریافت درخواست‌های بازیابی ==========
 if ($action == 'get_revert_requests') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        exit;
-    }
-    
     $stmt = $db->query("
         SELECT rr.*, u.fullname, u.unit_name
         FROM revert_requests rr
@@ -649,44 +780,44 @@ if ($action == 'get_revert_requests') {
     ");
     $requests = $stmt->fetchAll();
     
+    foreach ($requests as &$req) {
+        $req['delivery_date_persian'] = toPersianNumber($req['delivery_date']);
+        $req['requested_at_persian'] = jDateTime::date('Y/m/d H:i:s', strtotime($req['requested_at']));
+    }
+    
     echo json_encode(['success' => true, 'requests' => $requests]);
     exit;
 }
 
 // ========== تایید بازیابی توسط ادمین ==========
 if ($action == 'approve_revert') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        exit;
-    }
-    
-    $user_id = $_GET['user_id'] ?? 0;
+    $target_user_id = $_GET['user_id'] ?? 0;
     $delivery_date = $_GET['delivery_date'] ?? '';
     
-    if (empty($delivery_date)) {
-        echo json_encode(['success' => false, 'error' => 'Delivery date required']);
+    if (empty($delivery_date) || empty($target_user_id)) {
+        echo json_encode(['success' => false, 'error' => 'User ID and delivery date required']);
         exit;
     }
     
     // حذف تایید ادمین و کاربر برای این تاریخ خاص
     $stmt = $db->prepare("UPDATE delivery_approvals SET user_approved_at = NULL, admin_approved_at = NULL, admin_signature_used = NULL WHERE user_id = ? AND delivery_date = ?");
-    $stmt->execute([$user_id, $delivery_date]);
+    $stmt->execute([$target_user_id, $delivery_date]);
     
     // حذف فایل امضای ادمین
-    $admin_signature_file = 'storage/signatures/admin/admin_' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
+    $admin_signature_file = 'storage/signatures/admin/admin_' . $target_user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
     if (file_exists($admin_signature_file)) {
         unlink($admin_signature_file);
     }
     
     // حذف فایل امضای کاربر
-    $user_signature_file = 'storage/signatures/users/' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
+    $user_signature_file = 'storage/signatures/users/' . $target_user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
     if (file_exists($user_signature_file)) {
         unlink($user_signature_file);
     }
     
     // به‌روزرسانی وضعیت درخواست بازیابی
     $stmt = $db->prepare("UPDATE revert_requests SET status = 'approved', approved_at = NOW() WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
-    $stmt->execute([$user_id, $delivery_date]);
+    $stmt->execute([$target_user_id, $delivery_date]);
     
     echo json_encode(['success' => true]);
     exit;
@@ -694,81 +825,32 @@ if ($action == 'approve_revert') {
 
 // ========== رد بازیابی توسط ادمین ==========
 if ($action == 'reject_revert') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        exit;
-    }
-    
-    $user_id = $_GET['user_id'] ?? 0;
+    $target_user_id = $_GET['user_id'] ?? 0;
     $delivery_date = $_GET['delivery_date'] ?? '';
     
     $stmt = $db->prepare("UPDATE revert_requests SET status = 'rejected' WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
-    $stmt->execute([$user_id, $delivery_date]);
+    $stmt->execute([$target_user_id, $delivery_date]);
     
     echo json_encode(['success' => true]);
     exit;
 }
 
-// ========== دریافت اسناد تایید شده نهایی (بایگانی) ==========
-if ($action == 'get_approved_documents') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        exit;
-    }
-    
+// ========== دریافت اسناد تایید شده نهایی (بایگانی ادمین) ==========
+if ($action == 'get_all_approved_approvals') {
     $stmt = $db->query("
-        SELECT da.*, u.fullname, u.unit_name,
-               (SELECT COUNT(*) FROM documents WHERE user_id = da.user_id AND delivery_date = da.delivery_date) as total_docs
+        SELECT da.*, u.fullname, u.unit_name, u.id as user_id
         FROM delivery_approvals da
         JOIN users u ON da.user_id = u.id
-        WHERE da.admin_approved_at IS NOT NULL
+        WHERE da.user_approved_at IS NOT NULL AND da.admin_approved_at IS NOT NULL
         ORDER BY da.admin_approved_at DESC
+        LIMIT 200
     ");
-    $approvals = $stmt->fetchAll();
+    $approvals = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // تبدیل تاریخ‌ها به شمسی
-    foreach ($approvals as &$item) {
-        // تبدیل user_approved_at به شمسی
-        if (!empty($item['user_approved_at'])) {
-            $timestamp = strtotime($item['user_approved_at']);
-            $item['user_approved_at_fa'] = jDateTime::date('Y/m/d H:i:s', $timestamp);
-        } else {
-            $item['user_approved_at_fa'] = '-';
-        }
-        
-        // تبدیل admin_approved_at به شمسی
-        if (!empty($item['admin_approved_at'])) {
-            $timestamp = strtotime($item['admin_approved_at']);
-            $item['admin_approved_at_fa'] = jDateTime::date('Y/m/d H:i:s', $timestamp);
-        } else {
-            $item['admin_approved_at_fa'] = '-';
-        }
+    foreach ($approvals as &$app) {
+        $app['delivery_date_persian'] = toPersianNumber($app['delivery_date']);
+        $app['admin_approved_at_persian'] = jDateTime::date('Y/m/d H:i:s', strtotime($app['admin_approved_at']));
     }
-    
-    echo json_encode(['success' => true, 'approvals' => $approvals]);
-    exit;
-}
-
-// ========== دریافت لیست بایگانی کاربر عادی ==========
-if ($action == 'get_user_archived') {
-    $filter_date = $_GET['filter_date'] ?? '';
-    
-    $sql = "SELECT da.delivery_date, da.admin_approved_at,
-                   (SELECT COUNT(*) FROM documents WHERE user_id = da.user_id AND delivery_date = da.delivery_date) as total_docs
-            FROM delivery_approvals da
-            WHERE da.user_id = ? AND da.admin_approved_at IS NOT NULL";
-    $params = [$user_id];
-    
-    if (!empty($filter_date)) {
-        $sql .= " AND da.delivery_date LIKE ?";
-        $params[] = "%$filter_date%";
-    }
-    
-    $sql .= " ORDER BY da.delivery_date DESC";
-    
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    $approvals = $stmt->fetchAll();
     
     echo json_encode(['success' => true, 'approvals' => $approvals]);
     exit;
@@ -801,13 +883,8 @@ if ($action == 'get_locked_dates') {
     exit;
 }
 
-// ========== دریافت اطلاعات کامل برای بخش بایگانی (ادمین و کاربر) ==========
+// ========== دریافت اطلاعات کامل برای بخش بایگانی (ادمین) ==========
 if ($action == 'get_archive_list') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        exit;
-    }
-    
     $stmt = $db->query("
         SELECT da.*, u.fullname, u.unit_name,
                (SELECT COUNT(*) FROM documents WHERE user_id = da.user_id AND delivery_date = da.delivery_date) as total_docs
@@ -818,7 +895,6 @@ if ($action == 'get_archive_list') {
     ");
     $approvals = $stmt->fetchAll();
     
-    // تبدیل تاریخ‌ها به شمسی برای نمایش راحت‌تر
     foreach ($approvals as &$item) {
         if (!empty($item['admin_approved_at'])) {
             $timestamp = strtotime($item['admin_approved_at']);
