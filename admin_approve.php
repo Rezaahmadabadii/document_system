@@ -32,21 +32,14 @@ if (empty($delivery_date)) {
 $upload_dir = 'storage/signatures/admin/';
 if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
-// پردازش POST (ذخیره امضا)
+// مسیر فایل امضای ادمین (فقط یک فایل ثابت)
+$admin_signature_file = $upload_dir . 'admin.png';
+
+// پردازش POST (ذخیره امضا - جایگزینی امضای قبلی)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['admin_signature'])) {
-    $save_as_default = $_POST['save_as_default'] ?? 0;
-    $filename = 'admin_' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-    $upload_path = $upload_dir . $filename;
-    
-    if (move_uploaded_file($_FILES['admin_signature']['tmp_name'], $upload_path)) {
-        
-        if ($save_as_default == 1) {
-            $default_path = $upload_dir . 'admin_default.png';
-            copy($upload_path, $default_path);
-        }
-        
+    if (move_uploaded_file($_FILES['admin_signature']['tmp_name'], $admin_signature_file)) {
         $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW(), admin_signature_used = ? WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$upload_path, $user_id, $delivery_date]);
+        $stmt->execute([$admin_signature_file, $user_id, $delivery_date]);
         
         echo json_encode(['success' => true, 'message' => 'تایید نهایی با موفقیت ثبت شد']);
         exit;
@@ -56,18 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['admin_signature'])) {
     }
 }
 
-// استفاده از امضای قبلی ادمین
+// استفاده از امضای قبلی ادمین (بدون کپی، فقط ارجاع)
 if (isset($_GET['use_admin_default'])) {
-    $admin_default_file = 'storage/signatures/admin/admin_default.png';
-    if (file_exists($admin_default_file)) {
-        $filename = 'admin_' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-        $upload_path = $upload_dir . $filename;
-        copy($admin_default_file, $upload_path);
-        
+    if (file_exists($admin_signature_file)) {
         $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW(), admin_signature_used = ? WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$upload_path, $user_id, $delivery_date]);
+        $stmt->execute([$admin_signature_file, $user_id, $delivery_date]);
     }
     header('Location: print.php?user_id=' . urlencode($user_id) . '&delivery_date=' . urlencode($delivery_date) . '&admin_approved=1');
+    exit;
+}
+
+// حذف امضای ادمین
+if (isset($_GET['delete_signature'])) {
+    if (file_exists($admin_signature_file)) {
+        unlink($admin_signature_file);
+    }
+    header('Location: admin_approve.php?user_id=' . urlencode($user_id) . '&delivery_date=' . urlencode($delivery_date));
     exit;
 }
 
@@ -77,11 +74,7 @@ $stmt->execute([$user_id]);
 $user_info = $stmt->fetch(PDO::FETCH_ASSOC);
 $user_name = $user_info ? $user_info['fullname'] : $user_id;
 
-$admin_default = null;
-$admin_default_file = 'storage/signatures/admin/admin_default.png';
-if (file_exists($admin_default_file)) {
-    $admin_default = $admin_default_file;
-}
+$has_admin_signature = file_exists($admin_signature_file);
 ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
@@ -98,9 +91,12 @@ if (file_exists($admin_default_file)) {
         canvas { border: 1px solid #ddd; border-radius: 8px; cursor: crosshair; background: white; }
         button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; margin: 8px; }
         .btn-default { background: #10b981; display: inline-block; text-decoration: none; color: white; padding: 10px 20px; border-radius: 12px; margin: 8px; }
+        .btn-delete { background: #ef4444; }
+        .btn-delete:hover { background: #dc2626; }
         .info-box { background: #e0e7ff; padding: 12px; border-radius: 12px; margin-bottom: 15px; }
         hr { margin: 15px 0; }
-        .save-option { margin: 15px 0; text-align: right; background: #f0fdf4; padding: 12px; border-radius: 12px; }
+        .current-signature { margin: 15px 0; padding: 10px; background: #f0fdf4; border-radius: 12px; }
+        .current-signature img { max-width: 200px; max-height: 60px; margin-top: 10px; }
         .user-info { background: #f1f5f9; padding: 10px; border-radius: 12px; margin-bottom: 15px; }
     </style>
 </head>
@@ -112,13 +108,14 @@ if (file_exists($admin_default_file)) {
         <strong>تاریخ تحویل:</strong> <?php echo htmlspecialchars($delivery_date); ?>
     </div>
     
-    <?php if($admin_default): ?>
-    <div class="info-box">
-        <i class="fas fa-save"></i> شما یک امضای ذخیره شده دارید.
+    <?php if($has_admin_signature): ?>
+    <div class="current-signature">
+        <i class="fas fa-save"></i> امضای فعلی شما:
+        <br>
+        <img src="<?php echo $admin_signature_file . '?t=' . time(); ?>" alt="امضای فعلی">
+        <br>
+        <a href="?delete_signature=1&user_id=<?php echo $user_id; ?>&delivery_date=<?php echo urlencode($delivery_date); ?>" class="btn-delete" style="display: inline-block; padding: 5px 12px; font-size: 0.7rem; margin-top: 8px;" onclick="return confirm('آیا از حذف امضای خود اطمینان دارید؟')">🗑️ حذف امضا</a>
     </div>
-    <a href="?user_id=<?php echo $user_id; ?>&delivery_date=<?php echo urlencode($delivery_date); ?>&use_admin_default=1" class="btn-default" onclick="return confirm('از امضای قبلی استفاده شود؟')">
-        <i class="fas fa-check"></i> استفاده از امضای قبلی
-    </a>
     <hr>
     <?php endif; ?>
     
@@ -126,16 +123,16 @@ if (file_exists($admin_default_file)) {
         <canvas id="adminCanvas" width="450" height="200"></canvas>
         <div>
             <button onclick="clearCanvas()"><i class="fas fa-eraser"></i> پاک کردن</button>
-            <button onclick="saveAdminSignature()"><i class="fas fa-save"></i> ذخیره و تایید نهایی</button>
+            <button onclick="saveAdminSignature()"><i class="fas fa-save"></i> ثبت و جایگزینی امضا</button>
         </div>
     </div>
     
-    <div class="save-option">
-        <label>
-            <input type="checkbox" id="save_admin_default" value="1" checked>
-            ذخیره این امضا به عنوان امضای پیش‌فرض
-        </label>
+    <?php if($has_admin_signature): ?>
+    <div class="info-box">
+        <i class="fas fa-info-circle"></i> با ثبت امضای جدید، امضای قبلی شما <strong>جایگزین</strong> می‌شود.
     </div>
+    <a href="?use_admin_default=1&user_id=<?php echo $user_id; ?>&delivery_date=<?php echo urlencode($delivery_date); ?>" class="btn-default" onclick="return confirm('از امضای فعلی استفاده شود؟')">✅ استفاده از امضای فعلی</a>
+    <?php endif; ?>
 </div>
 
 <script>
@@ -211,11 +208,9 @@ if (file_exists($admin_default_file)) {
     
     function saveAdminSignature() {
         const dataURL = canvas.toDataURL('image/png');
-        const saveAsDefault = document.getElementById('save_admin_default')?.checked ? 1 : 0;
         const formData = new FormData();
         const blob = dataURLToBlob(dataURL);
         formData.append('admin_signature', blob, 'admin_signature.png');
-        formData.append('save_as_default', saveAsDefault);
         formData.append('user_id', '<?php echo $user_id; ?>');
         formData.append('delivery_date', '<?php echo $delivery_date; ?>');
         

@@ -682,6 +682,62 @@ if ($action == 'get_admin_user_detail_stats') {
     exit;
 }
 
+// ========== دریافت تاریخ‌های بایگانی شده برای کاربر عادی ==========
+if ($action == 'get_archived_delivery_dates') {
+    $sql = "SELECT DISTINCT da.delivery_date 
+            FROM delivery_approvals da 
+            WHERE da.user_id = :user_id 
+            AND da.user_approved_at IS NOT NULL 
+            AND da.admin_approved_at IS NOT NULL 
+            ORDER BY da.delivery_date DESC";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':user_id' => $user_id]);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $formatted = [];
+    foreach ($results as $row) {
+        $formatted[] = [
+            'delivery_date' => toPersianNumber($row['delivery_date']),
+            'delivery_date_raw' => $row['delivery_date']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'dates' => $formatted]);
+    exit;
+}
+
+// ========== دریافت تمام تاریخ‌های بایگانی شده برای ادمین ==========
+if ($action == 'get_all_archived_dates') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $sql = "SELECT DISTINCT da.delivery_date, da.user_id, u.fullname as user_name 
+            FROM delivery_approvals da 
+            JOIN users u ON da.user_id = u.id
+            WHERE da.user_approved_at IS NOT NULL 
+            AND da.admin_approved_at IS NOT NULL 
+            ORDER BY da.delivery_date DESC";
+    
+    $stmt = $db->query($sql);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $formatted = [];
+    foreach ($results as $row) {
+        $formatted[] = [
+            'delivery_date' => toPersianNumber($row['delivery_date']),
+            'delivery_date_raw' => $row['delivery_date'],
+            'user_id' => $row['user_id'],
+            'user_name' => $row['user_name']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'dates' => $formatted]);
+    exit;
+}
+
 // ============================================================
 // ========== فقط ادمین از اینجا به بعد =======================
 // ============================================================
@@ -929,63 +985,6 @@ if ($action == 'search_admin_documents') {
     }
     
     echo json_encode(['success' => true, 'documents' => $result]);
-    exit;
-}
-
-// ========== دریافت تاریخ‌های بایگانی شده کاربر عادی ==========
-if ($action == 'get_archived_delivery_dates') {
-    // این اکشن برای کاربر عادی است - بدون شرط ادمین
-    $sql = "SELECT DISTINCT da.delivery_date 
-            FROM delivery_approvals da 
-            WHERE da.user_id = :user_id 
-            AND da.user_approved_at IS NOT NULL 
-            AND da.admin_approved_at IS NOT NULL 
-            ORDER BY da.delivery_date DESC";
-    
-    $stmt = $db->prepare($sql);
-    $stmt->execute([':user_id' => $user_id]);
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    $formatted = [];
-    foreach ($results as $row) {
-        $formatted[] = [
-            'delivery_date' => toPersianNumber($row['delivery_date']),
-            'delivery_date_raw' => $row['delivery_date']
-        ];
-    }
-    
-    echo json_encode(['success' => true, 'dates' => $formatted]);
-    exit;
-}
-
-// ========== دریافت تمام تاریخ‌های بایگانی شده برای ادمین ==========
-if ($action == 'get_all_archived_dates') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        exit;
-    }
-    
-    $sql = "SELECT DISTINCT da.delivery_date, da.user_id, u.fullname as user_name 
-            FROM delivery_approvals da 
-            JOIN users u ON da.user_id = u.id
-            WHERE da.user_approved_at IS NOT NULL 
-            AND da.admin_approved_at IS NOT NULL 
-            ORDER BY da.delivery_date DESC";
-    
-    $stmt = $db->query($sql);
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    $formatted = [];
-    foreach ($results as $row) {
-        $formatted[] = [
-            'delivery_date' => toPersianNumber($row['delivery_date']),
-            'delivery_date_raw' => $row['delivery_date'],
-            'user_id' => $row['user_id'],
-            'user_name' => $row['user_name']
-        ];
-    }
-    
-    echo json_encode(['success' => true, 'dates' => $formatted]);
     exit;
 }
 

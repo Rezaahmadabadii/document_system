@@ -1,0 +1,87 @@
+// ========== بایگانی کاربر عادی ==========
+function loadUserArchiveList() {
+    const container = document.getElementById('userArchiveList');
+    if (!container) return;
+    
+    fetch('api/ajax.php?action=get_archived_delivery_dates')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '<div class="archive-list">';
+                data.dates.forEach(date => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <div class="archive-item-date">${date.delivery_date}</div>
+                                </div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewArchiveDocument('${date.delivery_date_raw}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.innerHTML = '<div class="empty-state">خطا در دریافت اطلاعات</div>';
+        });
+}
+
+// ========== بایگانی ادمین ==========
+function loadAdminArchiveList() {
+    const container = document.getElementById('adminArchiveList');
+    if (!container) return;
+    
+    fetch('api/ajax.php?action=get_all_archived_dates')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '<div class="archive-list">';
+                data.dates.forEach(item => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div>
+                                    <div class="archive-item-date">${item.delivery_date}</div>
+                                    <div class="archive-item-user">${escapeHtml(item.user_name)}</div>
+                                </div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewAdminArchiveDocument('${item.delivery_date_raw}', ${item.user_id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.innerHTML = '<div class="empty-state">خطا در دریافت اطلاعات</div>';
+        });
+}
+
+// ========== مشاهده سند بایگانی ==========
+function viewArchiveDocument(deliveryDate) {
+    window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
+}
+
+function viewAdminArchiveDocument(deliveryDate, userId) {
+    window.open(`print.php?user_id=${userId}&delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
+}

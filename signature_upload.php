@@ -8,51 +8,58 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$is_admin = $_SESSION['is_admin'] ?? 0;
 $delivery_date = isset($_GET['delivery_date']) ? $_GET['delivery_date'] : '';
 
 if (empty($delivery_date)) {
     die("تاریخ تحویل مشخص نشده است");
 }
 
-$upload_dir = 'storage/signatures/users/';
-if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-
-// ========== اضافه کن: بررسی اینکه ادمین قبلاً تایید نکرده باشد ==========
-$stmt = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
-$stmt->execute([$user_id, $delivery_date]);
-$admin_approved = $stmt->fetchColumn();
-
-if ($admin_approved) {
-    header('Location: print.php?delivery_date=' . urlencode($delivery_date) . '&error=locked');
-    exit;
+// تعیین مسیر ذخیره امضا (فقط یک فایل برای هر کاربر)
+if ($is_admin) {
+    $upload_dir = 'storage/signatures/admin/';
+    $signature_file = $upload_dir . 'admin.png';
+} else {
+    $upload_dir = 'storage/signatures/users/';
+    $signature_file = $upload_dir . $user_id . '.png';
 }
 
-// پردازش ذخیره امضا
+// ایجاد پوشه اگر وجود ندارد
+if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+
+// ========== بررسی اینکه ادمین قبلاً تایید نکرده باشد ==========
+if (!$is_admin) {
+    $stmt = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
+    $stmt->execute([$user_id, $delivery_date]);
+    $admin_approved = $stmt->fetchColumn();
+    
+    if ($admin_approved) {
+        header('Location: print.php?delivery_date=' . urlencode($delivery_date) . '&error=locked');
+        exit;
+    }
+}
+
+// پردازش ذخیره امضا (جایگزینی امضای قبلی)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['signature_data'])) {
     $signature_data = $_POST['signature_data'];
     $signature_data = preg_replace('/^data:image\/\w+;base64,/', '', $signature_data);
     $signature_data = str_replace(' ', '+', $signature_data);
     $image_data = base64_decode($signature_data);
     
-    $filename = $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-    $upload_path = $upload_dir . $filename;
-    
-    if (file_put_contents($upload_path, $image_data)) {
-        // ========== اصلاح: استفاده از ON DUPLICATE KEY UPDATE ==========
-        $stmt = $db->prepare("INSERT INTO delivery_approvals (user_id, delivery_date, user_approved_at) 
-                              VALUES (?, ?, NOW()) 
-                              ON DUPLICATE KEY UPDATE user_approved_at = NOW(), delivery_date = ?");
-        $stmt->execute([$user_id, $delivery_date, $delivery_date]);
+    if (file_put_contents($signature_file, $image_data)) {
+        // ذخیره در جدول delivery_approvals برای این تاریخ خاص (فقط برای کاربر عادی)
+        if (!$is_admin) {
+            $stmt = $db->prepare("INSERT INTO delivery_approvals (user_id, delivery_date, user_approved_at) 
+                                  VALUES (?, ?, NOW()) 
+                                  ON DUPLICATE KEY UPDATE user_approved_at = NOW(), delivery_date = ?");
+            $stmt->execute([$user_id, $delivery_date, $delivery_date]);
+        }
         
-        // ذخیره به عنوان امضای پیش‌فرض
-        if (isset($_POST['save_as_default'])) {
-            $default_path = $upload_dir . $user_id . '_default.png';
-            copy($upload_path, $default_path);
-            
-            $stmt = $db->prepare("INSERT INTO saved_signatures (user_id, signature_path, is_default) 
-                                  VALUES (?, ?, 1) 
-                                  ON DUPLICATE KEY UPDATE signature_path = ?, is_default = 1");
-            $stmt->execute([$user_id, $default_path, $default_path]);
+        // اگر ادمین است، فقط تایید نهایی را ثبت می‌کنیم
+        if ($is_admin) {
+            $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW(), admin_signature_used = ? 
+                                  WHERE user_id = ? AND delivery_date = ?");
+            $stmt->execute([$signature_file, $_GET['user_id'] ?? $user_id, $delivery_date]);
         }
         
         header('Location: print.php?delivery_date=' . urlencode($delivery_date) . '&success=1');
@@ -63,30 +70,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['signature_data'])) {
     exit;
 }
 
-// استفاده از امضای قبلی
+// استفاده از امضای قبلی (همان فایل ثابت)
 if (isset($_GET['use_default'])) {
-    $default_signature_file = $upload_dir . $user_id . '_default.png';
-    if (file_exists($default_signature_file)) {
-        $filename = $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-        $upload_path = $upload_dir . $filename;
-        copy($default_signature_file, $upload_path);
-        
-        $stmt = $db->prepare("INSERT INTO delivery_approvals (user_id, delivery_date, user_approved_at) 
-                              VALUES (?, ?, NOW()) 
-                              ON DUPLICATE KEY UPDATE user_approved_at = NOW(), delivery_date = ?");
-        $stmt->execute([$user_id, $delivery_date, $delivery_date]);
+    if (file_exists($signature_file)) {
+        // فقط رکورد delivery_approvals را ثبت می‌کنیم (بدون کپی فایل)
+        if (!$is_admin) {
+            $stmt = $db->prepare("INSERT INTO delivery_approvals (user_id, delivery_date, user_approved_at) 
+                                  VALUES (?, ?, NOW()) 
+                                  ON DUPLICATE KEY UPDATE user_approved_at = NOW(), delivery_date = ?");
+            $stmt->execute([$user_id, $delivery_date, $delivery_date]);
+        } else {
+            $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW(), admin_signature_used = ? 
+                                  WHERE user_id = ? AND delivery_date = ?");
+            $stmt->execute([$signature_file, $_GET['user_id'] ?? $user_id, $delivery_date]);
+        }
     }
     header('Location: print.php?delivery_date=' . urlencode($delivery_date) . '&signature=1');
     exit;
 }
 
-$has_default_signature = file_exists($upload_dir . $user_id . '_default.png');
+// حذف امضای پیش‌فرض
+if (isset($_GET['delete_signature'])) {
+    if (file_exists($signature_file)) {
+        unlink($signature_file);
+    }
+    header('Location: signature_upload.php?delivery_date=' . urlencode($delivery_date));
+    exit;
+}
+
+$has_signature = file_exists($signature_file);
 ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>ثبت امضای تحویل‌دهنده</title>
+    <title>ثبت امضای <?php echo $is_admin ? 'ادمین' : 'تحویل‌دهنده'; ?></title>
     <script defer src="assets/js/all.min.js"></script>
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
     <style>
@@ -97,48 +115,53 @@ $has_default_signature = file_exists($upload_dir . $user_id . '_default.png');
         canvas { border: 1px solid #ddd; border-radius: 8px; cursor: crosshair; background: white; }
         button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; margin: 8px; }
         .btn-default { background: #10b981; display: inline-block; text-decoration: none; color: white; padding: 10px 20px; border-radius: 12px; margin: 8px; }
-        .save-option { margin: 15px 0; text-align: right; background: #f0fdf4; padding: 12px; border-radius: 12px; }
+        .btn-delete { background: #ef4444; }
+        .btn-delete:hover { background: #dc2626; }
         .info-box { background: #e0e7ff; padding: 12px; border-radius: 12px; margin-bottom: 15px; }
         hr { margin: 15px 0; }
-        .error-box { background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 12px; margin-bottom: 15px; }
+        .current-signature { margin: 15px 0; padding: 10px; background: #f0fdf4; border-radius: 12px; }
+        .current-signature img { max-width: 200px; max-height: 60px; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>✍️ ثبت امضای تحویل‌دهنده</h2>
+    <h2>✍️ ثبت امضای <?php echo $is_admin ? 'ادمین' : 'تحویل‌دهنده'; ?></h2>
     <p>تاریخ تحویل: <strong><?php echo htmlspecialchars($delivery_date); ?></strong></p>
     
     <?php if(isset($_GET['error'])): ?>
-        <div class="error-box">❌ خطا در ذخیره امضا. لطفاً مجدداً تلاش کنید.</div>
+        <div class="error-box" style="background:#fee2e2; color:#dc2626; padding:12px; border-radius:12px; margin-bottom:15px;">❌ خطا در ذخیره امضا. لطفاً مجدداً تلاش کنید.</div>
+    <?php endif; ?>
+    
+    <?php if($has_signature): ?>
+    <div class="current-signature">
+        <i class="fas fa-save"></i> امضای فعلی شما:
+        <br>
+        <img src="<?php echo $signature_file . '?t=' . time(); ?>" alt="امضای فعلی">
+        <br>
+        <a href="?delete_signature=1&delivery_date=<?php echo urlencode($delivery_date); ?>" class="btn-delete" style="display: inline-block; padding: 5px 12px; font-size: 0.7rem; margin-top: 8px;" onclick="return confirm('آیا از حذف امضای خود اطمینان دارید؟')">🗑️ حذف امضا</a>
+    </div>
+    <hr>
     <?php endif; ?>
     
     <form method="POST" id="signatureForm">
         <input type="hidden" name="signature_data" id="signature_data">
         <input type="hidden" name="delivery_date" value="<?php echo htmlspecialchars($delivery_date); ?>">
-        <input type="hidden" name="save_as_default" id="save_as_default" value="0">
         
         <div class="signature-pad">
             <canvas id="signatureCanvas" width="450" height="200"></canvas>
             <div>
                 <button type="button" onclick="clearCanvas()"><i class="fas fa-eraser"></i> پاک کردن</button>
-                <button type="button" onclick="submitSignature()"><i class="fas fa-save"></i> ذخیره امضا</button>
+                <button type="button" onclick="submitSignature()"><i class="fas fa-save"></i> ثبت و جایگزینی امضا</button>
             </div>
-        </div>
-        
-        <div class="save-option">
-            <label>
-                <input type="checkbox" id="save_as_default_checkbox" onchange="document.getElementById('save_as_default').value = this.checked ? 1 : 0">
-                ذخیره این امضا به عنوان امضای پیش‌فرض
-            </label>
         </div>
     </form>
     
-    <?php if($has_default_signature): ?>
+    <?php if($has_signature): ?>
     <hr>
     <div class="info-box">
-        <i class="fas fa-save"></i> شما یک امضای ذخیره شده دارید.
+        <i class="fas fa-info-circle"></i> با ثبت امضای جدید، امضای قبلی شما <strong>جایگزین</strong> می‌شود.
     </div>
-    <a href="?use_default=1&delivery_date=<?php echo urlencode($delivery_date); ?>" class="btn-default" onclick="return confirm('از امضای قبلی استفاده شود؟')">استفاده از امضای قبلی</a>
+    <a href="?use_default=1&delivery_date=<?php echo urlencode($delivery_date); ?>" class="btn-default" onclick="return confirm('از امضای فعلی استفاده شود؟')">✅ استفاده از امضای فعلی</a>
     <?php endif; ?>
 </div>
 

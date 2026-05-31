@@ -114,10 +114,11 @@ if ($is_admin) {
         .btn-secondary { background: #e2e8f0; color: #475569; padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.7rem; }
         .toast { position: fixed; bottom: 20px; right: 20px; background: #1a2c3e; color: white; padding: 8px 18px; border-radius: 12px; font-size: 0.7rem; z-index: 1100; display: none; }
         .scrollable-list { max-height: 450px; overflow-y: auto; }
-        .companies-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
-        .company-card { background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #eef2f5; }
-        .company-card .company-name { font-size: 0.7rem; font-weight: 600; display: block; margin-bottom: 8px; }
-        .user-item { background: #f8fafc; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .companies-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .company-card { background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #eef2f5; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .company-card .company-name { font-size: 0.7rem; font-weight: 600; display: block; }
+        .company-card div { display: flex; gap: 6px; justify-content: center; }
+        .user-item { background: #f8fafc; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .user-info { font-size: 0.7rem; }
         .user-name { font-weight: 700; color: #1a2c3e; }
         .user-unit { color: #6c86a3; font-size: 0.6rem; }
@@ -127,214 +128,50 @@ if ($is_admin) {
         @media (max-width: 900px) { .documents-layout { flex-direction: column; } .right-panel-panel { width: 100%; position: relative; top: 0; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .companies-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .companies-grid { grid-template-columns: repeat(1, 1fr); } }
 		
+        /* ========== استایل بایگانی ========== */
+        .archive-list { display: flex; flex-direction: column; gap: 10px; }
+        .archive-item { background: #f8fafc; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eef2f5; transition: all 0.2s; }
+        .archive-item:hover { background: #f1f5f9; border-color: #667eea; }
+        .archive-item-left { display: flex; align-items: center; gap: 12px; }
+        .archive-item-icon { width: 35px; height: 35px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #667eea; }
+        .archive-item-date { font-weight: 600; font-size: 0.85rem; color: #1a2c3e; }
+        .archive-item-user { font-size: 0.7rem; color: #6c86a3; margin-top: 2px; }
+        .archive-view-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s; }
+        .archive-view-btn:hover { transform: scale(1.02); opacity: 0.9; }
+        
         /* ========== استایل‌های جدید آمار کاربران ========== */
-        .user-stats-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .user-card {
-            background: white;
-            border-radius: 16px;
-            padding: 15px;
-            border: 1px solid #eef2f5;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .user-card:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-            border-color: #667eea;
-        }
-
-        .user-card.selected {
-            background: linear-gradient(135deg, #667eea10, #764ba210);
-            border: 2px solid #667eea;
-        }
-
-        .user-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-avatar {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-        }
-
-        .user-details h4 {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: #1a2c3e;
-            margin: 0 0 3px 0;
-        }
-
-        .user-details .user-unit {
-            font-size: 0.6rem;
-            color: #6c86a3;
-        }
-
-        .user-stats-badges {
-            display: flex;
-            gap: 15px;
-        }
-
-        .stat-badge {
-            text-align: center;
-            background: #f8fafc;
-            padding: 5px 12px;
-            border-radius: 12px;
-        }
-
-        .stat-badge .stat-value {
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        .stat-badge .stat-label {
-            font-size: 0.55rem;
-            color: #6c86a3;
-        }
-
-        .progress-section {
-            margin: 12px 0;
-        }
-
-        .progress-bar-container {
-            background: #e2e8f0;
-            border-radius: 10px;
-            height: 8px;
-            overflow: hidden;
-            margin-bottom: 5px;
-        }
-
-        .progress-bar {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-
-        .progress-text {
-            font-size: 0.6rem;
-            color: #475569;
-            text-align: left;
-        }
-
-        .user-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #eef2f5;
-        }
-
-        .trend-up {
-            color: #10b981;
-            font-size: 0.65rem;
-            font-weight: 600;
-        }
-
-        .trend-down {
-            color: #ef4444;
-            font-size: 0.65rem;
-            font-weight: 600;
-        }
-
-        .trend-neutral {
-            color: #f59e0b;
-            font-size: 0.65rem;
-            font-weight: 600;
-        }
-
-        .detail-btn {
-            background: none;
-            border: none;
-            color: #667eea;
-            font-size: 0.65rem;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .detail-btn:hover {
-            background: #eef2ff;
-        }
-
-        .user-detail-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eef2f5;
-        }
-
-        .detail-stat-card {
-            text-align: center;
-            padding: 10px;
-            background: #f8fafc;
-            border-radius: 12px;
-        }
-
-        .detail-stat-value {
-            font-size: 1.3rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .detail-stat-label {
-            font-size: 0.6rem;
-            color: #6c86a3;
-            margin-top: 5px;
-        }
-
-        .avg-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8fafc;
-            border-radius: 12px;
-        }
-
-        .avg-item {
-            text-align: center;
-        }
-
-        .avg-value {
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .avg-label {
-            font-size: 0.55rem;
-            color: #6c86a3;
-        }
-        /* ========== پایان استایل‌های جدید ========== */
+        .user-stats-container { display: flex; flex-direction: column; gap: 15px; }
+        .user-card { background: white; border-radius: 16px; padding: 15px; border: 1px solid #eef2f5; transition: all 0.3s ease; cursor: pointer; }
+        .user-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); transform: translateY(-2px); border-color: #667eea; }
+        .user-card.selected { background: linear-gradient(135deg, #667eea10, #764ba210); border: 2px solid #667eea; }
+        .user-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 45px; height: 45px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; }
+        .user-details h4 { font-size: 0.9rem; font-weight: 700; color: #1a2c3e; margin: 0 0 3px 0; }
+        .user-details .user-unit { font-size: 0.6rem; color: #6c86a3; }
+        .user-stats-badges { display: flex; gap: 15px; }
+        .stat-badge { text-align: center; background: #f8fafc; padding: 5px 12px; border-radius: 12px; }
+        .stat-badge .stat-value { font-size: 1rem; font-weight: 700; }
+        .stat-badge .stat-label { font-size: 0.55rem; color: #6c86a3; }
+        .progress-section { margin: 12px 0; }
+        .progress-bar-container { background: #e2e8f0; border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 5px; }
+        .progress-bar { background: linear-gradient(135deg, #667eea, #764ba2); height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+        .progress-text { font-size: 0.6rem; color: #475569; text-align: left; }
+        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f5; }
+        .trend-up { color: #10b981; font-size: 0.65rem; font-weight: 600; }
+        .trend-down { color: #ef4444; font-size: 0.65rem; font-weight: 600; }
+        .trend-neutral { color: #f59e0b; font-size: 0.65rem; font-weight: 600; }
+        .detail-btn { background: none; border: none; color: #667eea; font-size: 0.65rem; cursor: pointer; padding: 5px 10px; border-radius: 8px; transition: all 0.2s; }
+        .detail-btn:hover { background: #eef2ff; }
+        .user-detail-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eef2f5; }
+        .detail-stat-card { text-align: center; padding: 10px; background: #f8fafc; border-radius: 12px; }
+        .detail-stat-value { font-size: 1.3rem; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .detail-stat-label { font-size: 0.6rem; color: #6c86a3; margin-top: 5px; }
+        .avg-stats { display: flex; justify-content: space-around; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 12px; }
+        .avg-item { text-align: center; }
+        .avg-value { font-weight: 700; font-size: 0.9rem; }
+        .avg-label { font-size: 0.55rem; color: #6c86a3; }
+        /* ========== پایان استایل‌ها ========== */
     </style>
 </head>
 <body>
@@ -373,17 +210,7 @@ if ($is_admin) {
                     <div class="menu-item" data-section="approvals" onclick="showLeftContent('approvals')"><i class="fas fa-check-double"></i> تاییدات نهایی</div>
                     <div class="menu-item" data-section="archive" onclick="showLeftContent('archive')"><i class="fas fa-archive"></i> بایگانی</div>
                 </div>
-                
-                <div id="userSelectForStats" class="user-select-for-stats">
-                    <label><i class="fas fa-user"></i> انتخاب کاربر برای آمار</label>
-                    <select id="stats_user_select">
-                        <option value="">همه کاربران</option>
-                        <?php foreach($users_list as $u): ?>
-                            <option value="<?php echo $u['id']; ?>"><?php echo htmlspecialchars($u['fullname'] . ' (' . $u['unit_name'] . ')'); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                
+                                
                 <div id="adminFiltersPanel" class="admin-filter-box">
                     <div class="admin-filter-group"><label><i class="fas fa-user"></i> انتخاب کاربر</label><select id="admin_user_select"><option value="">همه کاربران</option><?php foreach($users_list as $u): ?><option value="<?php echo $u['id']; ?>"><?php echo htmlspecialchars($u['fullname'] . ' (' . $u['unit_name'] . ')'); ?></option><?php endforeach; ?></select></div>
                     <div class="admin-filter-group"><label><i class="fas fa-hashtag"></i> شماره سند</label><input type="text" id="admin_filter_number" placeholder="جستجو..."></div>
@@ -404,11 +231,11 @@ if ($is_admin) {
                         <div class="form-group"><div style="display: flex; gap: 8px; align-items: center;"><input type="number" id="company_number" min="1" max="<?php echo count($companies); ?>" style="width: 70px; text-align: center; padding: 8px; border: 1.5px solid #e2e8f0; border-radius: 12px;" placeholder="#"><select id="company_id" style="flex: 1;"><?php foreach($companies as $c): ?><option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option><?php endforeach; ?></select></div></div>
                         <div class="form-group"><label>شماره سند</label><input type="text" id="doc_number" placeholder="INV-12345"></div>
                         <div class="form-group" id="date_group" <?php echo $require_doc_date ? '' : 'style="display:none;"'; ?>><label>تاریخ سند</label><input type="text" id="doc_date" placeholder="1405/02/30"></div>
-                        <button class="btn-submit" id="submitBtn">✓ ثبت سند</button>
+                        <button class="btn-submit" id="submitBtn" onclick="saveDocument()">✓ ثبت سند</button>
                     </div>
                     <div class="form-section" style="border-top: 1px solid #eef2f5; margin-top: 0;">
                         <div class="form-group"><label>گزارش / یادداشت</label><textarea id="doc_description" rows="3" placeholder="هرگونه توضیح یا گزارش اضافی..."></textarea></div>
-                        <button class="btn-green" id="submitDescriptionBtn">✏️ ثبت توضیح</button>
+                        <button class="btn-green" id="submitDescriptionBtn" onclick="addDescriptionToDocument()">✏️ ثبت توضیح</button>
                     </div>
                     
                     <!-- فیلدهای جستجو بعد از دکمه ثبت توضیح -->
@@ -427,8 +254,6 @@ if ($is_admin) {
                 
                 <div id="userArchivePanel" class="user-search-panel" style="display:none;">
                     <div style="padding: 14px 16px;">
-                        <div class="left-section-title" style="margin-top:0;"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div>
-                        <div id="userArchiveList"><div class="empty-state">در حال بارگذاری...</div></div>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -488,6 +313,10 @@ if ($is_admin) {
                 <div id="userDocumentsList" class="docs-list" style="margin-top: 15px;">
                     <div class="empty-state">برای جستجو از فیلدهای سمت راست استفاده کنید</div>
                 </div>
+                <div id="userArchiveList" class="archive-list" style="margin-top: 15px; display: none;">
+                    <div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div>
+                    <div class="empty-state">در حال بارگذاری...</div>
+                </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -540,24 +369,36 @@ function toggleUserPanel(panel) {
     let archivePanel = document.getElementById('userArchivePanel');
     let btns = document.querySelectorAll('.user-panel-btn');
     
+    let documentsList = document.getElementById('userDocumentsList');
+    let archiveList = document.getElementById('userArchiveList');
+    
     btns.forEach(btn => btn.classList.remove('active'));
     if (formPanel) formPanel.style.display = 'none';
     if (searchPanel) searchPanel.style.display = 'none';
     if (archivePanel) archivePanel.style.display = 'none';
+    
+    // مخفی کردن لیست‌های سمت چپ
+    if (documentsList) documentsList.style.display = 'none';
+    if (archiveList) archiveList.style.display = 'none';
     
     if (panel === 'form') {
         if (formPanel) formPanel.style.display = 'block';
         if (btns[0]) btns[0].classList.add('active');
         if (typeof loadLastDeliveryDate === 'function') loadLastDeliveryDate();
         if (document.getElementById('company_id')) document.getElementById('company_id').focus();
+        if (documentsList) documentsList.style.display = 'block';
     } else if (panel === 'search') {
         if (searchPanel) searchPanel.style.display = 'block';
         if (btns[1]) btns[1].classList.add('active');
-        if (typeof loadSearchDocuments === 'function') loadSearchDocuments();
+        if (typeof autoSearchDocuments === 'function') autoSearchDocuments();
+        if (documentsList) documentsList.style.display = 'block';
     } else if (panel === 'archive') {
         if (archivePanel) archivePanel.style.display = 'block';
         if (btns[2]) btns[2].classList.add('active');
-        if (typeof loadUserArchive === 'function') loadUserArchive();
+        if (typeof loadUserArchiveList === 'function') {
+            loadUserArchiveList();
+        }
+        if (archiveList) archiveList.style.display = 'block';
     }
 }
 
@@ -666,6 +507,172 @@ async function loadUserStats() {
     }
 }
 
+// ========== بایگانی کاربر عادی ==========
+function loadUserArchiveList() {
+    const container = document.getElementById('userArchiveList');
+    if (!container) return;
+    
+    // اضافه کردن کلاس left-content برای هماهنگی با آمار
+    container.classList.add('left-content');
+    
+    fetch('api/ajax.php?action=get_archived_delivery_dates')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '<div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div>';
+                html += '<div class="archive-list">';
+                data.dates.forEach(date => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <div class="archive-item-date">${date.delivery_date}</div>
+                                </div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewArchiveDocument('${date.delivery_date_raw}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div><div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.innerHTML = '<div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div><div class="empty-state">خطا در دریافت اطلاعات</div>';
+        });
+}
+
+// ========== مشاهده سند بایگانی ==========
+function viewArchiveDocument(deliveryDate) {
+    window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
+}
+
+function saveDocument() {
+    const delivery_date = document.getElementById('delivery_date')?.value || '';
+    const company_id = document.getElementById('company_id')?.value || '';
+    const doc_number = document.getElementById('doc_number')?.value || '';
+    let doc_date = document.getElementById('doc_date')?.value || '-';
+    const description = document.getElementById('doc_description')?.value || '';
+    
+    if (!doc_number) {
+        alert('شماره سند الزامی است');
+        return;
+    }
+    
+    fetch('api/ajax.php?action=save_document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            delivery_date: delivery_date,
+            company_id: company_id,
+            doc_number: doc_number,
+            doc_date: doc_date,
+            description: description
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('سند با موفقیت ثبت شد');
+            document.getElementById('doc_number').value = '';
+            if (document.getElementById('doc_date')) document.getElementById('doc_date').value = '';
+            document.getElementById('doc_description').value = '';
+            
+            const currentDate = document.getElementById('delivery_date').value;
+            loadDocumentsForDeliveryDate(currentDate);
+            
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
+        } else {
+            alert('خطا: ' + (data.error || 'مشخص نیست'));
+        }
+    })
+    .catch(err => {
+        console.error('خطا در ثبت سند:', err);
+        alert('خطا در ارتباط با سرور');
+    });
+}
+
+function addDescriptionToDocument() {
+    const docId = prompt('شناسه سند را وارد کنید:');
+    if (!docId) return;
+    const description = prompt('توضیحات خود را وارد کنید:');
+    if (!description) return;
+    
+    fetch('api/ajax.php?action=add_description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ doc_id: docId, description: description })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('توضیحات با موفقیت اضافه شد');
+            const delivery_date = document.getElementById('delivery_date')?.value || '';
+            loadDocumentsForDeliveryDate(delivery_date);
+        } else {
+            alert('خطا: ' + (data.error || 'مشخص نیست'));
+        }
+    });
+}
+
+function openEditModal(id, number, date, description) {
+    const newNumber = prompt('شماره سند جدید:', number);
+    if (!newNumber) return;
+    let newDate = prompt('تاریخ سند جدید (مثال: 1404/01/01) یا - برای خالی:', date);
+    if (newDate === '') newDate = '-';
+    
+    fetch('api/ajax.php?action=update_document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, doc_number: newNumber, doc_date: newDate })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('سند با موفقیت ویرایش شد');
+            const delivery_date = document.getElementById('delivery_date')?.value || '';
+            loadDocumentsForDeliveryDate(delivery_date);
+        } else {
+            alert('خطا: ' + (data.error || 'مشخص نیست'));
+        }
+    });
+}
+
+function deleteDocument(id) {
+    if (!confirm('آیا از حذف این سند اطمینان دارید؟')) return;
+    
+    fetch('api/ajax.php?action=delete_document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('سند با موفقیت حذف شد');
+            const delivery_date = document.getElementById('delivery_date')?.value || '';
+            loadDocumentsForDeliveryDate(delivery_date);
+            
+            // به‌روزرسانی آمار کاربر
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
+        } else {
+            alert('خطا: ' + (data.error || 'مشخص نیست'));
+        }
+    });
+}
+
 // ========== تغییر تاریخ تحویل با دکمه‌های + و - ==========
 function getDaysInMonth(year, month) {
     const jalaliMonths = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
@@ -714,35 +721,41 @@ function changeDeliveryDate(delta) {
     loadDocumentsForDeliveryDate(newDate);
 }
 
-// ========== بارگذاری اسناد بر اساس تاریخ تحویل ==========
 function loadDocumentsForDeliveryDate(deliveryDate) {
+    console.log('بارگذاری اسناد برای تاریخ:', deliveryDate);
+    
+    const container = document.getElementById('userDocumentsList');
+    console.log('آیا container پیدا شد؟', container);
+    
+    if (!container) {
+        console.error('container userDocumentsList یافت نشد');
+        return;
+    }
+    
+    if (!deliveryDate || deliveryDate === '') {
+        console.error('تاریخ تحویل خالی است');
+        container.innerHTML = '<div class="empty-state">تاریخ تحویل مشخص نشده است</div>';
+        return;
+    }
+    
     fetch(`api/ajax.php?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`)
         .then(res => res.json())
         .then(data => {
-            const container = document.getElementById('userDocumentsList');
-            if (!container) return;
+            console.log('داده دریافتی:', data);
             
             if (data.success && data.documents && data.documents.length > 0) {
-                let html = '';
-                let revertButton = '';
-                if (data.has_user_approval && !data.has_admin_approval) {
-                    revertButton = `<button class="print-btn" onclick="revertApproval('${deliveryDate}')" style="background:#f59e0b;"><i class="fas fa-undo"></i> بازیابی</button>`;
-                } else if (data.has_user_approval && data.has_admin_approval) {
-                    revertButton = `<button class="print-btn" onclick="requestRevert('${deliveryDate}')" style="background:#ef4444;"><i class="fas fa-envelope"></i> درخواست بازیابی</button>`;
-                }
-                
-                html = `<div class="doc-group">
+                let html = `<div class="doc-group">
                             <div class="group-title">
                                 <div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(deliveryDate)} <span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${data.documents.length} سند</span></div>
                                 <div style="display:flex; gap:8px;">
                                     <a href="print.php?delivery_date=${encodeURIComponent(deliveryDate)}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a>
-                                    ${revertButton}
                                 </div>
                             </div>
-                            <div style="overflow-x:auto;">
+                            <div style="overflow-x:auto; max-height: 400px; overflow-y: auto;">
                                 <table class="data-table">
                                     <thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead>
                                     <tbody>`;
+                
                 for (let i = 0; i < data.documents.length; i++) {
                     let doc = data.documents[i];
                     let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
@@ -751,13 +764,22 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                         actions = `<button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}')"><i class="fas fa-edit"></i></button>
                                    <button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button>`;
                     }
-                    html += `<tr><td style="padding: 8px 6px;">${i+1}</td><td style="padding: 8px 6px;">${escapeHtml(doc.doc_number)}</td><td style="padding: 8px 6px;">${docDate}</td><td style="padding: 8px 6px;">${escapeHtml(doc.company_name)}</td><td style="padding: 8px 6px;">${actions}</td></tr>`;
+                    html += `<tr>
+                        <td style="padding: 8px 6px;">${i+1}</td>
+                        <td style="padding: 8px 6px;">${escapeHtml(doc.doc_number)}</td>
+                        <td style="padding: 8px 6px;">${docDate}</td>
+                        <td style="padding: 8px 6px;">${escapeHtml(doc.company_name)}</td>
+                        <td style="padding: 8px 6px;">${actions}</td>
+                    </tr>`;
                 }
-                html += `</tbody>\\n<table>\\n</div>`;
+                html += `</tbody>
+                </table>
+            </div>`;
                 
                 let descriptions = data.documents.filter(d => d.description && d.description.trim() !== '');
                 if (descriptions.length > 0) {
-                    html += `<div class="descriptions-section"><div class="desc-title"><i class="fas fa-comment-dots"></i> توضیحات اسناد</div>`;
+                    html += `<div class="descriptions-section">
+                        <div class="desc-title"><i class="fas fa-comment-dots"></i> توضیحات اسناد</div>`;
                     for (let desc of descriptions) {
                         html += `<div class="desc-item"><strong>${escapeHtml(desc.doc_number)}:</strong> ${escapeHtml(desc.description.substring(0, 100))}${desc.description.length > 100 ? '...' : ''}</div>`;
                     }
@@ -765,6 +787,21 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                 }
                 html += `</div>`;
                 container.innerHTML = html;
+                console.log('لیست به‌روز شد، تعداد سند:', data.documents.length);
+                
+                // اسکرول به انتهای لیست برای نمایش آخرین سند ثبت شده
+                setTimeout(() => {
+                    const tableContainer = container.querySelector('div[style*="overflow-x:auto"]');
+                    if (tableContainer) {
+                        tableContainer.scrollTop = tableContainer.scrollHeight;
+                    }
+                    // همچنین اسکرول به آخرین ردیف جدول
+                    const lastRow = container.querySelector('table tbody tr:last-child');
+                    if (lastRow) {
+                        lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
+                
             } else {
                 // اگر سندی در این تاریخ وجود ندارد
                 container.innerHTML = `
@@ -778,11 +815,12 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                         </div>
                     </div>
                 `;
+                console.log('هیچ سندی برای این تاریخ وجود ندارد');
             }
         })
         .catch(err => {
-            console.error(err);
-            document.getElementById('userDocumentsList').innerHTML = '<div class="empty-state">خطا در دریافت اسناد</div>';
+            console.error('خطا در fetch:', err);
+            container.innerHTML = '<div class="empty-state">خطا در دریافت اسناد</div>';
         });
 }
 
@@ -824,6 +862,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof loadDocumentsForDeliveryDate === 'function') {
             loadDocumentsForDeliveryDate(deliveryDateInput.value);
         }
+    }
+    
+    // ========== بارگذاری بایگانی کاربر ==========
+    if (document.getElementById('userArchiveList')) {
+        loadUserArchiveList();
     }
 });
 
@@ -935,22 +978,6 @@ document.addEventListener('DOMContentLoaded', function() {
         companyNumberInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('doc_number').focus(); } });
     }
 
-    async function revertApproval(deliveryDate) {
-        if (!confirm('آیا از لغو امضای خود اطمینان دارید؟ پس از بازیابی می‌توانید اسناد را ویرایش کنید.')) return;
-        let res = await fetch(`${apiUrl}?action=revert_approval&delivery_date=${encodeURIComponent(deliveryDate)}`, { method: 'POST' });
-        let result = await res.json();
-        if (result.success) { showToast('✅ امضا لغو شد. اکنون می‌توانید اسناد را ویرایش کنید'); location.reload(); }
-        else { showToast(result.error || '❌ خطا در بازیابی', true); }
-    }
-
-    async function requestRevert(deliveryDate) {
-        if (!confirm('اسناد شما تایید نهایی شده است. آیا از ادمین درخواست بازیابی می‌کنید؟')) return;
-        let res = await fetch(`${apiUrl}?action=request_revert&delivery_date=${encodeURIComponent(deliveryDate)}`, { method: 'POST' });
-        let result = await res.json();
-        if (result.success) { showToast('درخواست بازیابی برای ادمین ارسال شد'); }
-        else { showToast(result.error || 'خطا در ارسال درخواست', true); }
-    }
-
 async function loadLastDeliveryDate() {
     try {
         let res = await fetch(`${apiUrl}?action=get_last_delivery_date`);
@@ -981,83 +1008,59 @@ async function loadLastDeliveryDate() {
     }
 }
 
-    async function submitDocument() {
-        let delivery_date = document.getElementById('delivery_date').value;
-        let checkRes = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(delivery_date)}`);
-        let checkData = await checkRes.json();
-        if (checkData.has_admin_approval === true) {
-            showToast('این تاریخ تحویل تایید نهایی شده است. امکان ثبت سند وجود ندارد.', true);
-            return;
-        }
-        let company_id = document.getElementById('company_id').value;
-        let doc_number = document.getElementById('doc_number').value.trim();
-        let doc_date = document.getElementById('doc_date')?.value.trim() || '';
-        if (!doc_number) { showToast('شماره سند الزامی است', true); return; }
-        if (requireDocDate && !doc_date) { showToast('تاریخ سند الزامی است', true); return; }
-        let res = await fetch(`${apiUrl}?action=save_document`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({delivery_date, company_id, doc_number, doc_date: doc_date || '-', description: ''}) });
+async function saveReport() {
+    let reportText = document.getElementById('doc_description')?.value.trim() || '';
+    if (!reportText) { showToast('لطفاً متن توضیحات را وارد کنید', true); return; }
+    let btn = document.getElementById('submitDescriptionBtn');
+    let originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...';
+    btn.disabled = true;
+    try {
+        let res = await fetch(`${apiUrl}?action=save_report`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({report: reportText}) });
         let result = await res.json();
-        if (result.success) {
-            showToast('سند با موفقیت ثبت شد');
-            document.getElementById('doc_number').value = '';
-            if (requireDocDate) document.getElementById('doc_date').value = '';
-            await loadDocumentsForDisplay(delivery_date);
-            document.getElementById('doc_number').focus();
-        } else showToast(result.error || 'خطا', true);
-    }
+        if (result.success) { showToast('✅ توضیحات با موفقیت ذخیره شد'); document.getElementById('doc_description').value = ''; }
+        else { showToast('❌ خطا: ' + (result.error || 'خطا در ذخیره توضیحات'), true); }
+    } catch(e) { console.error(e); showToast('❌ خطا در ارتباط با سرور', true); }
+    finally { btn.innerHTML = originalText; btn.disabled = false; }
+}
 
-    async function saveReport() {
-        let reportText = document.getElementById('doc_description')?.value.trim() || '';
-        if (!reportText) { showToast('لطفاً متن توضیحات را وارد کنید', true); return; }
-        let btn = document.getElementById('submitDescriptionBtn');
-        let originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...';
-        btn.disabled = true;
-        try {
-            let res = await fetch(`${apiUrl}?action=save_report`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({report: reportText}) });
-            let result = await res.json();
-            if (result.success) { showToast('✅ توضیحات با موفقیت ذخیره شد'); document.getElementById('doc_description').value = ''; }
-            else { showToast('❌ خطا: ' + (result.error || 'خطا در ذخیره توضیحات'), true); }
-        } catch(e) { console.error(e); showToast('❌ خطا در ارتباط با سرور', true); }
-        finally { btn.innerHTML = originalText; btn.disabled = false; }
-    }
+if (document.getElementById('company_number')) { document.getElementById('company_number').focus(); }
+else { document.getElementById('company_id').focus(); }
 
-    if (document.getElementById('company_number')) { document.getElementById('company_number').focus(); }
-    else { document.getElementById('company_id').focus(); }
-
-    var companyNumberElem = document.getElementById('company_number');
-    if (companyNumberElem) {
-        companyNumberElem.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('doc_number').focus(); } });
-    }
-    if (document.getElementById('doc_number')) {
-        document.getElementById('doc_number').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (requireDocDate && document.getElementById('doc_date')) { document.getElementById('doc_date').focus(); }
-                else { if (document.getElementById('company_number')) { document.getElementById('company_number').focus(); } else if (document.getElementById('company_id')) { document.getElementById('company_id').focus(); } }
-            }
-        });
-    }
-    if (requireDocDate && document.getElementById('doc_date')) {
-        document.getElementById('doc_date').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (document.getElementById('company_number')) { document.getElementById('company_number').focus(); } else if (document.getElementById('company_id')) { document.getElementById('company_id').focus(); } }
-        });
-        let docDateElem = document.getElementById('doc_date');
-        if (docDateElem) {
-            docDateElem.addEventListener('input', function(e) { formatJalali(this); });
+var companyNumberElem = document.getElementById('company_number');
+if (companyNumberElem) {
+    companyNumberElem.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('doc_number').focus(); } });
+}
+if (document.getElementById('doc_number')) {
+    document.getElementById('doc_number').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (requireDocDate && document.getElementById('doc_date')) { document.getElementById('doc_date').focus(); }
+            else { if (document.getElementById('company_number')) { document.getElementById('company_number').focus(); } else if (document.getElementById('company_id')) { document.getElementById('company_id').focus(); } }
         }
+    });
+}
+if (requireDocDate && document.getElementById('doc_date')) {
+    document.getElementById('doc_date').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (document.getElementById('company_number')) { document.getElementById('company_number').focus(); } else if (document.getElementById('company_id')) { document.getElementById('company_id').focus(); } }
+    });
+    let docDateElem = document.getElementById('doc_date');
+    if (docDateElem) {
+        docDateElem.addEventListener('input', function(e) { formatJalali(this); });
     }
-    var companySelectElem = document.getElementById('company_id');
-    if (companySelectElem) {
-        companySelectElem.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('doc_number').focus(); } });
-    }
-    if (document.getElementById('submitBtn')) {
-        document.getElementById('submitBtn').addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); return false; } });
-    }
-    document.addEventListener('keydown', async function(e) { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); if (currentPanel === 'form') { await submitDocument(); } } });
-    if (document.getElementById('submitBtn')) {
-        document.getElementById('submitBtn').addEventListener('click', function() { submitDocument(); setTimeout(function() { if (document.getElementById('doc_number')) document.getElementById('doc_number').focus(); }, 100); });
-    }
-    loadLastDeliveryDate();
+}
+var companySelectElem = document.getElementById('company_id');
+if (companySelectElem) {
+    companySelectElem.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('doc_number').focus(); } });
+}
+if (document.getElementById('submitBtn')) {
+    document.getElementById('submitBtn').addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); return false; } });
+}
+document.addEventListener('keydown', async function(e) { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); if (currentPanel === 'form') { await saveDocument(); } } });
+if (document.getElementById('submitBtn')) {
+    document.getElementById('submitBtn').addEventListener('click', function() { saveDocument(); setTimeout(function() { if (document.getElementById('doc_number')) document.getElementById('doc_number').focus(); }, 100); });
+}
+loadLastDeliveryDate();
 
     window.openEditModal = function(id, number, date, description) {
         let editId = document.getElementById('edit_id'), editNumber = document.getElementById('edit_number'), editDate = document.getElementById('edit_date');
@@ -1536,53 +1539,53 @@ function bindAdminSearchEvents() {
     if (adminFilterDelivery) adminFilterDelivery.addEventListener('input', adminAutoSearch);
 }
 
-function showLeftContent(section) {
-    // مخفی کردن همه بخش‌ها
-    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent'];
-    sections.forEach(s => {
-        const el = document.getElementById(s);
-        if (el) el.style.display = 'none';
-    });
+// ========== بایگانی ادمین ==========
+function loadAdminArchiveList() {
+    const container = document.getElementById('archiveList');
+    if (!container) return;
     
-    // نمایش بخش انتخاب شده
-    const target = document.getElementById(section + 'Content');
-    if (target) target.style.display = 'block';
-    
-    // تغییر کلاس active در منو
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.classList.remove('active');
-        if (item.getAttribute('data-section') === section) {
-            item.classList.add('active');
-        }
-    });
-    
-    // مدیریت پنل فیلترها
-    const adminFiltersPanel = document.getElementById('adminFiltersPanel');
-    const userSelectForStats = document.getElementById('userSelectForStats');
-    
-    if (section === 'filters') {
-        if (adminFiltersPanel) adminFiltersPanel.classList.add('visible');
-        if (userSelectForStats) userSelectForStats.style.display = 'none';
-        adminAutoSearch();
-    } else if (section === 'user_stats') {
-        if (adminFiltersPanel) adminFiltersPanel.classList.remove('visible');
-        if (userSelectForStats) userSelectForStats.style.display = 'none';
-        loadAdminUsersStats();
-    } else {
-        if (adminFiltersPanel) adminFiltersPanel.classList.remove('visible');
-        if (userSelectForStats) userSelectForStats.style.display = 'block';
-    }
-    
-    // ========== اصلاح شده ==========
-    if (section === 'stats') loadAdminUsersStats();  // تغییر از loadAdminStats به loadAdminUsersStats
-    if (section === 'users') loadUsersList();
-    if (section === 'companies') loadCompaniesList();
-    if (section === 'archive') loadAdminArchiveList();
+    fetch('api/ajax.php?action=get_all_archived_dates')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '<div class="archive-list">';
+                data.dates.forEach(item => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div>
+                                    <div class="archive-item-date">${item.delivery_date}</div>
+                                    <div class="archive-item-user">${escapeHtml(item.user_name)}</div>
+                                </div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewAdminArchiveDocument('${item.delivery_date_raw}', ${item.user_id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.innerHTML = '<div class="empty-state">خطا در دریافت اطلاعات</div>';
+        });
+}
+
+function viewAdminArchiveDocument(deliveryDate, userId) {
+    window.open(`print.php?user_id=${userId}&delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
 
 function showLeftContent(section) {
     // مخفی کردن همه بخش‌ها
-    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent'];
+    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent', 'approvalsContent'];
     sections.forEach(s => {
         const el = document.getElementById(s);
         if (el) el.style.display = 'none';
@@ -1602,24 +1605,24 @@ function showLeftContent(section) {
     
     // مدیریت پنل فیلترها
     const adminFiltersPanel = document.getElementById('adminFiltersPanel');
-    const userSelectForStats = document.getElementById('userSelectForStats');
     
     if (section === 'filters') {
         if (adminFiltersPanel) adminFiltersPanel.classList.add('visible');
-        if (userSelectForStats) userSelectForStats.style.display = 'none';
         adminAutoSearch();
     } else {
         if (adminFiltersPanel) adminFiltersPanel.classList.remove('visible');
-        if (userSelectForStats) userSelectForStats.style.display = 'block';
     }
     
-    // بارگذاری محتوا بر اساس بخش
-    if (section === 'stats') {
-        loadAdminUsersStats();  // بارگذاری آمار کاربران به جای آمار کلی
-    }
+    // بارگذاری محتوای هر بخش
+    if (section === 'stats') loadAdminUsersStats();
     if (section === 'users') loadUsersList();
     if (section === 'companies') loadCompaniesList();
     if (section === 'archive') loadAdminArchiveList();
+    if (section === 'approvals') {
+        if (typeof loadPendingUsersList === 'function') {
+            loadPendingUsersList();
+        }
+    }
 }
 
 function showApprovalsTab(tab) {
@@ -1862,6 +1865,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('userSearchPanel').appendChild(div);
     }
     
+    // ========== بارگذاری اولیه اسناد ==========
+    const deliveryDateInput = document.getElementById('delivery_date');
+    if (deliveryDateInput && deliveryDateInput.value) {
+        loadDocumentsForDeliveryDate(deliveryDateInput.value);
+    }
+    
+    // ========== بارگذاری بایگانی کاربر ==========
+    if (document.getElementById('userArchiveList')) {
+        loadUserArchiveList();
+    }
+    
     // ========== جستجوی ادمین ==========
     if (document.getElementById('adminFiltersPanel')) {
         bindAdminSearchEvents();
@@ -1876,6 +1890,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== بارگذاری آمار کاربران برای ادمین ==========
     if (document.getElementById('adminUsersStatsList')) {
         loadAdminUsersStats();
+    }
+    
+    // ========== بارگذاری بایگانی ادمین ==========
+    if (document.getElementById('adminArchiveList')) {
+        loadAdminArchiveList();
     }
 });
 </script>

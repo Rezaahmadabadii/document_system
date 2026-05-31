@@ -113,8 +113,8 @@ $approval = $stmt->fetch();
 $has_user_approval = $approval && !empty($approval['user_approved_at']);
 $has_admin_approval = $approval && !empty($approval['admin_approved_at']);
 
-$user_signature_file = 'storage/signatures/users/' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-$admin_signature_file = 'storage/signatures/admin/admin_' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
+$user_signature_file = 'storage/signatures/users/' . $user_id . '.png';
+$admin_signature_file = 'storage/signatures/admin/admin.png';
 
 ?>
 <!DOCTYPE html>
@@ -806,13 +806,8 @@ $admin_signature_file = 'storage/signatures/admin/admin_' . $user_id . '_' . str
                     <div class="sign-line"></div>
                     <div class="sign-label">امضاء تحویل‌دهنده</div>
                     <?php if(file_exists($user_signature_file) && $has_user_approval): ?>
-                        <img src="<?php echo $user_signature_file; ?>" class="sign-img">
+                        <img src="<?php echo $user_signature_file . '?t=' . time(); ?>" class="sign-img">
                         <div style="font-size:0.55rem; color:#10b981; margin-top:5px;">✅ امضا ثبت شده</div>
-                        <?php if(!$is_admin && $has_user_approval && !$has_admin_approval): ?>
-                            <button onclick="revertApproval('<?php echo $delivery_date; ?>')" class="sign-btn" style="background:#f59e0b; margin-top:8px; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">
-                                <i class="fas fa-undo"></i> درخواست بازیابی
-                            </button>
-                        <?php endif; ?>
                     <?php else: ?>
                         <?php if(!$is_admin && !$has_user_approval): ?>
                             <a href="signature_upload.php?delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-user"><i class="fas fa-pen"></i> ثبت امضا</a>
@@ -828,7 +823,7 @@ $admin_signature_file = 'storage/signatures/admin/admin_' . $user_id . '_' . str
                     <div class="sign-line"></div>
                     <div class="sign-label">امضاء بایگانی</div>
                     <?php if(file_exists($admin_signature_file) && $has_admin_approval): ?>
-                        <img src="<?php echo $admin_signature_file; ?>" class="sign-img">
+                        <img src="<?php echo $admin_signature_file . '?t=' . time(); ?>" class="sign-img">
                         <div style="font-size:0.55rem; color:#10b981; margin-top:5px;">✅ تایید شده</div>
                     <?php else: ?>
                         <?php if($is_admin && $has_user_approval && !$has_admin_approval): ?>
@@ -841,10 +836,6 @@ $admin_signature_file = 'storage/signatures/admin/admin_' . $user_id . '_' . str
                     <?php endif; ?>
                 </div>
             </div>
-            <?php endif; ?>
-            
-        </div>
-    <?php endforeach; ?>
     
     <script>
     // تنظیم متن دکمه بر اساس تعداد صفحات
@@ -973,26 +964,7 @@ $admin_signature_file = 'storage/signatures/admin/admin_' . $user_id . '_' . str
     function closePrintWindow() {
         window.location.href = 'index.php';
     }
-    
-    function revertApproval(deliveryDate) {
-        if (!confirm('آیا از لغو امضای خود اطمینان دارید؟ پس از بازیابی می‌توانید اسناد را ویرایش کنید.')) return;
         
-        fetch(`api/ajax.php?action=revert_approval&delivery_date=${encodeURIComponent(deliveryDate)}`, { method: 'POST' })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert('✅ امضا لغو شد. اکنون می‌توانید اسناد را ویرایش کنید');
-                    location.reload();
-                } else {
-                    alert('❌ خطا: ' + (result.error || 'خطا در بازیابی'));
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('❌ خطا در ارتباط با سرور');
-            });
-    }
-    
     // ========== اتصال رویدادها به دکمه‌ها ==========
     document.getElementById('downloadImageBtn').addEventListener('click', downloadAllPagesAsImage);
     document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
