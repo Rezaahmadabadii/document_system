@@ -848,52 +848,6 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
         });
 }
 
-// اتصال رویدادها و اجرای اولیه
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM آماده است');
-    
-    const filterNumber = document.getElementById('filter_number');
-    const filterDate = document.getElementById('filter_date');
-    const filterCompany = document.getElementById('filter_company');
-    const filterDelivery = document.getElementById('filter_delivery');
-    
-    if (filterNumber) {
-        filterNumber.addEventListener('input', autoSearchDocuments);
-        console.log('event attached to filter_number');
-    }
-    if (filterDate) filterDate.addEventListener('input', autoSearchDocuments);
-    if (filterCompany) filterCompany.addEventListener('change', autoSearchDocuments);
-    if (filterDelivery) filterDelivery.addEventListener('input', autoSearchDocuments);
-    
-    // اجرای اولیه برای نمایش همه اسناد
-    autoSearchDocuments();
-    
-    // بارگذاری آمار کاربر
-    if (document.getElementById('userStatsContainer')) {
-        loadUserStats();
-    }
-    
-    // ========== دکمه‌های + و - برای تغییر تاریخ تحویل ==========
-    const dateMinus = document.getElementById('dateMinus');
-    const datePlus = document.getElementById('datePlus');
-    const deliveryDateInput = document.getElementById('delivery_date');
-    
-    if (dateMinus && datePlus && deliveryDateInput) {
-        dateMinus.addEventListener('click', function() { changeDeliveryDate(-1); });
-        datePlus.addEventListener('click', function() { changeDeliveryDate(1); });
-        
-        // بارگذاری اولیه اسناد برای تاریخ فعلی
-        if (typeof loadDocumentsForDeliveryDate === 'function') {
-            loadDocumentsForDeliveryDate(deliveryDateInput.value);
-        }
-    }
-    
-    // ========== بارگذاری بایگانی کاربر ==========
-    if (document.getElementById('userArchiveList')) {
-        loadUserArchiveList();
-    }
-});
-
 function viewArchiveDocument(deliveryDate) {
     window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
@@ -928,18 +882,6 @@ async function changePassword() {
 
 // ========== کاربر عادی ==========
 <?php if(!$is_admin): ?>
-
-document.addEventListener('DOMContentLoaded', function() {
-    function getDaysInMonth(year, month) {
-        if (month >= 1 && month <= 6) return 31;
-        if (month >= 7 && month <= 11) return 30;
-        if (month === 12) { let isLeap = (year % 33 === 1 || year % 33 === 5 || year % 33 === 9 || year % 33 === 13 || year % 33 === 17 || year % 33 === 22 || year % 33 === 26 || year % 33 === 30); return isLeap ? 30 : 29; }
-        return 31;
-    }
-
-    let deliveryYear = 1405;
-    let deliveryMonth = 1;
-    let deliveryDay = 1;
 
     function updateDeliveryDate() {
         let monthStr = deliveryMonth < 10 ? '0' + deliveryMonth : deliveryMonth;
@@ -1955,8 +1897,11 @@ function viewArchiveDocument(deliveryDate) {
     window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
 
-// اتصال رویدادهای جستجوی آنی برای کاربر عادی
+// اتصال رویدادها و اجرای اولیه - یک بار
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM آماده است');
+    
+    // ========== فیلدهای جستجوی کاربر عادی ==========
     const filterNumber = document.getElementById('filter_number');
     const filterDate = document.getElementById('filter_date');
     const filterCompany = document.getElementById('filter_company');
@@ -1967,19 +1912,108 @@ document.addEventListener('DOMContentLoaded', function() {
     if (filterCompany) filterCompany.addEventListener('change', autoSearchDocuments);
     if (filterDelivery) filterDelivery.addEventListener('input', autoSearchDocuments);
     
-    // ایجاد container برای نتایج جستجو اگر وجود ندارد
-    if (!document.getElementById('userDocumentsList') && document.getElementById('userSearchPanel')) {
-        const div = document.createElement('div');
-        div.id = 'userDocumentsList';
-        div.className = 'docs-list';
-        div.style.marginTop = '15px';
-        document.getElementById('userSearchPanel').appendChild(div);
+    // اجرای اولیه برای نمایش همه اسناد
+    autoSearchDocuments();
+    
+    // بارگذاری آمار کاربر
+    if (document.getElementById('userStatsContainer')) {
+        loadUserStats();
     }
     
-    // ========== بارگذاری اولیه اسناد ==========
+    // ========== دکمه‌های + و - برای تغییر تاریخ تحویل ==========
+    const dateMinus = document.getElementById('dateMinus');
+    const datePlus = document.getElementById('datePlus');
     const deliveryDateInput = document.getElementById('delivery_date');
-    if (deliveryDateInput && deliveryDateInput.value) {
-        loadDocumentsForDeliveryDate(deliveryDateInput.value);
+    
+    if (dateMinus && datePlus && deliveryDateInput) {
+        dateMinus.addEventListener('click', function() { changeDeliveryDate(-1); });
+        datePlus.addEventListener('click', function() { changeDeliveryDate(1); });
+        
+        if (typeof loadDocumentsForDeliveryDate === 'function') {
+            loadDocumentsForDeliveryDate(deliveryDateInput.value);
+        }
+    }
+    
+    // ========== توابع تاریخ شمسی (فقط یک بار تعریف شوند) ==========
+    function getDaysInMonthJalali(year, month) {
+        if (month >= 1 && month <= 6) return 31;
+        if (month >= 7 && month <= 11) return 30;
+        if (month === 12) {
+            let isLeap = (year % 33 === 1 || year % 33 === 5 || year % 33 === 9 || year % 33 === 13 || year % 33 === 17 || year % 33 === 22 || year % 33 === 26 || year % 33 === 30);
+            return isLeap ? 30 : 29;
+        }
+        return 31;
+    }
+
+    let deliveryYear = 1405;
+    let deliveryMonth = 1;
+    let deliveryDay = 1;
+
+    function updateDeliveryDate() {
+        let monthStr = deliveryMonth < 10 ? '0' + deliveryMonth : deliveryMonth;
+        let dayStr = deliveryDay < 10 ? '0' + deliveryDay : deliveryDay;
+        let dateInput = document.getElementById('delivery_date');
+        if (dateInput) { dateInput.value = deliveryYear + '/' + monthStr + '/' + dayStr; }
+    }
+    
+    async function checkLockStatus(deliveryDate) {
+        try {
+            let res = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`);
+            let data = await res.json();
+            let docNumberInput = document.getElementById('doc_number');
+            let descInput = document.getElementById('doc_description');
+            if (docNumberInput) docNumberInput.disabled = data.has_admin_approval === true;
+            if (descInput) descInput.disabled = data.has_admin_approval === true;
+        } catch(e) { console.error(e); }
+    }
+    
+    function addDaysToDelivery(days) {
+        deliveryDay += days;
+        let daysInMonth = getDaysInMonthJalali(deliveryYear, deliveryMonth);
+        if (deliveryDay > daysInMonth) { deliveryDay = 1; deliveryMonth++; if (deliveryMonth > 12) { deliveryMonth = 1; deliveryYear++; } }
+        if (deliveryDay < 1) { deliveryMonth--; if (deliveryMonth < 1) { deliveryMonth = 12; deliveryYear--; } deliveryDay = getDaysInMonthJalali(deliveryYear, deliveryMonth); }
+        updateDeliveryDate();
+        let newDate = deliveryYear + '/' + (deliveryMonth < 10 ? '0'+deliveryMonth : deliveryMonth) + '/' + (deliveryDay < 10 ? '0'+deliveryDay : deliveryDay);
+        checkLockStatus(newDate);
+        loadDocumentsForDeliveryDate(newDate);
+    }
+
+    let initialDelivery = '<?php echo $today; ?>'.split('/');
+    if (initialDelivery.length === 3) {
+        deliveryYear = parseInt(initialDelivery[0]);
+        deliveryMonth = parseInt(initialDelivery[1]);
+        deliveryDay = parseInt(initialDelivery[2]);
+    }
+    updateDeliveryDate();
+    let initialDate = deliveryYear + '/' + (deliveryMonth < 10 ? '0'+deliveryMonth : deliveryMonth) + '/' + (deliveryDay < 10 ? '0'+deliveryDay : deliveryDay);
+    checkLockStatus(initialDate);
+
+    let minusBtn = document.getElementById('dateMinus');
+    let plusBtn = document.getElementById('datePlus');
+    if (minusBtn) minusBtn.addEventListener('click', function() { addDaysToDelivery(-1); });
+    if (plusBtn) plusBtn.addEventListener('click', function() { addDaysToDelivery(1); });
+    
+    const descBtn = document.getElementById('submitDescriptionBtn');
+    if (descBtn) { 
+        descBtn.addEventListener('click', function(e) { 
+            e.preventDefault(); 
+            if (typeof saveReport === 'function') saveReport(); 
+        }); 
+    }
+    
+    const companyNumberInput = document.getElementById('company_number');
+    const companySelect = document.getElementById('company_id');
+    if (companyNumberInput && companySelect) {
+        const companiesList = <?php $list = []; foreach($companies as $c) { $list[] = ['id' => $c['id'], 'name' => $c['name']]; } echo json_encode($list); ?>;
+        companyNumberInput.addEventListener('input', function() {
+            let num = parseInt(this.value);
+            if (isNaN(num)) return;
+            if (num > companiesList.length) num = companiesList.length;
+            if (num < 1) num = 1;
+            const selectedCompany = companiesList[num - 1];
+            if (selectedCompany) companySelect.value = selectedCompany.id;
+        });
+        companyNumberInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('doc_number').focus(); } });
     }
     
     // ========== بارگذاری بایگانی کاربر ==========
@@ -1989,23 +2023,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ========== جستجوی ادمین ==========
     if (document.getElementById('adminFiltersPanel')) {
-        bindAdminSearchEvents();
-        adminAutoSearch();
+        if (typeof bindAdminSearchEvents === 'function') bindAdminSearchEvents();
+        if (typeof adminAutoSearch === 'function') adminAutoSearch();
     }
     
     // ========== بارگذاری لیست شرکت‌ها برای ادمین ==========
     if (document.getElementById('companiesList')) {
-        loadCompaniesList();
+        if (typeof loadCompaniesList === 'function') loadCompaniesList();
     }
     
     // ========== بارگذاری آمار کاربران برای ادمین ==========
     if (document.getElementById('adminUsersStatsList')) {
-        loadAdminUsersStats();
+        if (typeof loadAdminUsersStats === 'function') loadAdminUsersStats();
     }
     
     // ========== بارگذاری بایگانی ادمین ==========
     if (document.getElementById('adminArchiveList')) {
-        loadAdminArchiveList();
+        if (typeof loadAdminArchiveList === 'function') loadAdminArchiveList();
     }
 });
 </script>
