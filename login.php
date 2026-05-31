@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="logo-icon">
                 <i class="fas fa-file-alt"></i>
             </div>
-            <h1>سامانه بایگانی اسناد</h1>
+            <h1>سامانه بایگانی و تحویل  اسناد</h1>
             <p>مدیریت و بایگانی هوشمند اسناد</p>
         </div>
         

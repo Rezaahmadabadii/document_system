@@ -74,8 +74,8 @@ if ($action == 'get_documents_for_display') {
     $docs = $stmt->fetchAll();
     
     $can_edit = $is_admin;
-    if (!$is_admin && count($docs) > 0 && !$has_user_approval) {
-        $can_edit = (time() - strtotime($docs[0]['created_at'])) <= (2 * 86400);
+    if (!$is_admin && !$has_admin_approval) {
+        $can_edit = true;
     }
     
     $result = [];
@@ -312,76 +312,6 @@ if ($action == 'delete_document') {
     exit;
 }
 
-// ========== بازیابی (لغو امضای کاربر) ==========
-if ($action == 'revert_approval') {
-    if ($is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Admin cannot revert']);
-        exit;
-    }
-    
-    $delivery_date = $_GET['delivery_date'] ?? '';
-    
-    if (!empty($delivery_date)) {
-        $stmt = $db->prepare("UPDATE delivery_approvals SET user_approved_at = NULL, user_reverted_at = NOW() WHERE user_id = ? AND delivery_date = ? AND admin_approved_at IS NULL");
-        $result = $stmt->execute([$user_id, $delivery_date]);
-        
-        $signature_file = 'storage/signatures/users/' . $user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-        if (file_exists($signature_file)) {
-            unlink($signature_file);
-        }
-    } else {
-        $stmt = $db->prepare("UPDATE delivery_approvals SET user_approved_at = NULL, user_reverted_at = NOW() WHERE user_id = ? AND admin_approved_at IS NULL");
-        $result = $stmt->execute([$user_id]);
-    }
-    
-    echo json_encode(['success' => $result]);
-    exit;
-}
-
-// ========== درخواست بازیابی از ادمین (برای تاریخ تایید شده) ==========
-if ($action == 'request_revert') {
-    if ($is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Admin cannot request revert']);
-        exit;
-    }
-    
-    $delivery_date = $_GET['delivery_date'] ?? '';
-    if (empty($delivery_date)) {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $delivery_date = $data['delivery_date'] ?? '';
-    }
-    
-    if (empty($delivery_date)) {
-        echo json_encode(['success' => false, 'error' => 'Delivery date required']);
-        exit;
-    }
-    
-    $stmt = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
-    $stmt->execute([$user_id, $delivery_date]);
-    $admin_approved = $stmt->fetchColumn();
-    
-    if ($admin_approved) {
-        $stmt = $db->prepare("SELECT id FROM revert_requests WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
-        $stmt->execute([$user_id, $delivery_date]);
-        if ($stmt->fetch()) {
-            echo json_encode(['success' => false, 'error' => 'درخواست بازیابی قبلاً ارسال شده و در انتظار تایید است']);
-            exit;
-        }
-        
-        $stmt = $db->prepare("INSERT INTO revert_requests (user_id, delivery_date, requested_at, status) VALUES (?, ?, NOW(), 'pending')");
-        $result = $stmt->execute([$user_id, $delivery_date]);
-        
-        if ($result) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['success' => false, 'error' => 'خطا در ثبت درخواست']);
-        }
-    } else {
-        echo json_encode(['success' => false, 'error' => 'این سند هنوز توسط ادمین تایید نشده است']);
-    }
-    exit;
-}
-
 // ========== تغییر رمز عبور ==========
 if ($action == 'change_password') {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -409,34 +339,23 @@ if ($action == 'change_password') {
 if ($action == 'get_user_stats') {
     $today = jDateTime::date('Y/m/d');
     $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
-    $day_before_yesterday = jDateTime::date('Y/m/d', strtotime('-2 days'));
     
-    // اسناد امروز
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$user_id, $today]);
     $today_count = $stmt->fetchColumn();
     
-    // اسناد دیروز
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$user_id, $yesterday]);
     $yesterday_count = $stmt->fetchColumn();
     
-    // اسناد پریروز (برای محاسبه تغییرات)
-    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-    $stmt->execute([$user_id, $day_before_yesterday]);
-    $day_before_count = $stmt->fetchColumn();
-    
-    // کل اسناد
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $total_docs = $stmt->fetchColumn();
     
-    // اولین و آخرین تاریخ
     $stmt = $db->prepare("SELECT MIN(delivery_date) as first_date, MAX(delivery_date) as last_date FROM documents WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $dates = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // بیشترین و کمترین سند بر اساس شرکت
     $stmt = $db->prepare("
         SELECT c.name as company_name, COUNT(d.id) as doc_count 
         FROM documents d 
@@ -453,33 +372,6 @@ if ($action == 'get_user_stats') {
     $least_company = !empty($company_stats) ? $company_stats[count($company_stats)-1]['company_name'] : '-';
     $least_count = !empty($company_stats) ? $company_stats[count($company_stats)-1]['doc_count'] : 0;
     
-    // محاسبه تغییر نسبت به دیروز
-    $trend = '';
-    $trend_class = '';
-    $trend_icon = '';
-    if ($yesterday_count > 0) {
-        $change = $today_count - $yesterday_count;
-        $percent = round(($change / $yesterday_count) * 100);
-        if ($change > 0) {
-            $trend = "▲ +{$change} (+{$percent}%)";
-            $trend_class = "color: #10b981;";
-            $trend_icon = "📈";
-        } elseif ($change < 0) {
-            $trend = "▼ {$change} ({$percent}%)";
-            $trend_class = "color: #ef4444;";
-            $trend_icon = "📉";
-        } else {
-            $trend = "● بدون تغییر";
-            $trend_class = "color: #f59e0b;";
-            $trend_icon = "➖";
-        }
-    } else {
-        $trend = $today_count > 0 ? "▲ +{$today_count} (100%)" : "● بدون سند";
-        $trend_class = $today_count > 0 ? "color: #10b981;" : "color: #6c86a3;";
-        $trend_icon = $today_count > 0 ? "📈" : "➖";
-    }
-    
-    // میانگین نسبت به هفته، ماه، سال گذشته
     $week_ago = jDateTime::date('Y/m/d', strtotime('-7 days'));
     $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
     $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
@@ -496,13 +388,21 @@ if ($action == 'get_user_stats') {
     $stmt->execute([$user_id, $year_ago, $today]);
     $year_count = $stmt->fetchColumn();
     
+    $trend = '';
+    $trend_class = '';
+    if ($yesterday_count > 0) {
+        $change = $today_count - $yesterday_count;
+        $trend = $change > 0 ? "▲ +{$change}" : ($change < 0 ? "▼ {$change}" : "● بدون تغییر");
+        $trend_class = $change > 0 ? "color: #10b981;" : ($change < 0 ? "color: #ef4444;" : "color: #f59e0b;");
+    } else {
+        $trend = $today_count > 0 ? "▲ +{$today_count}" : "● بدون سند";
+        $trend_class = $today_count > 0 ? "color: #10b981;" : "color: #6c86a3;";
+    }
+    
     echo json_encode([
         'success' => true,
         'today_count' => $today_count,
         'yesterday_count' => $yesterday_count,
-        'trend' => $trend,
-        'trend_class' => $trend_class,
-        'trend_icon' => $trend_icon,
         'total_docs' => $total_docs,
         'first_date' => $dates['first_date'] ? toPersianNumber($dates['first_date']) : '-',
         'last_date' => $dates['last_date'] ? toPersianNumber($dates['last_date']) : '-',
@@ -512,12 +412,14 @@ if ($action == 'get_user_stats') {
         'least_count' => $least_count,
         'week_count' => $week_count,
         'month_count' => $month_count,
-        'year_count' => $year_count
+        'year_count' => $year_count,
+        'trend' => $trend,
+        'trend_class' => $trend_class
     ]);
     exit;
 }
 
-// ========== آمار ادمین - دریافت کاربران با اسناد در حال تایید امروز ==========
+// ========== آمار ادمین - دریافت کاربران ==========
 if ($action == 'get_admin_users_stats') {
     if (!$is_admin) {
         echo json_encode(['success' => false, 'error' => 'Access denied']);
@@ -526,50 +428,43 @@ if ($action == 'get_admin_users_stats') {
     
     $today = jDateTime::date('Y/m/d');
     
-    // دریافت همه کاربران عادی
     $stmt = $db->query("SELECT id, fullname, unit_name FROM users WHERE is_admin = 0 ORDER BY fullname");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $result = [];
     foreach ($users as $user) {
-        $user_id = $user['id'];
+        $user_id_val = $user['id'];
         
-        // اسناد امروز (همه اسناد ثبت شده در تاریخ امروز، بدون توجه به امضا)
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$user_id, $today]);
+        $stmt->execute([$user_id_val, $today]);
         $pending_today = $stmt->fetchColumn();
         
-        // کل اسناد ثبت شده (همه اسناد کاربر، حتی تایید نشده)
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
-        $stmt->execute([$user_id]);
+        $stmt->execute([$user_id_val]);
         $total_docs = $stmt->fetchColumn();
         
-        // تعداد اسناد دیروز
         $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$user_id, $yesterday]);
+        $stmt->execute([$user_id_val, $yesterday]);
         $yesterday_count = $stmt->fetchColumn();
         
-        // میانگین نسبت به هفته گذشته
         $week_ago = jDateTime::date('Y/m/d', strtotime('-7 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id, $week_ago, $today]);
+        $stmt->execute([$user_id_val, $week_ago, $today]);
         $week_count = $stmt->fetchColumn();
         
-        // میانگین نسبت به ماه گذشته
         $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id, $month_ago, $today]);
+        $stmt->execute([$user_id_val, $month_ago, $today]);
         $month_count = $stmt->fetchColumn();
         
-        // میانگین نسبت به سال گذشته
         $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id, $year_ago, $today]);
+        $stmt->execute([$user_id_val, $year_ago, $today]);
         $year_count = $stmt->fetchColumn();
         
         $result[] = [
-            'id' => $user_id,
+            'id' => $user_id_val,
             'fullname' => $user['fullname'],
             'unit_name' => $user['unit_name'],
             'pending_today' => $pending_today,
@@ -581,12 +476,10 @@ if ($action == 'get_admin_users_stats') {
         ];
     }
     
-    // مرتب‌سازی بر اساس کل اسناد ثبت شده (برای رتبه‌بندی)
     usort($result, function($a, $b) {
         return $b['total_docs'] - $a['total_docs'];
     });
     
-    // تعیین بیشترین و کمترین
     $max_user = !empty($result) ? $result[0] : null;
     $min_user = !empty($result) ? $result[count($result) - 1] : null;
     
@@ -619,42 +512,34 @@ if ($action == 'get_admin_user_detail_stats') {
     $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
     $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
     
-    // اطلاعات کاربر
     $stmt = $db->prepare("SELECT fullname, unit_name FROM users WHERE id = ?");
     $stmt->execute([$target_user_id]);
     $user_info = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // اسناد امروز (همه اسناد ثبت شده در تاریخ امروز، بدون توجه به امضا)
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$target_user_id, $today]);
     $pending_today = $stmt->fetchColumn();
     
-    // کل اسناد ثبت شده (همه اسناد کاربر)
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
     $stmt->execute([$target_user_id]);
     $total_docs = $stmt->fetchColumn();
     
-    // تعداد اسناد دیروز
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$target_user_id, $yesterday]);
     $yesterday_count = $stmt->fetchColumn();
     
-    // میانگین نسبت به هفته گذشته
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$target_user_id, $week_ago, $today]);
     $week_count = $stmt->fetchColumn();
     
-    // میانگین نسبت به ماه گذشته
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$target_user_id, $month_ago, $today]);
     $month_count = $stmt->fetchColumn();
     
-    // میانگین نسبت به سال گذشته
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$target_user_id, $year_ago, $today]);
     $year_count = $stmt->fetchColumn();
     
-    // تغییر نسبت به دیروز
     $trend = '';
     $trend_class = '';
     if ($yesterday_count > 0) {
@@ -988,51 +873,6 @@ if ($action == 'search_admin_documents') {
     exit;
 }
 
-// ========== درخواست بازیابی از بایگانی (کاربر عادی) ==========
-if ($action == 'request_revert_from_archive') {
-    // فقط کاربر عادی می‌تواند درخواست دهد
-    if ($is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Admin cannot request revert from archive']);
-        exit;
-    }
-    
-    $data = json_decode(file_get_contents('php://input'), true);
-    $delivery_date = $data['delivery_date'] ?? '';
-    $delivery_date = toEnglishNumber($delivery_date);
-    
-    if (empty($delivery_date)) {
-        echo json_encode(['success' => false, 'error' => 'تاریخ تحویل مشخص نشده']);
-        exit;
-    }
-    
-    // بررسی اینکه آیا این تاریخ واقعاً تایید نهایی شده است
-    $stmt = $db->prepare("SELECT id FROM delivery_approvals WHERE user_id = ? AND delivery_date = ? AND user_approved_at IS NOT NULL AND admin_approved_at IS NOT NULL");
-    $stmt->execute([$user_id, $delivery_date]);
-    if (!$stmt->fetch()) {
-        echo json_encode(['success' => false, 'error' => 'این تاریخ تحویل هنوز تایید نهایی نشده است']);
-        exit;
-    }
-    
-    // بررسی درخواست تکراری
-    $stmt = $db->prepare("SELECT id FROM revert_requests WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
-    $stmt->execute([$user_id, $delivery_date]);
-    if ($stmt->fetch()) {
-        echo json_encode(['success' => false, 'error' => 'درخواست بازیابی قبلاً ارسال شده و در انتظار تایید است']);
-        exit;
-    }
-    
-    // ثبت درخواست بازیابی
-    $stmt = $db->prepare("INSERT INTO revert_requests (user_id, delivery_date, requested_at, status) VALUES (?, ?, NOW(), 'pending')");
-    $result = $stmt->execute([$user_id, $delivery_date]);
-    
-    if ($result) {
-        echo json_encode(['success' => true, 'message' => 'درخواست بازیابی با موفقیت ارسال شد']);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'خطا در ثبت درخواست']);
-    }
-    exit;
-}
-
 // ========== دریافت لیست کاربران دارای تایید pending ==========
 if ($action == 'get_users_with_pending_approvals') {
     $stmt = $db->query("
@@ -1073,72 +913,6 @@ if ($action == 'get_user_pending_dates') {
     }
     
     echo json_encode(['success' => true, 'dates' => $dates]);
-    exit;
-}
-
-// ========== دریافت درخواست‌های بازیابی ==========
-if ($action == 'get_revert_requests') {
-    $stmt = $db->query("
-        SELECT rr.*, u.fullname, u.unit_name
-        FROM revert_requests rr
-        JOIN users u ON rr.user_id = u.id
-        WHERE rr.status = 'pending'
-        ORDER BY rr.requested_at ASC
-    ");
-    $requests = $stmt->fetchAll();
-    
-    foreach ($requests as &$req) {
-        $req['delivery_date_persian'] = toPersianNumber($req['delivery_date']);
-        $req['requested_at_persian'] = jDateTime::date('Y/m/d H:i:s', strtotime($req['requested_at']));
-    }
-    
-    echo json_encode(['success' => true, 'requests' => $requests]);
-    exit;
-}
-
-// ========== تایید بازیابی توسط ادمین ==========
-if ($action == 'approve_revert') {
-    $target_user_id = $_GET['user_id'] ?? 0;
-    $delivery_date = $_GET['delivery_date'] ?? '';
-    
-    if (empty($delivery_date) || empty($target_user_id)) {
-        echo json_encode(['success' => false, 'error' => 'User ID and delivery date required']);
-        exit;
-    }
-    
-    // حذف تایید ادمین و کاربر برای این تاریخ خاص
-    $stmt = $db->prepare("UPDATE delivery_approvals SET user_approved_at = NULL, admin_approved_at = NULL, admin_signature_used = NULL WHERE user_id = ? AND delivery_date = ?");
-    $stmt->execute([$target_user_id, $delivery_date]);
-    
-    // حذف فایل امضای ادمین
-    $admin_signature_file = 'storage/signatures/admin/admin_' . $target_user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-    if (file_exists($admin_signature_file)) {
-        unlink($admin_signature_file);
-    }
-    
-    // حذف فایل امضای کاربر
-    $user_signature_file = 'storage/signatures/users/' . $target_user_id . '_' . str_replace('/', '-', $delivery_date) . '.png';
-    if (file_exists($user_signature_file)) {
-        unlink($user_signature_file);
-    }
-    
-    // به‌روزرسانی وضعیت درخواست بازیابی
-    $stmt = $db->prepare("UPDATE revert_requests SET status = 'approved', approved_at = NOW() WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
-    $stmt->execute([$target_user_id, $delivery_date]);
-    
-    echo json_encode(['success' => true]);
-    exit;
-}
-
-// ========== رد بازیابی توسط ادمین ==========
-if ($action == 'reject_revert') {
-    $target_user_id = $_GET['user_id'] ?? 0;
-    $delivery_date = $_GET['delivery_date'] ?? '';
-    
-    $stmt = $db->prepare("UPDATE revert_requests SET status = 'rejected' WHERE user_id = ? AND delivery_date = ? AND status = 'pending'");
-    $stmt->execute([$target_user_id, $delivery_date]);
-    
-    echo json_encode(['success' => true]);
     exit;
 }
 

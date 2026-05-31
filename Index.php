@@ -35,7 +35,7 @@ if ($is_admin) {
     <script defer src="assets/js/all.min.js"></script>
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, 'Tahoma', sans-serif !important;
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; font-size: 14px; }
         .main-header { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e2e8f0; }
         .header-container { max-width: 1400px; margin: 0 auto; padding: 12px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
@@ -556,6 +556,12 @@ function viewArchiveDocument(deliveryDate) {
 }
 
 function saveDocument() {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn.disabled) return; // جلوگیری از ارسال مجدد
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ثبت...';
+    
     const delivery_date = document.getElementById('delivery_date')?.value || '';
     const company_id = document.getElementById('company_id')?.value || '';
     const doc_number = document.getElementById('doc_number')?.value || '';
@@ -564,6 +570,8 @@ function saveDocument() {
     
     if (!doc_number) {
         alert('شماره سند الزامی است');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '✓ ثبت سند';
         return;
     }
     
@@ -599,6 +607,10 @@ function saveDocument() {
     .catch(err => {
         console.error('خطا در ثبت سند:', err);
         alert('خطا در ارتباط با سرور');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '✓ ثبت سند';
     });
 }
 
@@ -640,8 +652,17 @@ function openEditModal(id, number, date, description) {
     .then(data => {
         if (data.success) {
             showToast('سند با موفقیت ویرایش شد');
-            const delivery_date = document.getElementById('delivery_date')?.value || '';
-            loadDocumentsForDeliveryDate(delivery_date);
+            // به‌روزرسانی آنی لیست بر اساس تاریخ تحویل فعلی
+            const currentDate = document.getElementById('delivery_date')?.value || '';
+            if (currentDate) {
+                loadDocumentsForDeliveryDate(currentDate);
+            } else {
+                autoSearchDocuments();
+            }
+            // به‌روزرسانی آمار کاربر
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
         } else {
             alert('خطا: ' + (data.error || 'مشخص نیست'));
         }
@@ -660,9 +681,13 @@ function deleteDocument(id) {
     .then(data => {
         if (data.success) {
             showToast('سند با موفقیت حذف شد');
-            const delivery_date = document.getElementById('delivery_date')?.value || '';
-            loadDocumentsForDeliveryDate(delivery_date);
-            
+            // به‌روزرسانی آنی لیست بر اساس تاریخ تحویل فعلی
+            const currentDate = document.getElementById('delivery_date')?.value || '';
+            if (currentDate) {
+                loadDocumentsForDeliveryDate(currentDate);
+            } else {
+                autoSearchDocuments();
+            }
             // به‌روزرسانی آمار کاربر
             if (typeof loadUserStats === 'function') {
                 loadUserStats();
@@ -760,6 +785,7 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                     let doc = data.documents[i];
                     let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
                     let actions = '';
+                    // شرط: فقط تا زمانی که ادمین تایید نکرده باشد، دکمه‌ها نمایش داده شوند
                     if (doc.can_edit && !data.has_admin_approval) {
                         actions = `<button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}')"><i class="fas fa-edit"></i></button>
                                    <button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button>`;
@@ -795,7 +821,6 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                     if (tableContainer) {
                         tableContainer.scrollTop = tableContainer.scrollHeight;
                     }
-                    // همچنین اسکرول به آخرین ردیف جدول
                     const lastRow = container.querySelector('table tbody tr:last-child');
                     if (lastRow) {
                         lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -803,7 +828,6 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                 }, 100);
                 
             } else {
-                // اگر سندی در این تاریخ وجود ندارد
                 container.innerHTML = `
                     <div class="doc-group">
                         <div class="group-title">
@@ -1072,19 +1096,62 @@ loadLastDeliveryDate();
     }
     window.closeEditModal = function() { if (document.getElementById('editModal')) document.getElementById('editModal').classList.remove('active'); }
     window.saveEdit = async function() {
-        let id = document.getElementById('edit_id')?.value || '', number = document.getElementById('edit_number')?.value.trim() || '', date = document.getElementById('edit_date')?.value.trim() || '';
+        let id = document.getElementById('edit_id')?.value || '';
+        let number = document.getElementById('edit_number')?.value.trim() || '';
+        let date = document.getElementById('edit_date')?.value.trim() || '';
+        
         if (!id) { showToast('شناسه سند یافت نشد', true); return; }
         if (!number) { showToast('شماره سند الزامی است', true); return; }
-        let res = await fetch(`${apiUrl}?action=update_document`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, doc_number: number, doc_date: date || '-' }) });
+        
+        let res = await fetch(`${apiUrl}?action=update_document`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, doc_number: number, doc_date: date || '-' })
+        });
         let result = await res.json();
-        if (result.success) { showToast('ویرایش شد'); closeEditModal(); await loadDocumentsForDisplay(currentDeliveryDate); }
-        else { showToast(result.error || 'خطا در ویرایش', true); }
+        
+        if (result.success) {
+            showToast('ویرایش شد');
+            closeEditModal();
+            
+            const currentDate = document.getElementById('delivery_date')?.value || '';
+            if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+                loadDocumentsForDeliveryDate(currentDate);
+            } else if (typeof autoSearchDocuments === 'function') {
+                autoSearchDocuments();
+            }
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
+        } else {
+            showToast(result.error || 'خطا در ویرایش', true);
+        }
     }
     window.deleteDocument = async function(id) {
         if (!confirm('حذف شود؟')) return;
-        let res = await fetch(`${apiUrl}?action=delete_document`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        
+        let res = await fetch(`${apiUrl}?action=delete_document`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        });
         let result = await res.json();
-        if (result.success) { showToast('حذف شد'); await loadDocumentsForDisplay(currentDeliveryDate); }
+        
+        if (result.success) {
+            showToast('حذف شد');
+            
+            const currentDate = document.getElementById('delivery_date')?.value || '';
+            if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+                loadDocumentsForDeliveryDate(currentDate);
+            } else if (typeof autoSearchDocuments === 'function') {
+                autoSearchDocuments();
+            }
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
+        } else {
+            showToast(result.error || 'خطا در حذف', true);
+        }
     }
 
     async function loadSearchDocuments() {
@@ -1583,6 +1650,44 @@ function viewAdminArchiveDocument(deliveryDate, userId) {
     window.open(`print.php?user_id=${userId}&delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
 
+function loadPendingUsersList(forceRefresh = false) {
+    const container = document.getElementById('usersPendingList');
+    if (!container) return;
+    
+    // اضافه کردن تایم‌استمپ برای جلوگیری از کش
+    let url = 'api/ajax.php?action=get_users_with_pending_approvals';
+    if (forceRefresh) {
+        url += '&t=' + new Date().getTime();
+    }
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.users && data.users.length > 0) {
+                let html = '<div class="scrollable-list">';
+                data.users.forEach(user => {
+                    html += `
+                        <div class="user-item" onclick="loadUserPendingDates(${user.user_id})">
+                            <div>
+                                <div class="user-name">${escapeHtml(user.fullname)}</div>
+                                <div class="user-unit">${escapeHtml(user.unit_name)}</div>
+                            </div>
+                            <div class="user-stat-badge">${user.pending_count} سند</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="empty-state">هیچ کاربری در انتظار تایید نیست</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.innerHTML = '<div class="empty-state">خطا در دریافت اطلاعات</div>';
+        });
+}
+
 function showLeftContent(section) {
     // مخفی کردن همه بخش‌ها
     const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent', 'approvalsContent'];
@@ -1620,30 +1725,36 @@ function showLeftContent(section) {
     if (section === 'archive') loadAdminArchiveList();
     if (section === 'approvals') {
         if (typeof loadPendingUsersList === 'function') {
-            loadPendingUsersList();
+            loadPendingUsersList(true); // بارگذاری تازه بدون کش
         }
     }
 }
 
 function showApprovalsTab(tab) {
+    // فعال کردن دکمه تب
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = '#475569';
+        btn.style.borderBottom = 'none';
+    });
+    event.target.classList.add('active');
+    event.target.style.color = '#667eea';
+    event.target.style.borderBottom = '2px solid #667eea';
+    
+    // مخفی کردن همه تب‌ها
     document.getElementById('pendingApprovalsTab').style.display = 'none';
     document.getElementById('revertRequestsTab').style.display = 'none';
     document.getElementById('approvedApprovalsTab').style.display = 'none';
-    document.querySelectorAll('.tab-btn').forEach(btn => { btn.style.color = '#475569'; btn.style.borderBottom = 'none'; });
+    
     if (tab === 'pending') {
         document.getElementById('pendingApprovalsTab').style.display = 'block';
-        document.querySelector('.tab-btn:first-child').style.color = '#667eea';
-        document.querySelector('.tab-btn:first-child').style.borderBottom = '2px solid #667eea';
-        loadUsersPendingList();
+        // بارگذاری مجدد با جلوگیری از کش
+        loadPendingUsersList(true); // true برای forced refresh
     } else if (tab === 'revert') {
         document.getElementById('revertRequestsTab').style.display = 'block';
-        document.querySelector('.tab-btn:nth-child(2)').style.color = '#667eea';
-        document.querySelector('.tab-btn:nth-child(2)').style.borderBottom = '2px solid #667eea';
         loadRevertRequests();
     } else if (tab === 'approved') {
         document.getElementById('approvedApprovalsTab').style.display = 'block';
-        document.querySelector('.tab-btn:nth-child(3)').style.color = '#667eea';
-        document.querySelector('.tab-btn:nth-child(3)').style.borderBottom = '2px solid #667eea';
         loadApprovedApprovals();
     }
 }
