@@ -11,6 +11,15 @@ require_once 'config/jdatetime.class.php';
 
 $user_id = $_SESSION['user_id'];
 $is_admin = $_SESSION['is_admin'] ?? 0;
+
+// دریافت دسترسی کاربر به بایگانی کاربران
+$can_view_all_archives = false;
+if (!$is_admin) {
+    $stmt = $db->prepare("SELECT can_view_all_archives FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $can_view_all_archives = $stmt->fetchColumn() == 1;
+}
+
 $require_doc_date = $_SESSION['require_doc_date'] ?? 1;
 $lock_delivery_date = $_SESSION['lock_delivery_date'] ?? 0;
 $fullname = $_SESSION['fullname'] ?? 'کاربر';
@@ -32,6 +41,8 @@ if ($is_admin) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سیستم بایگانی اسناد تایید شده</title>
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
     <script defer src="assets/js/all.min.js"></script>
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
     <style>
@@ -157,20 +168,39 @@ if ($is_admin) {
         .progress-bar-container { background: #e2e8f0; border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 5px; }
         .progress-bar { background: linear-gradient(135deg, #667eea, #764ba2); height: 100%; border-radius: 10px; transition: width 0.5s ease; }
         .progress-text { font-size: 0.6rem; color: #475569; text-align: left; }
-        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f5; }
+        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f5; flex-wrap: wrap; gap: 10px; }
         .trend-up { color: #10b981; font-size: 0.65rem; font-weight: 600; }
         .trend-down { color: #ef4444; font-size: 0.65rem; font-weight: 600; }
         .trend-neutral { color: #f59e0b; font-size: 0.65rem; font-weight: 600; }
-        .detail-btn { background: none; border: none; color: #667eea; font-size: 0.65rem; cursor: pointer; padding: 5px 10px; border-radius: 8px; transition: all 0.2s; }
-        .detail-btn:hover { background: #eef2ff; }
-        .user-detail-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eef2f5; }
-        .detail-stat-card { text-align: center; padding: 10px; background: #f8fafc; border-radius: 12px; }
-        .detail-stat-value { font-size: 1.3rem; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .detail-stat-label { font-size: 0.6rem; color: #6c86a3; margin-top: 5px; }
-        .avg-stats { display: flex; justify-content: space-around; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 12px; }
-        .avg-item { text-align: center; }
-        .avg-value { font-weight: 700; font-size: 0.9rem; }
-        .avg-label { font-size: 0.55rem; color: #6c86a3; }
+        /* استایل میانگین در کارت کاربر */
+        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f5; flex-wrap: wrap; gap: 15px; }
+        .trend-info { display: flex; align-items: center; gap: 5px; background: #fef3c7; padding: 4px 10px; border-radius: 20px; }
+        .trend-up { color: #10b981; font-size: 0.7rem; font-weight: 600; }
+        .trend-down { color: #ef4444; font-size: 0.7rem; font-weight: 600; }
+        .trend-neutral { color: #f59e0b; font-size: 0.7rem; font-weight: 600; }
+        .trend-label { font-size: 0.6rem; color: #6c86a3; }
+        .avg-box { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 5px 15px; border-radius: 20px; }
+        .avg-text { font-size: 0.7rem; color: #475569; font-weight: 500; }
+        .avg-arrow { font-size: 1rem; color: #ef4444; animation: arrowMove 0.8s ease-in-out infinite; }
+        @keyframes arrowMove { 0% { transform: translateX(0); } 50% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+        .avg-stats-mini { display: flex; gap: 8px; }
+        .avg-item-mini { display: flex; align-items: center; gap: 4px; background: white; padding: 4px 12px; border-radius: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: help; }
+        .avg-icon-mini { font-size: 0.75rem; }
+        .avg-value-mini { font-weight: 700; font-size: 0.85rem; color: #1a2c3e; }
+        .avg-change { font-size: 0.6rem; font-weight: 600; margin-left: 3px; }
+        .avg-change-up { color: #10b981; }
+        .avg-change-down { color: #ef4444; }
+        .avg-change-neutral { color: #f59e0b; }
+        .avg-label-mini { font-size: 0.55rem; color: #6c86a3; margin-right: 2px; }
+        @media (max-width: 768px) { .user-card-footer { flex-direction: column; align-items: stretch; } .avg-box { flex-wrap: wrap; justify-content: center; } .avg-stats-mini { flex-wrap: wrap; justify-content: center; } }
+        /* ========== استایل رادیو باتن بایگانی کاربران ========== */
+        .radio-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .radio-label { display: inline-flex; align-items: center; gap: 5px; background: #f1f5f9; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; }
+        .radio-label:hover { background: #eef2ff; border-color: #667eea; }
+        .radio-label input[type="radio"] { width: 12px; height: 12px; margin: 0; cursor: pointer; accent-color: #667eea; }
+        .radio-label span { color: #334155; }
+        .radio-label:has(input:checked) { background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea; }
+        .radio-label:has(input:checked) span { color: white; }
         /* ========== پایان استایل‌ها ========== */
     </style>
 </head>
@@ -221,8 +251,11 @@ if ($is_admin) {
                 
                 <?php else: ?>
                 <div class="user-panel-buttons">
-                    <button class="user-panel-btn active" onclick="toggleUserPanel('form')">📝 ثبت سند جدید</button>
-                    <button class="user-panel-btn" onclick="toggleUserPanel('archive')">📦 بایگانی</button>
+                    <button class="user-panel-btn active" data-panel="form" onclick="toggleUserPanel('form')">📝 ثبت سند جدید</button>
+                    <button class="user-panel-btn" data-panel="archive" onclick="toggleUserPanel('archive')">📦 بایگانی من</button>
+                    <?php if($can_view_all_archives): ?>
+                    <button class="user-panel-btn" data-panel="admin_archive" onclick="toggleUserPanel('admin_archive')">📂 بایگانی کاربران</button>
+                    <?php endif; ?>
                 </div>
                 
                 <div id="userFormPanel" class="user-form-panel">
@@ -288,17 +321,6 @@ if ($is_admin) {
                     <div id="adminUsersStatsList" class="scrollable-list" style="max-height: 350px; overflow-y: auto;">
                         <div class="empty-state">در حال بارگذاری...</div>
                     </div>
-                    
-                    <!-- آمار کاربر انتخاب شده -->
-                    <div id="selectedUserStats" style="display: none; margin-top: 20px;">
-                        <div class="left-section-title" style="background: #f1f5f9; padding: 10px; border-radius: 12px;">
-                            <i class="fas fa-chart-line"></i> آمار دقیق: <span id="selectedUserName"></span>
-                            <button onclick="closeSelectedUserStats()" style="float: left; background: none; border: none; cursor: pointer;"><i class="fas fa-times"></i></button>
-                        </div>
-                        <div id="selectedUserStatsContent" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;">
-                            <div class="empty-state">در حال بارگذاری...</div>
-                        </div>
-                    </div>
                 </div>
                 <div id="usersContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-users"></i> مدیریت کاربران<button class="btn-primary" style="padding:4px 12px; font-size:0.65rem; margin-right:auto;" onclick="showAddUserModal()">+ افزودن کاربر</button></div><div class="scrollable-list" id="usersList"><div class="empty-state">در حال بارگذاری...</div></div></div>
                 <div id="companiesContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-building"></i> مدیریت شرکت‌ها<button class="btn-primary" style="padding:4px 12px; font-size:0.65rem; margin-right:auto;" onclick="showAddCompanyModal()">+ افزودن شرکت</button></div><div class="companies-grid" id="companiesList"><?php foreach($companies as $c): ?><div class="company-card"><span class="company-name"><?php echo htmlspecialchars($c['name']); ?></span><div><button class="action-btn edit-btn" onclick="editCompany(<?php echo $c['id']; ?>, '<?php echo htmlspecialchars($c['name']); ?>')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="toggleCompany(<?php echo $c['id']; ?>, 0)"><i class="fas fa-trash-alt"></i></button></div></div><?php endforeach; ?></div></div>
@@ -310,12 +332,20 @@ if ($is_admin) {
                     <div class="left-section-title"><i class="fas fa-chart-line"></i> آمار شما</div>
                     <div id="userStatsContainer"><div class="empty-state">در حال بارگذاری...</div></div>
                 </div>
-                <div id="userDocumentsList" class="docs-list" style="margin-top: 15px;">
+                <div id="userDocumentsList" class="docs-list left-content" style="margin-top: 15px;">
                     <div class="empty-state">برای جستجو از فیلدهای سمت راست استفاده کنید</div>
                 </div>
-                <div id="userArchiveList" class="archive-list" style="margin-top: 15px; display: none;">
+                <div id="userArchiveList" class="archive-list left-content" style="margin-top: 15px; display: none;">
                     <div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div>
-                    <div class="empty-state">در حال بارگذاری...</div>
+                    <div id="archive_list_content" style="margin-top: 10px;">
+                        <div class="empty-state">در حال بارگذاری...</div>
+                    </div>
+                </div>
+                <div id="userAdminArchiveList" class="archive-list left-content" style="margin-top: 15px; display: none;">
+                    <div class="left-section-title"><i class="fas fa-users"></i> بایگانی کاربران</div>
+                    <div id="admin_archive_list_container" style="margin-top: 10px;">
+                        <div class="empty-state">در حال بارگذاری...</div>
+                    </div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -339,6 +369,18 @@ let searchTimeout;
 let currentDeliveryDate = '';
 let currentPanel = 'form';
 
+// ========== تابع checkLockStatus در ابتدا ==========
+async function checkLockStatus(deliveryDate) {
+    try {
+        let res = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`);
+        let data = await res.json();
+        let docNumberInput = document.getElementById('doc_number');
+        let descInput = document.getElementById('doc_description');
+        if (docNumberInput) docNumberInput.disabled = data.has_admin_approval === true;
+        if (descInput) descInput.disabled = data.has_admin_approval === true;
+    } catch(e) { console.error(e); }
+}
+
 function showToast(msg, isError = false) {
     let toast = document.getElementById('toast');
     toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
@@ -361,44 +403,58 @@ function formatJalali(input) {
     else { input.value = raw.slice(0, 4) + '/' + raw.slice(4, 6) + '/' + raw.slice(6, 8); }
 }
 
-// ========== توابع عمومی ==========
 function toggleUserPanel(panel) {
     currentPanel = panel;
     let formPanel = document.getElementById('userFormPanel');
     let searchPanel = document.getElementById('userSearchPanel');
     let archivePanel = document.getElementById('userArchivePanel');
+    let adminArchivePanel = document.getElementById('userAdminArchiveList');
     let btns = document.querySelectorAll('.user-panel-btn');
     
     let documentsList = document.getElementById('userDocumentsList');
     let archiveList = document.getElementById('userArchiveList');
+    let adminArchiveList = document.getElementById('userAdminArchiveList');
     
-    btns.forEach(btn => btn.classList.remove('active'));
+    // فعال کردن دکمه مناسب بر اساس data-panel
+    btns.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-panel') === panel) {
+            btn.classList.add('active');
+        }
+    });
+    
     if (formPanel) formPanel.style.display = 'none';
     if (searchPanel) searchPanel.style.display = 'none';
     if (archivePanel) archivePanel.style.display = 'none';
+    if (adminArchivePanel) adminArchivePanel.style.display = 'none';
     
-    // مخفی کردن لیست‌های سمت چپ
     if (documentsList) documentsList.style.display = 'none';
     if (archiveList) archiveList.style.display = 'none';
+    if (adminArchiveList) adminArchiveList.style.display = 'none';
     
     if (panel === 'form') {
         if (formPanel) formPanel.style.display = 'block';
-        if (btns[0]) btns[0].classList.add('active');
-        if (typeof loadLastDeliveryDate === 'function') loadLastDeliveryDate();
+        let today = '<?php echo $today; ?>';
+        let deliveryDateInput = document.getElementById('delivery_date');
+        if (deliveryDateInput) {
+            deliveryDateInput.value = today;
+            if (typeof loadDocumentsForDeliveryDate === 'function') loadDocumentsForDeliveryDate(today);
+            if (typeof checkLockStatus === 'function') checkLockStatus(today);
+        }
         if (document.getElementById('company_id')) document.getElementById('company_id').focus();
         if (documentsList) documentsList.style.display = 'block';
     } else if (panel === 'search') {
         if (searchPanel) searchPanel.style.display = 'block';
-        if (btns[1]) btns[1].classList.add('active');
         if (typeof autoSearchDocuments === 'function') autoSearchDocuments();
         if (documentsList) documentsList.style.display = 'block';
     } else if (panel === 'archive') {
         if (archivePanel) archivePanel.style.display = 'block';
-        if (btns[2]) btns[2].classList.add('active');
-        if (typeof loadUserArchiveList === 'function') {
-            loadUserArchiveList();
-        }
+        if (typeof loadUserArchiveList === 'function') loadUserArchiveList();
         if (archiveList) archiveList.style.display = 'block';
+    } else if (panel === 'admin_archive') {
+        if (adminArchivePanel) adminArchivePanel.style.display = 'block';
+        if (typeof loadAdminArchiveUsers === 'function') loadAdminArchiveUsers();
+        if (adminArchiveList) adminArchiveList.style.display = 'block';
     }
 }
 
@@ -465,7 +521,7 @@ async function loadUserStats() {
                     <div class="stat-card">
                         <div class="stat-value">${data.today_count}</div>
                         <div class="stat-label">اسناد امروز</div>
-                        <div class="stat-small" style="${data.trend_class} margin-top: 4px; font-size: 0.55rem;">${data.trend_icon} ${data.trend}</div>
+                        <div class="stat-small" style="${data.trend_class} margin-top: 4px; font-size: 0.55rem;">${data.trend_icon} ${data.trend_text}</div>
                         <div class="stat-label" style="font-size: 0.55rem; margin-top: 2px;">نسبت به دیروز (${data.yesterday_count})</div>
                     </div>
                     <div class="stat-card">
@@ -489,70 +545,29 @@ async function loadUserStats() {
                     </div>
                 </div>
                 <div class="stat-card" style="margin-top: 10px;">
-                    <div class="stat-label">میانگین اسناد</div>
+                    <div class="stat-label">میانگین پیشرفت اسناد</div>
                     <div style="display: flex; justify-content: space-around; margin-top: 8px;">
-                        <div><span style="font-weight: 700; font-size: 0.9rem;">${data.week_count}</span><br><span style="font-size: 0.55rem;">هفته گذشته</span></div>
-                        <div><span style="font-weight: 700; font-size: 0.9rem;">${data.month_count}</span><br><span style="font-size: 0.55rem;">ماه گذشته</span></div>
-                        <div><span style="font-weight: 700; font-size: 0.9rem;">${data.year_count}</span><br><span style="font-size: 0.55rem;">سال گذشته</span></div>
+                        <div>
+                            <span style="font-weight: 700; font-size: 0.9rem; ${data.week_change_class}">${data.week_change}</span>
+                            <br><span style="font-size: 0.55rem;">نسبت به هفته قبل</span>
+                        </div>
+                        <div>
+                            <span style="font-weight: 700; font-size: 0.9rem; ${data.month_change_class}">${data.month_change}</span>
+                            <br><span style="font-size: 0.55rem;">نسبت به ماه قبل</span>
+                        </div>
+                        <div>
+                            <span style="font-weight: 700; font-size: 0.9rem; ${data.year_change_class}">${data.year_change}</span>
+                            <br><span style="font-size: 0.55rem;">نسبت به سال قبل</span>
+                        </div>
                     </div>
                 </div>
             `;
             document.getElementById('userStatsContainer').innerHTML = html;
-        } else {
-            document.getElementById('userStatsContainer').innerHTML = '<div class="empty-state">خطا در دریافت آمار</div>';
         }
     } catch(e) {
         console.error(e);
         document.getElementById('userStatsContainer').innerHTML = '<div class="empty-state">خطا در دریافت آمار</div>';
     }
-}
-
-// ========== بایگانی کاربر عادی ==========
-function loadUserArchiveList() {
-    const container = document.getElementById('userArchiveList');
-    if (!container) return;
-    
-    // اضافه کردن کلاس left-content برای هماهنگی با آمار
-    container.classList.add('left-content');
-    
-    fetch('api/ajax.php?action=get_archived_delivery_dates')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.dates && data.dates.length > 0) {
-                let html = '<div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div>';
-                html += '<div class="archive-list">';
-                data.dates.forEach(date => {
-                    html += `
-                        <div class="archive-item">
-                            <div class="archive-item-left">
-                                <div class="archive-item-icon">
-                                    <i class="fas fa-calendar-check"></i>
-                                </div>
-                                <div>
-                                    <div class="archive-item-date">${date.delivery_date}</div>
-                                </div>
-                            </div>
-                            <button class="archive-view-btn" onclick="viewArchiveDocument('${date.delivery_date_raw}')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = '<div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div><div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            container.innerHTML = '<div class="left-section-title"><i class="fas fa-archive"></i> تاریخ‌های تایید شده</div><div class="empty-state">خطا در دریافت اطلاعات</div>';
-        });
-}
-
-// ========== مشاهده سند بایگانی ==========
-function viewArchiveDocument(deliveryDate) {
-    window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
 
 function saveDocument() {
@@ -615,25 +630,49 @@ function saveDocument() {
 }
 
 function addDescriptionToDocument() {
-    const docId = prompt('شناسه سند را وارد کنید:');
-    if (!docId) return;
-    const description = prompt('توضیحات خود را وارد کنید:');
-    if (!description) return;
+    const description = document.getElementById('doc_description')?.value.trim();
+    if (!description) {
+        showToast('لطفاً ابتدا توضیح را در کادر بالا وارد کنید', true);
+        return;
+    }
     
-    fetch('api/ajax.php?action=add_description', {
+    const delivery_date = document.getElementById('delivery_date')?.value || '';
+    if (!delivery_date) {
+        alert('تاریخ تحویل مشخص نیست');
+        return;
+    }
+    
+    const btn = document.getElementById('submitDescriptionBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...';
+    btn.disabled = true;
+    
+    fetch('api/ajax.php?action=add_delivery_description', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ doc_id: docId, description: description })
+        body: JSON.stringify({ delivery_date: delivery_date, description: description })
     })
     .then(res => res.json())
     .then(data => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
         if (data.success) {
-            showToast('توضیحات با موفقیت اضافه شد');
-            const delivery_date = document.getElementById('delivery_date')?.value || '';
-            loadDocumentsForDeliveryDate(delivery_date);
+            showToast('گزارش با موفقیت ذخیره شد');
+            document.getElementById('doc_description').value = '';
+            const currentDate = document.getElementById('delivery_date')?.value || '';
+            if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+                loadDocumentsForDeliveryDate(currentDate);
+            }
         } else {
             alert('خطا: ' + (data.error || 'مشخص نیست'));
         }
+    })
+    .catch(err => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        console.error(err);
+        alert('خطا در ارتباط با سرور');
     });
 }
 
@@ -848,8 +887,12 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
         });
 }
 
-function viewArchiveDocument(deliveryDate) {
-    window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
+function viewArchiveDocument(deliveryDate, userId) {
+    if (!userId) {
+        userId = currentUserId; // اگر userId ارسال نشد، از کاربر جاری استفاده کن
+    }
+    console.log('باز کردن:', 'user_id=' + userId, 'delivery_date=' + deliveryDate);
+    window.open(`print.php?user_id=${userId}&delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
 
 function resetUserFilters() { 
@@ -882,6 +925,9 @@ async function changePassword() {
 
 // ========== کاربر عادی ==========
 <?php if(!$is_admin): ?>
+// ========== متغیرهای کاربر جاری ==========
+let currentUserId = <?php echo $user_id; ?>;
+let currentUserName = '<?php echo $fullname; ?>';
 
     function updateDeliveryDate() {
         let monthStr = deliveryMonth < 10 ? '0' + deliveryMonth : deliveryMonth;
@@ -889,21 +935,158 @@ async function changePassword() {
         let dateInput = document.getElementById('delivery_date');
         if (dateInput) { dateInput.value = deliveryYear + '/' + monthStr + '/' + dayStr; }
     }
+      
+// ========== بایگانی کاربر عادی ==========
+
+function loadUserArchiveList() {
+    const container = document.getElementById('archive_list_content');
+    if (!container) return;
     
-    async function checkLockStatus(deliveryDate) {
-        try {
-            let res = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`);
-            let data = await res.json();
-            if (data.has_admin_approval === true) {
-                document.getElementById('doc_number').disabled = true;
-                document.getElementById('doc_description').disabled = true;
+    container.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+    
+    // استفاده از اکشن جداگانه برای خود کاربر (همه تاریخ‌ها)
+    fetch(`api/ajax.php?action=get_my_archived_dates`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '';
+                data.dates.forEach(item => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <div class="archive-item-date">${item.delivery_date}</div>
+                                </div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewArchiveDocument('${item.delivery_date_raw}', ${currentUserId})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
             } else {
-                document.getElementById('doc_number').disabled = false;
-                document.getElementById('doc_description').disabled = false;
+                container.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
             }
-        } catch(e) { console.error(e); }
-    }
+        });
+}
+
+function loadSelectedUserArchive() {
+    const selectElem = document.getElementById('archive_user_select');
+    if (selectElem) loadArchiveForUser(parseInt(selectElem.value));
+}
+
+function loadArchiveForUser(userId) {
+    const content = document.getElementById('archive_list_content');
+    if (!content) return;
     
+    content.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+    
+    fetch(`api/ajax.php?action=get_archived_delivery_dates_for_user&user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '<div class="archive-list">';
+                data.dates.forEach(item => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <div class="archive-item-date">${item.delivery_date}</div>
+                                </div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewArchiveDocument('${item.delivery_date_raw}', ${userId})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                content.innerHTML = html + '</div>';
+            } else {
+                content.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
+            }
+        });
+}
+
+function viewArchiveDocument(deliveryDate, userId) {
+    window.open(`print.php?user_id=${userId}&delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
+}
+
+function loadAdminArchiveUsers() {
+    fetch('api/ajax.php?action=get_all_users_for_archive')
+        .then(res => res.json())
+        .then(data => {
+            let container = document.getElementById('admin_archive_list_container');
+            if (!container) return;
+            
+            if (!data.users || data.users.length === 0) {
+                container.innerHTML = '<div class="empty-state">هیچ کاربری یافت نشد</div>';
+                return;
+            }
+            
+            let html = '<div class="radio-group">';
+            data.users.forEach(user => {
+                if (user.id != currentUserId) {
+                    html += `
+                        <label class="radio-label">
+                            <input type="radio" name="admin_archive_user" value="${user.id}" onchange="loadAdminArchive()">
+                            <span>${escapeHtml(user.fullname)}</span>
+                        </label>
+                    `;
+                }
+            });
+            html += '</div><div id="admin_archive_list" class="archive-list"><div class="empty-state">کاربری را انتخاب کنید</div></div>';
+            container.innerHTML = html;
+        });
+}
+
+function loadAdminArchive() {
+    const selectedRadio = document.querySelector('input[name="admin_archive_user"]:checked');
+    if (!selectedRadio) return;
+    const userId = selectedRadio.value;
+    
+    const container = document.getElementById('admin_archive_list');
+    if (!container) return;
+    container.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+    
+    fetch(`api/ajax.php?action=get_archived_delivery_dates_for_user&user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.dates && data.dates.length > 0) {
+                let html = '<div class="archive-list">';
+                data.dates.forEach(item => {
+                    html += `
+                        <div class="archive-item">
+                            <div class="archive-item-left">
+                                <div class="archive-item-icon"><i class="fas fa-calendar-check"></i></div>
+                                <div><div class="archive-item-date">${item.delivery_date}</div></div>
+                            </div>
+                            <button class="archive-view-btn" onclick="viewAdminArchive('${item.delivery_date_raw}', ${userId})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html + '</div>';
+            } else {
+                container.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
+            }
+        });
+}
+
+function viewAdminArchive(deliveryDate, userId) {
+    window.open(`print.php?user_id=${userId}&delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
+}
+
+// اتصال رویداد
+document.getElementById('admin_archive_user_select')?.addEventListener('change', loadAdminArchive);
+	  
     function addDaysToDelivery(days) {
         deliveryDay += days;
         let daysInMonth = getDaysInMonth(deliveryYear, deliveryMonth);
@@ -912,7 +1095,7 @@ async function changePassword() {
         updateDeliveryDate();
         let newDate = deliveryYear + '/' + (deliveryMonth < 10 ? '0'+deliveryMonth : deliveryMonth) + '/' + (deliveryDay < 10 ? '0'+deliveryDay : deliveryDay);
         checkLockStatus(newDate);
-        loadDocumentsForDisplay(newDate);
+        loadDocumentsForDeliveryDate(newDate);
     }
 
     let initialDelivery = '<?php echo $today; ?>'.split('/');
@@ -943,36 +1126,6 @@ async function changePassword() {
         });
         companyNumberInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('doc_number').focus(); } });
     }
-
-async function loadLastDeliveryDate() {
-    try {
-        let res = await fetch(`${apiUrl}?action=get_last_delivery_date`);
-        let text = await res.text();
-        if (text.trim().startsWith('<')) {
-            let today = '<?php echo $today; ?>';
-            document.getElementById('delivery_date').value = today;
-            autoSearchDocuments();
-            if (typeof checkLockStatus === 'function') await checkLockStatus(today);
-            return;
-        }
-        let data = JSON.parse(text);
-        if (data.success && data.last_date) {
-            document.getElementById('delivery_date').value = data.last_date;
-            autoSearchDocuments();
-            if (typeof checkLockStatus === 'function') await checkLockStatus(data.last_date);
-        } else {
-            let today = '<?php echo $today; ?>';
-            document.getElementById('delivery_date').value = today;
-            autoSearchDocuments();
-            if (typeof checkLockStatus === 'function') await checkLockStatus(today);
-        }
-    } catch(e) {
-        let today = '<?php echo $today; ?>';
-        document.getElementById('delivery_date').value = today;
-        autoSearchDocuments();
-        if (typeof checkLockStatus === 'function') await checkLockStatus(today);
-    }
-}
 
 async function saveReport() {
     let reportText = document.getElementById('doc_description')?.value.trim() || '';
@@ -1026,75 +1179,86 @@ document.addEventListener('keydown', async function(e) { if (e.key === 'Enter' &
 if (document.getElementById('submitBtn')) {
     document.getElementById('submitBtn').addEventListener('click', function() { saveDocument(); setTimeout(function() { if (document.getElementById('doc_number')) document.getElementById('doc_number').focus(); }, 100); });
 }
-loadLastDeliveryDate();
 
-    window.openEditModal = function(id, number, date, description) {
-        let editId = document.getElementById('edit_id'), editNumber = document.getElementById('edit_number'), editDate = document.getElementById('edit_date');
-        if (editId) editId.value = id;
-        if (editNumber) editNumber.value = number;
-        if (editDate) editDate.value = (date === '-' ? '' : date);
-        let modal = document.getElementById('editModal');
-        if (modal) modal.classList.add('active');
+let todayDate = '<?php echo $today; ?>';
+let deliveryDateInput = document.getElementById('delivery_date');
+if (deliveryDateInput) {
+    deliveryDateInput.value = todayDate;
+    if (typeof loadDocumentsForDeliveryDate === 'function') {
+        loadDocumentsForDeliveryDate(todayDate);
     }
-    window.closeEditModal = function() { if (document.getElementById('editModal')) document.getElementById('editModal').classList.remove('active'); }
-    window.saveEdit = async function() {
-        let id = document.getElementById('edit_id')?.value || '';
-        let number = document.getElementById('edit_number')?.value.trim() || '';
-        let date = document.getElementById('edit_date')?.value.trim() || '';
+    if (typeof checkLockStatus === 'function') {
+        checkLockStatus(todayDate);
+    }
+}
+
+window.openEditModal = function(id, number, date, description) {
+    let editId = document.getElementById('edit_id'), editNumber = document.getElementById('edit_number'), editDate = document.getElementById('edit_date');
+    if (editId) editId.value = id;
+    if (editNumber) editNumber.value = number;
+    if (editDate) editDate.value = (date === '-' ? '' : date);
+    let modal = document.getElementById('editModal');
+    if (modal) modal.classList.add('active');
+}
+window.closeEditModal = function() { if (document.getElementById('editModal')) document.getElementById('editModal').classList.remove('active'); }
+window.saveEdit = async function() {
+    let id = document.getElementById('edit_id')?.value || '';
+    let number = document.getElementById('edit_number')?.value.trim() || '';
+    let date = document.getElementById('edit_date')?.value.trim() || '';
+    
+    if (!id) { showToast('شناسه سند یافت نشد', true); return; }
+    if (!number) { showToast('شماره سند الزامی است', true); return; }
+    
+    let res = await fetch(`${apiUrl}?action=update_document`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, doc_number: number, doc_date: date || '-' })
+    });
+    let result = await res.json();
+    
+    if (result.success) {
+        showToast('ویرایش شد');
+        closeEditModal();
         
-        if (!id) { showToast('شناسه سند یافت نشد', true); return; }
-        if (!number) { showToast('شماره سند الزامی است', true); return; }
-        
-        let res = await fetch(`${apiUrl}?action=update_document`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id, doc_number: number, doc_date: date || '-' })
-        });
-        let result = await res.json();
-        
-        if (result.success) {
-            showToast('ویرایش شد');
-            closeEditModal();
-            
-            const currentDate = document.getElementById('delivery_date')?.value || '';
-            if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
-                loadDocumentsForDeliveryDate(currentDate);
-            } else if (typeof autoSearchDocuments === 'function') {
-                autoSearchDocuments();
-            }
-            if (typeof loadUserStats === 'function') {
-                loadUserStats();
-            }
-        } else {
-            showToast(result.error || 'خطا در ویرایش', true);
+        const currentDate = document.getElementById('delivery_date')?.value || '';
+        if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+            loadDocumentsForDeliveryDate(currentDate);
+        } else if (typeof autoSearchDocuments === 'function') {
+            autoSearchDocuments();
         }
-    }
-    window.deleteDocument = async function(id) {
-        if (!confirm('حذف شود؟')) return;
-        
-        let res = await fetch(`${apiUrl}?action=delete_document`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
-        });
-        let result = await res.json();
-        
-        if (result.success) {
-            showToast('حذف شد');
-            
-            const currentDate = document.getElementById('delivery_date')?.value || '';
-            if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
-                loadDocumentsForDeliveryDate(currentDate);
-            } else if (typeof autoSearchDocuments === 'function') {
-                autoSearchDocuments();
-            }
-            if (typeof loadUserStats === 'function') {
-                loadUserStats();
-            }
-        } else {
-            showToast(result.error || 'خطا در حذف', true);
+        if (typeof loadUserStats === 'function') {
+            loadUserStats();
         }
+    } else {
+        showToast(result.error || 'خطا در ویرایش', true);
     }
+}
+window.deleteDocument = async function(id) {
+    if (!confirm('حذف شود؟')) return;
+    
+    let res = await fetch(`${apiUrl}?action=delete_document`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+    });
+    let result = await res.json();
+    
+    if (result.success) {
+        showToast('حذف شد');
+        
+        const currentDate = document.getElementById('delivery_date')?.value || '';
+        if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+            loadDocumentsForDeliveryDate(currentDate);
+        } else if (typeof autoSearchDocuments === 'function') {
+            autoSearchDocuments();
+        }
+        if (typeof loadUserStats === 'function') {
+            loadUserStats();
+        }
+    } else {
+        showToast(result.error || 'خطا در حذف', true);
+    }
+}
 
     async function loadSearchDocuments() {
         let params = new URLSearchParams();
@@ -1169,7 +1333,6 @@ loadLastDeliveryDate();
             else { showToast(result.error || '❌ خطا', true); }
         } catch(e) { console.error(e); showToast('❌ خطا در ارتباط با سرور', true); }
     }
-});
 
 <?php endif; ?>
 
@@ -1333,7 +1496,6 @@ function loadAdminUsersStats() {
             if (data.success) {
                 document.getElementById('statsTodayDate').innerHTML = `📅 ${data.today_date}`;
                 
-                // بیشترین و کمترین
                 if (data.max_user) {
                     document.getElementById('maxUserName').innerHTML = data.max_user.fullname;
                     document.getElementById('maxUserCount').innerHTML = `${data.max_user.total_docs} سند`;
@@ -1343,37 +1505,121 @@ function loadAdminUsersStats() {
                     document.getElementById('minUserCount').innerHTML = `${data.min_user.total_docs} سند`;
                 }
                 
-                // محاسبه بیشترین تعداد اسناد برای نوار پیشرفت
                 const maxDocs = Math.max(...data.users.map(u => u.total_docs), 1);
                 
-                // لیست کاربران با کارت‌های حرفه‌ای
                 let usersHtml = '<div class="user-stats-container">';
                 data.users.forEach(user => {
                     const progressPercent = (user.total_docs / maxDocs) * 100;
                     const todayIcon = user.pending_today > 0 ? '📄' : '📭';
                     
-                    // تعیین روند نسبت به دیروز
                     let trendHtml = '';
+                    let trendClass = '';
                     const change = user.total_docs - user.yesterday_count;
                     if (user.yesterday_count > 0) {
                         if (change > 0) {
-                            trendHtml = `<span class="trend-up">▲ +${change} نسبت به دیروز</span>`;
+                            trendHtml = `▲ +${change}`;
+                            trendClass = 'trend-up';
                         } else if (change < 0) {
-                            trendHtml = `<span class="trend-down">▼ ${change} نسبت به دیروز</span>`;
+                            trendHtml = `▼ ${change}`;
+                            trendClass = 'trend-down';
                         } else {
-                            trendHtml = `<span class="trend-neutral">● بدون تغییر نسبت به دیروز</span>`;
+                            trendHtml = `● بدون تغییر`;
+                            trendClass = 'trend-neutral';
                         }
                     } else {
-                        trendHtml = user.total_docs > 0 ? `<span class="trend-up">▲ +${user.total_docs} نسبت به دیروز</span>` : `<span class="trend-neutral">● بدون سند</span>`;
+                        trendHtml = user.total_docs > 0 ? `▲ +${user.total_docs}` : `● بدون سند`;
+                        trendClass = user.total_docs > 0 ? 'trend-up' : 'trend-neutral';
+                    }
+                    
+                    // ========== هفته ==========
+                    let weekChange = '';
+                    let weekChangeClass = '';
+                    let weekTooltip = '';
+                    
+                    if (user.prev_week_count === 0 && user.week_count === 0) {
+                        weekChange = `---`;
+                        weekChangeClass = 'avg-change-neutral';
+                        weekTooltip = `دوره هنوز کامل نشده (نیاز به ۱۴ روز)`;
+                    } else if (user.prev_week_count === 0 && user.week_count > 0) {
+                        weekChange = `---`;
+                        weekChangeClass = 'avg-change-neutral';
+                        weekTooltip = `دوره هنوز کامل نشده (نیاز به ۱۴ روز)`;
+                    } else {
+                        let diff = user.week_count - user.prev_week_count;
+                        if (diff > 0) {
+                            weekChange = `▲ +${diff}`;
+                            weekChangeClass = 'avg-change-up';
+                        } else if (diff < 0) {
+                            weekChange = `▼ ${diff}`;
+                            weekChangeClass = 'avg-change-down';
+                        } else {
+                            weekChange = `● 0`;
+                            weekChangeClass = 'avg-change-neutral';
+                        }
+                        weekTooltip = `هفته گذشته: ${user.week_count} سند | هفته قبل‌تر: ${user.prev_week_count} سند | تغییر: ${weekChange}`;
+                    }
+                    
+                    // ========== ماه ==========
+                    let monthChange = '';
+                    let monthChangeClass = '';
+                    let monthTooltip = '';
+                    
+                    if (user.prev_month_count === 0 && user.month_count === 0) {
+                        monthChange = `---`;
+                        monthChangeClass = 'avg-change-neutral';
+                        monthTooltip = `دوره هنوز کامل نشده (نیاز به ۶۰ روز)`;
+                    } else if (user.prev_month_count === 0 && user.month_count > 0) {
+                        monthChange = `---`;
+                        monthChangeClass = 'avg-change-neutral';
+                        monthTooltip = `دوره هنوز کامل نشده (نیاز به ۶۰ روز)`;
+                    } else {
+                        let diff = user.month_count - user.prev_month_count;
+                        if (diff > 0) {
+                            monthChange = `▲ +${diff}`;
+                            monthChangeClass = 'avg-change-up';
+                        } else if (diff < 0) {
+                            monthChange = `▼ ${diff}`;
+                            monthChangeClass = 'avg-change-down';
+                        } else {
+                            monthChange = `● 0`;
+                            monthChangeClass = 'avg-change-neutral';
+                        }
+                        monthTooltip = `ماه گذشته: ${user.month_count} سند | ماه قبل‌تر: ${user.prev_month_count} سند | تغییر: ${monthChange}`;
+                    }
+                    
+                    // ========== سال ==========
+                    let yearChange = '';
+                    let yearChangeClass = '';
+                    let yearTooltip = '';
+                    
+                    if (user.prev_year_count === 0 && user.year_count === 0) {
+                        yearChange = `---`;
+                        yearChangeClass = 'avg-change-neutral';
+                        yearTooltip = `دوره هنوز کامل نشده (نیاز به ۷۳۰ روز)`;
+                    } else if (user.prev_year_count === 0 && user.year_count > 0) {
+                        yearChange = `---`;
+                        yearChangeClass = 'avg-change-neutral';
+                        yearTooltip = `دوره هنوز کامل نشده (نیاز به ۷۳۰ روز)`;
+                    } else {
+                        let diff = user.year_count - user.prev_year_count;
+                        if (diff > 0) {
+                            yearChange = `▲ +${diff}`;
+                            yearChangeClass = 'avg-change-up';
+                        } else if (diff < 0) {
+                            yearChange = `▼ ${diff}`;
+                            yearChangeClass = 'avg-change-down';
+                        } else {
+                            yearChange = `● 0`;
+                            yearChangeClass = 'avg-change-neutral';
+                        }
+                        yearTooltip = `سال گذشته: ${user.year_count} سند | سال قبل‌تر: ${user.prev_year_count} سند | تغییر: ${yearChange}`;
                     }
                     
                     usersHtml += `
-                        <div class="user-card" onclick="selectUserForStats(${user.id}, '${escapeHtml(user.fullname)}')" id="userCard_${user.id}">
+                        <div class="user-card" data-user-id="${user.id}">
                             <div class="user-card-header">
                                 <div class="user-info">
-                                    <div class="user-avatar">
-                                        <i class="fas fa-user"></i>
-                                    </div>
+                                    <div class="user-avatar"><i class="fas fa-user"></i></div>
                                     <div class="user-details">
                                         <h4>${escapeHtml(user.fullname)}</h4>
                                         <div class="user-unit">${escapeHtml(user.unit_name)}</div>
@@ -1397,10 +1643,31 @@ function loadAdminUsersStats() {
                                 <div class="progress-text">${user.total_docs} از ${maxDocs} سند</div>
                             </div>
                             <div class="user-card-footer">
-                                ${trendHtml}
-                                <button class="detail-btn" onclick="event.stopPropagation(); selectUserForStats(${user.id}, '${escapeHtml(user.fullname)}')">
-                                    <i class="fas fa-chart-line"></i> مشاهده جزئیات
-                                </button>
+                                <div class="trend-info">
+                                    <span class="${user.trend_class}">${user.trend_text}</span>
+                                    <span class="trend-label">نسبت به دیروز (${user.yesterday_count})</span>
+                                </div>
+                                <div class="avg-box">
+                                    <span class="avg-text">میانگین پیشرفت اسناد</span>
+                                    <i class="fas fa-arrow-left avg-arrow"></i>
+                                    <div class="avg-stats-mini">
+                                        <div class="avg-item-mini" title="نسبت به هفته قبل">
+                                            <span class="avg-icon-mini">📅</span>
+                                            <span class="avg-change ${user.week_change_class}">${user.week_change}</span>
+                                            <span class="avg-label-mini">نسبت به هفته قبل</span>
+                                        </div>
+                                        <div class="avg-item-mini" title="نسبت به ماه قبل">
+                                            <span class="avg-icon-mini">📆</span>
+                                            <span class="avg-change ${user.month_change_class}">${user.month_change}</span>
+                                            <span class="avg-label-mini">نسبت به ماه قبل</span>
+                                        </div>
+                                        <div class="avg-item-mini" title="نسبت به سال قبل">
+                                            <span class="avg-icon-mini">📅</span>
+                                            <span class="avg-change ${user.year_change_class}">${user.year_change}</span>
+                                            <span class="avg-label-mini">نسبت به سال قبل</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1413,55 +1680,66 @@ function loadAdminUsersStats() {
 }
 
 function selectUserForStats(userId, userName) {
-    // حذف کلاس selected از همه کارت‌ها
     document.querySelectorAll('.user-card').forEach(card => {
         card.classList.remove('selected');
     });
-    // اضافه کردن کلاس selected به کارت انتخاب شده
     const selectedCard = document.getElementById(`userCard_${userId}`);
     if (selectedCard) selectedCard.classList.add('selected');
     
     document.getElementById('selectedUserName').innerHTML = userName;
     document.getElementById('selectedUserStats').style.display = 'block';
-    
-    // اسکرول به بخش آمار دقیق
     document.getElementById('selectedUserStats').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
-    // دریافت آمار دقیق کاربر
     fetch(`api/ajax.php?action=get_admin_user_detail_stats&user_id=${userId}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                let trendColor = '';
+                let trendIcon = '';
+                if (data.trend_class.includes('10b981')) {
+                    trendColor = 'linear-gradient(135deg, #10b981, #059669)';
+                    trendIcon = '📈';
+                } else if (data.trend_class.includes('ef4444')) {
+                    trendColor = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                    trendIcon = '📉';
+                } else {
+                    trendColor = 'linear-gradient(135deg, #f59e0b, #d97706)';
+                    trendIcon = '➖';
+                }
+                
                 let detailHtml = `
-                    <div class="user-detail-stats">
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value">${data.pending_today}</div>
-                            <div class="detail-stat-label">📅 اسناد امروز</div>
+                    <div class="stats-detail-wrapper">
+                        <div class="stats-detail-card">
+                            <div class="stats-detail-value">${data.pending_today}</div>
+                            <div class="stats-detail-label">📅 اسناد امروز</div>
                         </div>
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value">${data.total_docs}</div>
-                            <div class="detail-stat-label">📊 کل اسناد</div>
+                        <div class="stats-detail-card-green">
+                            <div class="stats-detail-value">${data.total_docs}</div>
+                            <div class="stats-detail-label">📊 کل اسناد</div>
                         </div>
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value" style="${data.trend_class}">${data.trend}</div>
-                            <div class="detail-stat-label">📈 نسبت به دیروز (${data.yesterday_count})</div>
+                        <div class="stats-detail-trend" style="background: ${trendColor};">
+                            <div class="stats-detail-value-small">${trendIcon} ${data.trend}</div>
+                            <div class="stats-detail-label-small">نسبت به دیروز (${data.yesterday_count})</div>
                         </div>
-                        <div class="detail-stat-card">
-                            <div class="avg-stats" style="padding:0; background:transparent;">
-                                <div class="avg-item">
-                                    <div class="avg-value">${data.week_count}</div>
-                                    <div class="avg-label">هفته گذشته</div>
-                                </div>
-                                <div class="avg-item">
-                                    <div class="avg-value">${data.month_count}</div>
-                                    <div class="avg-label">ماه گذشته</div>
-                                </div>
-                                <div class="avg-item">
-                                    <div class="avg-value">${data.year_count}</div>
-                                    <div class="avg-label">سال گذشته</div>
-                                </div>
+                        <div class="stats-detail-avg">
+                            <div class="avg-item">
+                                <div class="avg-icon">📅</div>
+                                <div class="avg-value">${data.week_count}</div>
+                                <div class="avg-label">هفته گذشته</div>
+                                <div class="avg-desc">۷ روز اخیر</div>
                             </div>
-                            <div class="detail-stat-label">⏱️ میانگین اسناد</div>
+                            <div class="avg-item">
+                                <div class="avg-icon">📆</div>
+                                <div class="avg-value">${data.month_count}</div>
+                                <div class="avg-label">ماه گذشته</div>
+                                <div class="avg-desc">۳۰ روز اخیر</div>
+                            </div>
+                            <div class="avg-item">
+                                <div class="avg-icon">📅</div>
+                                <div class="avg-value">${data.year_count}</div>
+                                <div class="avg-label">سال گذشته</div>
+                                <div class="avg-desc">۳۶۵ روز اخیر</div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1710,7 +1988,23 @@ async function loadUsersList() {
         if (data.success && data.users) {
             let html = '';
             for (let user of data.users) {
-                html += `<div class="user-item"><div class="user-info"><div class="user-name">${escapeHtml(user.fullname)}</div><div class="user-unit">${escapeHtml(user.unit_name)} | ${escapeHtml(user.username)} | کل اسناد: ${user.total_docs}</div></div><div><button class="action-btn edit-btn" onclick="editUser(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.fullname)}', '${escapeHtml(user.unit_name)}', ${user.require_doc_date})"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteUser(${user.id})"><i class="fas fa-trash-alt"></i></button></div></div>`;
+                let permissionCheckbox = user.can_view_all_archives == 1 ? 'checked' : '';
+                html += `<div class="user-item">
+                    <div class="user-info">
+                        <div class="user-name">${escapeHtml(user.fullname)}</div>
+                        <div class="user-unit">${escapeHtml(user.unit_name)} | ${escapeHtml(user.username)} | کل اسناد: ${user.total_docs}</div>
+                        <div class="user-unit" style="margin-top: 5px;">
+                            <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" class="archive-permission" data-id="${user.id}" ${permissionCheckbox} onchange="toggleArchivePermission(${user.id}, this.checked)">
+                                دسترسی به بایگانی همه کاربران
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="action-btn edit-btn" onclick="editUser(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.fullname)}', '${escapeHtml(user.unit_name)}', ${user.require_doc_date})"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete-btn" onclick="deleteUser(${user.id})"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>`;
             }
             container.innerHTML = html;
         }
@@ -1787,6 +2081,26 @@ async function deleteUser(id) {
     let res = await fetch(`${apiUrl}?action=delete_user`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
     let result = await res.json();
     if (result.success) { showToast('حذف شد'); loadUsersList(); }
+}
+
+// ========== تغییر دسترسی بایگانی کاربر ==========
+async function toggleArchivePermission(userId, isChecked) {
+    try {
+        let res = await fetch(`${apiUrl}?action=toggle_archive_permission`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, can_view_all_archives: isChecked ? 1 : 0 })
+        });
+        let result = await res.json();
+        if (result.success) {
+            showToast('✅ دسترسی با موفقیت به‌روز شد');
+        } else {
+            showToast('❌ خطا: ' + (result.error || 'مشخص نیست'), true);
+        }
+    } catch(e) {
+        console.error(e);
+        showToast('❌ خطا در ارتباط با سرور', true);
+    }
 }
 
 function showAddCompanyModal() {
@@ -1955,18 +2269,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let dateInput = document.getElementById('delivery_date');
         if (dateInput) { dateInput.value = deliveryYear + '/' + monthStr + '/' + dayStr; }
     }
-    
-    async function checkLockStatus(deliveryDate) {
-        try {
-            let res = await fetch(`${apiUrl}?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`);
-            let data = await res.json();
-            let docNumberInput = document.getElementById('doc_number');
-            let descInput = document.getElementById('doc_description');
-            if (docNumberInput) docNumberInput.disabled = data.has_admin_approval === true;
-            if (descInput) descInput.disabled = data.has_admin_approval === true;
-        } catch(e) { console.error(e); }
-    }
-    
+        
     function addDaysToDelivery(days) {
         deliveryDay += days;
         let daysInMonth = getDaysInMonthJalali(deliveryYear, deliveryMonth);

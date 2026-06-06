@@ -29,12 +29,47 @@ $is_admin = $_SESSION['is_admin'] ?? 0;
 $fullname = $_SESSION['fullname'] ?? '';
 $action = $_GET['action'] ?? '';
 
+// ========== ذخیره امضای کاربر (جایگزینی) ==========
+if ($action == 'save_user_signature') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $signature_data = $data['signature_data'] ?? '';
+    $delivery_date = $data['delivery_date'] ?? '';
+    
+    if (empty($signature_data)) {
+        echo json_encode(['success' => false, 'error' => 'داده امضا یافت نشد']);
+        exit;
+    }
+    
+    $stmt = $db->prepare("UPDATE users SET signature_data = ? WHERE id = ?");
+    $result = $stmt->execute([$signature_data, $user_id]);
+    
+    if ($result) {
+        $stmt = $db->prepare("INSERT INTO delivery_approvals (user_id, delivery_date, user_approved_at) 
+                              VALUES (?, ?, NOW()) 
+                              ON DUPLICATE KEY UPDATE user_approved_at = NOW()");
+        $stmt->execute([$user_id, $delivery_date]);
+        
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'خطا در ذخیره امضا']);
+    }
+    exit;
+}
+
+// ========== دریافت امضای کاربر برای نمایش ==========
+if ($action == 'get_user_signature') {
+    $stmt = $db->prepare("SELECT signature_data FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $signature = $stmt->fetchColumn();
+    
+    echo json_encode(['success' => true, 'signature' => $signature]);
+    exit;
+}
+
 // ========== دریافت آخرین تاریخ تحویل کاربر ==========
 if ($action == 'get_last_delivery_date') {
-    $target_user_id = isset($_GET['admin_user_id']) && $is_admin && $_GET['admin_user_id'] !== '' ? (int)$_GET['admin_user_id'] : $user_id;
-    
     $stmt = $db->prepare("SELECT delivery_date FROM documents WHERE user_id = ? ORDER BY delivery_date DESC LIMIT 1");
-    $stmt->execute([$target_user_id]);
+    $stmt->execute([$user_id]);
     $last_date = $stmt->fetchColumn();
     
     if (!$last_date) {
@@ -42,6 +77,13 @@ if ($action == 'get_last_delivery_date') {
     }
     
     echo json_encode(['success' => true, 'last_date' => $last_date]);
+    exit;
+}
+
+// ========== دریافت تاریخ امروز ==========
+if ($action == 'get_today_date') {
+    $today = jDateTime::date('Y/m/d');
+    echo json_encode(['success' => true, 'today_date' => $today]);
     exit;
 }
 
@@ -340,22 +382,27 @@ if ($action == 'get_user_stats') {
     $today = jDateTime::date('Y/m/d');
     $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
     
+    // اسناد امروز
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$user_id, $today]);
     $today_count = $stmt->fetchColumn();
     
+    // اسناد دیروز
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
     $stmt->execute([$user_id, $yesterday]);
     $yesterday_count = $stmt->fetchColumn();
     
+    // کل اسناد
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $total_docs = $stmt->fetchColumn();
     
+    // اولین و آخرین تاریخ
     $stmt = $db->prepare("SELECT MIN(delivery_date) as first_date, MAX(delivery_date) as last_date FROM documents WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $dates = $stmt->fetch(PDO::FETCH_ASSOC);
     
+    // بیشترین و کمترین شرکت
     $stmt = $db->prepare("
         SELECT c.name as company_name, COUNT(d.id) as doc_count 
         FROM documents d 
@@ -372,31 +419,112 @@ if ($action == 'get_user_stats') {
     $least_company = !empty($company_stats) ? $company_stats[count($company_stats)-1]['company_name'] : '-';
     $least_count = !empty($company_stats) ? $company_stats[count($company_stats)-1]['doc_count'] : 0;
     
+    // ========== هفته جاری (7 روز اخیر) ==========
     $week_ago = jDateTime::date('Y/m/d', strtotime('-7 days'));
-    $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
-    $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
-    
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$user_id, $week_ago, $today]);
     $week_count = $stmt->fetchColumn();
     
+    // هفته قبل (7 روز قبل از هفته جاری)
+    $prev_week_start = jDateTime::date('Y/m/d', strtotime('-14 days'));
+    $prev_week_end = jDateTime::date('Y/m/d', strtotime('-8 days'));
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$user_id, $prev_week_start, $prev_week_end]);
+    $prev_week_count = $stmt->fetchColumn();
+    
+    // ========== ماه جاری (30 روز اخیر) ==========
+    $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$user_id, $month_ago, $today]);
     $month_count = $stmt->fetchColumn();
     
+    // ماه قبل (30 روز قبل از ماه جاری)
+    $prev_month_start = jDateTime::date('Y/m/d', strtotime('-60 days'));
+    $prev_month_end = jDateTime::date('Y/m/d', strtotime('-31 days'));
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$user_id, $prev_month_start, $prev_month_end]);
+    $prev_month_count = $stmt->fetchColumn();
+    
+    // ========== سال جاری (365 روز اخیر) ==========
+    $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$user_id, $year_ago, $today]);
     $year_count = $stmt->fetchColumn();
     
-    $trend = '';
-    $trend_class = '';
-    if ($yesterday_count > 0) {
-        $change = $today_count - $yesterday_count;
-        $trend = $change > 0 ? "▲ +{$change}" : ($change < 0 ? "▼ {$change}" : "● بدون تغییر");
-        $trend_class = $change > 0 ? "color: #10b981;" : ($change < 0 ? "color: #ef4444;" : "color: #f59e0b;");
+    // سال قبل (365 روز قبل از سال جاری)
+    $prev_year_start = jDateTime::date('Y/m/d', strtotime('-730 days'));
+    $prev_year_end = jDateTime::date('Y/m/d', strtotime('-366 days'));
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$user_id, $prev_year_start, $prev_year_end]);
+    $prev_year_count = $stmt->fetchColumn();
+    
+    // ========== تغییرات ==========
+    
+    // تغییر نسبت به دیروز
+    $trend_diff = $today_count - $yesterday_count;
+    if ($trend_diff > 0) {
+        $trend_text = "▲ +{$trend_diff}";
+        $trend_class = "color: #10b981;";
+        $trend_icon = "📈";
+    } elseif ($trend_diff < 0) {
+        $trend_text = "▼ {$trend_diff}";
+        $trend_class = "color: #ef4444;";
+        $trend_icon = "📉";
     } else {
-        $trend = $today_count > 0 ? "▲ +{$today_count}" : "● بدون سند";
-        $trend_class = $today_count > 0 ? "color: #10b981;" : "color: #6c86a3;";
+        $trend_text = "● 0";
+        $trend_class = "color: #f59e0b;";
+        $trend_icon = "➖";
+    }
+    
+    // تغییر هفته
+    $week_change = '---';
+    $week_change_class = 'avg-change-neutral';
+    if ($prev_week_count > 0) {
+        $diff = $week_count - $prev_week_count;
+        if ($diff > 0) {
+            $week_change = "▲ +{$diff}";
+            $week_change_class = 'avg-change-up';
+        } elseif ($diff < 0) {
+            $week_change = "▼ {$diff}";
+            $week_change_class = 'avg-change-down';
+        } else {
+            $week_change = "● 0";
+            $week_change_class = 'avg-change-neutral';
+        }
+    }
+    
+    // تغییر ماه
+    $month_change = '---';
+    $month_change_class = 'avg-change-neutral';
+    if ($prev_month_count > 0) {
+        $diff = $month_count - $prev_month_count;
+        if ($diff > 0) {
+            $month_change = "▲ +{$diff}";
+            $month_change_class = 'avg-change-up';
+        } elseif ($diff < 0) {
+            $month_change = "▼ {$diff}";
+            $month_change_class = 'avg-change-down';
+        } else {
+            $month_change = "● 0";
+            $month_change_class = 'avg-change-neutral';
+        }
+    }
+    
+    // تغییر سال
+    $year_change = '---';
+    $year_change_class = 'avg-change-neutral';
+    if ($prev_year_count > 0) {
+        $diff = $year_count - $prev_year_count;
+        if ($diff > 0) {
+            $year_change = "▲ +{$diff}";
+            $year_change_class = 'avg-change-up';
+        } elseif ($diff < 0) {
+            $year_change = "▼ {$diff}";
+            $year_change_class = 'avg-change-down';
+        } else {
+            $year_change = "● 0";
+            $year_change_class = 'avg-change-neutral';
+        }
     }
     
     echo json_encode([
@@ -410,11 +538,15 @@ if ($action == 'get_user_stats') {
         'most_count' => $most_count,
         'least_company' => $least_company,
         'least_count' => $least_count,
-        'week_count' => $week_count,
-        'month_count' => $month_count,
-        'year_count' => $year_count,
-        'trend' => $trend,
-        'trend_class' => $trend_class
+        'trend_text' => $trend_text,
+        'trend_class' => $trend_class,
+        'trend_icon' => $trend_icon,
+        'week_change' => $week_change,
+        'week_change_class' => $week_change_class,
+        'month_change' => $month_change,
+        'month_change_class' => $month_change_class,
+        'year_change' => $year_change,
+        'year_change_class' => $year_change_class
     ]);
     exit;
 }
@@ -427,6 +559,7 @@ if ($action == 'get_admin_users_stats') {
     }
     
     $today = jDateTime::date('Y/m/d');
+    $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
     
     $stmt = $db->query("SELECT id, fullname, unit_name FROM users WHERE is_admin = 0 ORDER BY fullname");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -435,44 +568,141 @@ if ($action == 'get_admin_users_stats') {
     foreach ($users as $user) {
         $user_id_val = $user['id'];
         
+        // اسناد امروز
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
         $stmt->execute([$user_id_val, $today]);
-        $pending_today = $stmt->fetchColumn();
+        $today_count = $stmt->fetchColumn();
         
-        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
-        $stmt->execute([$user_id_val]);
-        $total_docs = $stmt->fetchColumn();
-        
-        $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
+        // اسناد دیروز
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
         $stmt->execute([$user_id_val, $yesterday]);
         $yesterday_count = $stmt->fetchColumn();
         
+        // کل اسناد ثبت شده
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
+        $stmt->execute([$user_id_val]);
+        $total_docs = $stmt->fetchColumn();
+        
+        // هفته جاری (7 روز اخیر)
         $week_ago = jDateTime::date('Y/m/d', strtotime('-7 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $week_ago, $today]);
         $week_count = $stmt->fetchColumn();
         
+        // هفته قبل (7 روز قبل از هفته جاری)
+        $prev_week_start = jDateTime::date('Y/m/d', strtotime('-14 days'));
+        $prev_week_end = jDateTime::date('Y/m/d', strtotime('-8 days'));
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+        $stmt->execute([$user_id_val, $prev_week_start, $prev_week_end]);
+        $prev_week_count = $stmt->fetchColumn();
+        
+        // ماه جاری (30 روز اخیر)
         $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $month_ago, $today]);
         $month_count = $stmt->fetchColumn();
         
+        // ماه قبل (30 روز قبل از ماه جاری)
+        $prev_month_start = jDateTime::date('Y/m/d', strtotime('-60 days'));
+        $prev_month_end = jDateTime::date('Y/m/d', strtotime('-31 days'));
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+        $stmt->execute([$user_id_val, $prev_month_start, $prev_month_end]);
+        $prev_month_count = $stmt->fetchColumn();
+        
+        // سال جاری (365 روز اخیر)
         $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $year_ago, $today]);
         $year_count = $stmt->fetchColumn();
         
+        // سال قبل (365 روز قبل از سال جاری)
+        $prev_year_start = jDateTime::date('Y/m/d', strtotime('-730 days'));
+        $prev_year_end = jDateTime::date('Y/m/d', strtotime('-366 days'));
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+        $stmt->execute([$user_id_val, $prev_year_start, $prev_year_end]);
+        $prev_year_count = $stmt->fetchColumn();
+        
+        // ========== تغییرات ==========
+        
+        // تغییر نسبت به دیروز
+        $trend_diff = $today_count - $yesterday_count;
+        if ($trend_diff > 0) {
+            $trend_text = "▲ +{$trend_diff}";
+            $trend_class = 'trend-up';
+        } elseif ($trend_diff < 0) {
+            $trend_text = "▼ {$trend_diff}";
+            $trend_class = 'trend-down';
+        } else {
+            $trend_text = "● 0";
+            $trend_class = 'trend-neutral';
+        }
+        
+        // تغییر هفته
+        $week_change = '---';
+        $week_change_class = 'avg-change-neutral';
+        if ($prev_week_count > 0) {
+            $diff = $week_count - $prev_week_count;
+            if ($diff > 0) {
+                $week_change = "▲ +{$diff}";
+                $week_change_class = 'avg-change-up';
+            } elseif ($diff < 0) {
+                $week_change = "▼ {$diff}";
+                $week_change_class = 'avg-change-down';
+            } else {
+                $week_change = "● 0";
+                $week_change_class = 'avg-change-neutral';
+            }
+        }
+        
+        // تغییر ماه
+        $month_change = '---';
+        $month_change_class = 'avg-change-neutral';
+        if ($prev_month_count > 0) {
+            $diff = $month_count - $prev_month_count;
+            if ($diff > 0) {
+                $month_change = "▲ +{$diff}";
+                $month_change_class = 'avg-change-up';
+            } elseif ($diff < 0) {
+                $month_change = "▼ {$diff}";
+                $month_change_class = 'avg-change-down';
+            } else {
+                $month_change = "● 0";
+                $month_change_class = 'avg-change-neutral';
+            }
+        }
+        
+        // تغییر سال
+        $year_change = '---';
+        $year_change_class = 'avg-change-neutral';
+        if ($prev_year_count > 0) {
+            $diff = $year_count - $prev_year_count;
+            if ($diff > 0) {
+                $year_change = "▲ +{$diff}";
+                $year_change_class = 'avg-change-up';
+            } elseif ($diff < 0) {
+                $year_change = "▼ {$diff}";
+                $year_change_class = 'avg-change-down';
+            } else {
+                $year_change = "● 0";
+                $year_change_class = 'avg-change-neutral';
+            }
+        }
+        
         $result[] = [
             'id' => $user_id_val,
             'fullname' => $user['fullname'],
             'unit_name' => $user['unit_name'],
-            'pending_today' => $pending_today,
+            'pending_today' => $today_count,
             'total_docs' => $total_docs,
             'yesterday_count' => $yesterday_count,
-            'week_count' => $week_count,
-            'month_count' => $month_count,
-            'year_count' => $year_count
+            'trend_text' => $trend_text,
+            'trend_class' => $trend_class,
+            'week_change' => $week_change,
+            'week_change_class' => $week_change_class,
+            'month_change' => $month_change,
+            'month_change_class' => $month_change_class,
+            'year_change' => $year_change,
+            'year_change_class' => $year_change_class
         ];
     }
     
@@ -623,6 +853,117 @@ if ($action == 'get_all_archived_dates') {
     exit;
 }
 
+// ========== ذخیره توضیحات برای تاریخ تحویل ==========
+if ($action == 'add_delivery_description') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $delivery_date = $data['delivery_date'] ?? '';
+    $description = $data['description'] ?? '';
+    
+    if (empty($delivery_date)) {
+        echo json_encode(['success' => false, 'error' => 'تاریخ تحویل مشخص نیست']);
+        exit;
+    }
+    
+    // اطمینان از وجود رکورد
+    $stmt = $db->prepare("INSERT IGNORE INTO delivery_approvals (user_id, delivery_date) VALUES (?, ?)");
+    $stmt->execute([$user_id, $delivery_date]);
+    
+    // ذخیره توضیح در دیتابیس
+    $stmt = $db->prepare("UPDATE delivery_approvals SET description = ? WHERE user_id = ? AND delivery_date = ?");
+    $stmt->execute([$description, $user_id, $delivery_date]);
+    
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+// ========== دریافت توضیحات برای تاریخ تحویل ==========
+if ($action == 'get_delivery_description') {
+    $delivery_date = $_GET['delivery_date'] ?? '';
+    
+    $stmt = $db->prepare("SELECT description FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
+    $stmt->execute([$user_id, $delivery_date]);
+    $description = $stmt->fetchColumn();
+    
+    echo json_encode(['success' => true, 'description' => $description]);
+    exit;
+}
+
+// ========== دریافت دسترسی کاربر به بایگانی دیگران ==========
+if ($action == 'get_user_archive_permission') {
+    $stmt = $db->prepare("SELECT can_view_all_archives FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $can_view = $stmt->fetchColumn();
+    
+    echo json_encode(['success' => true, 'can_view_all' => $can_view == 1]);
+    exit;
+}
+
+// دریافت لیست همه کاربران برای انتخاب
+if ($action == 'get_all_users_for_archive') {
+    $stmt = $db->query("SELECT id, fullname, unit_name FROM users WHERE is_admin = 0 ORDER BY fullname");
+    $users = $stmt->fetchAll();
+    echo json_encode(['success' => true, 'users' => $users]);
+    exit;
+}
+
+// ========== دریافت بایگانی یک کاربر خاص (فقط ۲ تاریخ آخر) ==========
+if ($action == 'get_archived_delivery_dates_for_user') {
+    $target_user_id = $_GET['user_id'] ?? 0;
+    if (empty($target_user_id)) {
+        echo json_encode(['success' => false, 'error' => 'User ID required']);
+        exit;
+    }
+    
+    // فقط ۲ تاریخ آخر
+    $sql = "SELECT DISTINCT da.delivery_date 
+            FROM delivery_approvals da 
+            WHERE da.user_id = :user_id 
+            AND da.user_approved_at IS NOT NULL 
+            AND da.admin_approved_at IS NOT NULL 
+            ORDER BY da.delivery_date DESC 
+            LIMIT 2";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':user_id' => $target_user_id]);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $formatted = [];
+    foreach ($results as $row) {
+        $formatted[] = [
+            'delivery_date' => toPersianNumber($row['delivery_date']),
+            'delivery_date_raw' => $row['delivery_date']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'dates' => $formatted]);
+    exit;
+}
+
+// ========== دریافت بایگانی خود کاربر (همه تاریخ‌ها) ==========
+if ($action == 'get_my_archived_dates') {
+    $sql = "SELECT DISTINCT da.delivery_date 
+            FROM delivery_approvals da 
+            WHERE da.user_id = :user_id 
+            AND da.user_approved_at IS NOT NULL 
+            AND da.admin_approved_at IS NOT NULL 
+            ORDER BY da.delivery_date DESC";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':user_id' => $user_id]);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $formatted = [];
+    foreach ($results as $row) {
+        $formatted[] = [
+            'delivery_date' => toPersianNumber($row['delivery_date']),
+            'delivery_date_raw' => $row['delivery_date']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'dates' => $formatted]);
+    exit;
+}
+
 // ============================================================
 // ========== فقط ادمین از اینجا به بعد =======================
 // ============================================================
@@ -700,7 +1041,7 @@ if ($action == 'get_admin_stats') {
 
 // ========== دریافت کاربران ==========
 if ($action == 'get_users') {
-    $stmt = $db->query("SELECT id, username, fullname, unit_name, require_doc_date, lock_delivery_date, 
+    $stmt = $db->query("SELECT id, username, fullname, unit_name, require_doc_date, lock_delivery_date, can_view_all_archives,
                         (SELECT COUNT(*) FROM documents WHERE user_id = users.id) as total_docs 
                         FROM users WHERE is_admin = 0 ORDER BY unit_name");
     $users = $stmt->fetchAll();
@@ -724,8 +1065,8 @@ if ($action == 'add_user') {
         exit;
     }
     
-    $stmt = $db->prepare("INSERT INTO users (username, password, fullname, unit_name, require_doc_date, is_admin) 
-                          VALUES (?, ?, ?, ?, ?, 0)");
+    $stmt = $db->prepare("INSERT INTO users (username, password, fullname, unit_name, require_doc_date, is_admin, can_view_all_archives) 
+                          VALUES (?, ?, ?, ?, ?, 0, 0)");
     $result = $stmt->execute([$username, $password, $fullname, $unit_name, $require_doc_date]);
     
     echo json_encode(['success' => $result]);
@@ -740,6 +1081,7 @@ if ($action == 'update_user') {
     $username = $data['username'] ?? '';
     $unit_name = $data['unit_name'] ?? '';
     $require_doc_date = $data['require_doc_date'] ?? 0;
+    $can_view_all_archives = $data['can_view_all_archives'] ?? 0;
     $password = $data['password'] ?? '';
     
     $check = $db->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
@@ -751,12 +1093,30 @@ if ($action == 'update_user') {
     
     if (!empty($password)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $db->prepare("UPDATE users SET username=?, fullname=?, unit_name=?, require_doc_date=?, password=? WHERE id=? AND is_admin=0");
-        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $hashed_password, $id]);
+        $stmt = $db->prepare("UPDATE users SET username=?, fullname=?, unit_name=?, require_doc_date=?, can_view_all_archives=?, password=? WHERE id=? AND is_admin=0");
+        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $can_view_all_archives, $hashed_password, $id]);
     } else {
-        $stmt = $db->prepare("UPDATE users SET username=?, fullname=?, unit_name=?, require_doc_date=? WHERE id=? AND is_admin=0");
-        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $id]);
+        $stmt = $db->prepare("UPDATE users SET username=?, fullname=?, unit_name=?, require_doc_date=?, can_view_all_archives=? WHERE id=? AND is_admin=0");
+        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $can_view_all_archives, $id]);
     }
+    echo json_encode(['success' => $result]);
+    exit;
+}
+
+// ========== تغییر دسترسی بایگانی کاربر ==========
+if ($action == 'toggle_archive_permission') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $data = json_decode(file_get_contents('php://input'), true);
+    $target_user_id = $data['user_id'] ?? 0;
+    $can_view_all_archives = $data['can_view_all_archives'] ?? 0;
+    
+    $stmt = $db->prepare("UPDATE users SET can_view_all_archives = ? WHERE id = ? AND is_admin = 0");
+    $result = $stmt->execute([$can_view_all_archives, $target_user_id]);
+    
     echo json_encode(['success' => $result]);
     exit;
 }
@@ -986,6 +1346,24 @@ if ($action == 'get_archive_list') {
     }
     
     echo json_encode(['success' => true, 'approvals' => $approvals]);
+    exit;
+}
+
+// ========== تغییر دسترسی بایگانی کاربر ==========
+if ($action == 'toggle_archive_permission') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $data = json_decode(file_get_contents('php://input'), true);
+    $target_user_id = $data['user_id'] ?? 0;
+    $can_view_all_archives = $data['can_view_all_archives'] ?? 0;
+    
+    $stmt = $db->prepare("UPDATE users SET can_view_all_archives = ? WHERE id = ? AND is_admin = 0");
+    $result = $stmt->execute([$can_view_all_archives, $target_user_id]);
+    
+    echo json_encode(['success' => $result]);
     exit;
 }
 

@@ -8,32 +8,74 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$fullname = $_SESSION['fullname'];
-$gender = $_SESSION['gender'];
-$unit_name = $_SESSION['unit_name'];
-$is_admin = $_SESSION['is_admin'] ?? 0;
-
-// دریافت تاریخ تحویل از پارامترها
+// دریافت تاریخ تحویل
 $delivery_date = isset($_GET['delivery_date']) ? $_GET['delivery_date'] : '';
 
-// اگر ادمین هست و user_id ارسال شده
-if (isset($_GET['user_id']) && is_numeric($_GET['user_id']) && $is_admin) {
-    $user_id = (int)$_GET['user_id'];
-    $stmt = $db->prepare("SELECT fullname, gender, unit_name FROM users WHERE id = ?");
-    $stmt->execute([$user_id]);
-    $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($userInfo) {
-        $fullname = $userInfo['fullname'];
-        $gender = $userInfo['gender'];
-        $unit_name = $userInfo['unit_name'];
-    }
-}
-
-// بررسی وجود تاریخ تحویل
 if (empty($delivery_date)) {
     die("تاریخ تحویل مشخص نشده است");
 }
+
+// ========== تعیین user_id ==========
+$logged_in_user_id = $_SESSION['user_id'];
+$is_admin = $_SESSION['is_admin'] ?? 0;
+
+// بررسی دسترسی کاربر به بایگانی کاربران
+$can_view_all = false;
+if (!$is_admin) {
+    $stmt = $db->prepare("SELECT can_view_all_archives FROM users WHERE id = ?");
+    $stmt->execute([$logged_in_user_id]);
+    $can_view_all = $stmt->fetchColumn() == 1;
+}
+
+// اولویت 1: user_id در URL (اگر ادمین است یا دسترسی دارد)
+if (isset($_GET['user_id']) && is_numeric($_GET['user_id'])) {
+    $url_user_id = (int)$_GET['user_id'];
+    if ($is_admin || $can_view_all) {
+        $user_id = $url_user_id;
+    } else {
+        $user_id = $logged_in_user_id;
+    }
+} else {
+    // اولویت 2: از سشن (کاربر لاگین شده)
+    $user_id = $logged_in_user_id;
+}
+
+// دریافت اطلاعات کاربر
+$fullname = '';
+$unit_name = '';
+$stmt = $db->prepare("SELECT fullname, unit_name FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($userInfo) {
+    $fullname = $userInfo['fullname'];
+    $unit_name = $userInfo['unit_name'];
+}
+
+// دریافت اسناد کاربر بر اساس تاریخ تحویل
+$stmt = $db->prepare("SELECT d.*, c.name as company_name 
+                      FROM documents d 
+                      JOIN companies c ON d.company_id = c.id 
+                      WHERE d.user_id = ? AND d.delivery_date = ? 
+                      ORDER BY d.id ASC");
+$stmt->execute([$user_id, $delivery_date]);
+$documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+if (count($documents) == 0) {
+    die("هیچ سندی برای این کاربر در تاریخ تحویل '$delivery_date' یافت نشد");
+}
+
+// دریافت اطلاعات کاربر
+$fullname = '';
+$unit_name = '';
+$stmt = $db->prepare("SELECT fullname, unit_name FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($userInfo) {
+    $fullname = $userInfo['fullname'];
+    $unit_name = $userInfo['unit_name'];
+}
+
+$is_admin = $_SESSION['is_admin'] ?? 0;
 
 // دریافت اسناد کاربر بر اساس تاریخ تحویل
 $stmt = $db->prepare("SELECT d.*, c.name as company_name 
@@ -102,20 +144,30 @@ foreach ($documents as $doc) {
     }
 }
 
-// گزارش ذخیره شده در سشن
-$report = $_SESSION['print_report'] ?? '';
-
-// وضعیت تایید بر اساس تاریخ تحویل
-$stmt = $db->prepare("SELECT * FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
+// ========== دریافت توضیحات از دیتابیس ==========
+$stmt = $db->prepare("SELECT description FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
 $stmt->execute([$user_id, $delivery_date]);
-$approval = $stmt->fetch();
+$report = $stmt->fetchColumn();
+if (!$report) $report = '';
+// ============================================
 
-$has_user_approval = $approval && !empty($approval['user_approved_at']);
-$has_admin_approval = $approval && !empty($approval['admin_approved_at']);
-
+// ========== تعیین وضعیت امضا ==========
 $user_signature_file = 'storage/signatures/users/' . $user_id . '.png';
 $admin_signature_file = 'storage/signatures/admin/admin.png';
 
+// بررسی تأیید کاربر برای این تاریخ
+$stmt = $db->prepare("SELECT user_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
+$stmt->execute([$user_id, $delivery_date]);
+$user_approved = $stmt->fetchColumn();
+
+// بررسی تأیید ادمین برای این تاریخ
+$stmt = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
+$stmt->execute([$user_id, $delivery_date]);
+$admin_approved = $stmt->fetchColumn();
+
+$has_user_approval = file_exists($user_signature_file) && !empty($user_approved);
+$has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approved);
+// =========================================
 ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
@@ -759,7 +811,7 @@ $admin_signature_file = 'storage/signatures/admin/admin.png';
                         </thead>
                         <tbody>
                             <?php foreach($page['right'] as $index => $doc): ?>
-                            <td>
+                            <tr>
                                 <td><?php echo $page['start_row'] + 20 + $index; ?></td>
                                 <td><?php echo htmlspecialchars($doc['doc_number']); ?></td>
                                 <td><?php echo $doc['doc_date'] == '-' ? '---' : htmlspecialchars($doc['doc_date']); ?></td>
@@ -767,7 +819,7 @@ $admin_signature_file = 'storage/signatures/admin/admin.png';
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
-                    </table>
+                    <td>
                 </div>
             </div>
             <?php endif; ?>
@@ -842,69 +894,14 @@ $admin_signature_file = 'storage/signatures/admin/admin.png';
     <?php endforeach; ?>
     
     <script>
-    // تنظیم متن دکمه بر اساس تعداد صفحات
-    const pages = document.querySelectorAll('.print-container');
-    const btnText = document.getElementById('downloadBtnText');
-    if (pages.length > 1) {
-        btnText.innerHTML = 'دانلود عکس همه صفحات (' + pages.length + ' صفحه)';
-    } else {
-        btnText.innerHTML = 'دانلود عکس';
+    // ========== توابع کمکی ==========
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
     
-    // ========== تابع دانلود عکس ==========
-    async function downloadAllPagesAsImage() {
-        const pages = document.querySelectorAll('.print-container');
-        const btn = document.getElementById('downloadImageBtn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال پردازش...';
-        btn.disabled = true;
-        
-        if (pages.length === 1) {
-            const noPrintElements = pages[0].querySelectorAll('.no-print');
-            noPrintElements.forEach(el => el.style.display = 'none');
-            
-            const canvas = await html2canvas(pages[0], {
-                scale: 2,
-                backgroundColor: '#ffffff',
-                useCORS: true
-            });
-            
-            noPrintElements.forEach(el => el.style.display = '');
-            
-            const link = document.createElement('a');
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-            link.download = `document-${timestamp}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-        } else {
-            for (let i = 0; i < pages.length; i++) {
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
-                
-                const noPrintElements = pages[i].querySelectorAll('.no-print');
-                noPrintElements.forEach(el => el.style.display = 'none');
-                
-                const canvas = await html2canvas(pages[i], {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    useCORS: true
-                });
-                
-                noPrintElements.forEach(el => el.style.display = '');
-                
-                const link = document.createElement('a');
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                link.download = `page_${i+1}_${timestamp}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                await new Promise(r => setTimeout(r, 500));
-            }
-        }
-        
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        alert('✅ دانلود با موفقیت انجام شد');
+    function closePrintWindow() {
+        window.close();
     }
     
     // ========== تابع دانلود PDF ==========
@@ -916,7 +913,7 @@ $admin_signature_file = 'storage/signatures/admin/admin.png';
         btn.disabled = true;
         
         const { jsPDF } = window.jspdf;
-        const pdfWidth = 297; // A4 landscape width in mm
+        const pdfWidth = 297;
         let pdf = null;
         
         for (let i = 0; i < pages.length; i++) {
@@ -965,10 +962,69 @@ $admin_signature_file = 'storage/signatures/admin/admin.png';
         alert('✅ PDF با موفقیت دانلود شد');
     }
     
-    function closePrintWindow() {
-        window.location.href = 'index.php';
-    }
+    // ========== تابع دانلود عکس ==========
+    async function downloadAllPagesAsImage() {
+        const pages = document.querySelectorAll('.print-container');
+        const btn = document.getElementById('downloadImageBtn');
+        const btnText = document.getElementById('downloadBtnText');
+        const originalText = btnText.innerHTML;
+        btnText.innerHTML = 'در حال آماده‌سازی...';
+        btn.disabled = true;
         
+        try {
+            const zip = new JSZip();
+            let successCount = 0;
+            
+            for (let i = 0; i < pages.length; i++) {
+                btnText.innerHTML = `در حال پردازش صفحه ${i+1} از ${pages.length}...`;
+                
+                const noPrintElements = pages[i].querySelectorAll('.no-print');
+                noPrintElements.forEach(el => el.style.display = 'none');
+                
+                try {
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true
+                    });
+                    
+                    noPrintElements.forEach(el => el.style.display = '');
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const base64Data = imgData.split(',')[1];
+                    zip.file(`page_${i+1}.png`, base64Data, { base64: true });
+                    successCount++;
+                    
+                } catch (err) {
+                    console.error(err);
+                    noPrintElements.forEach(el => el.style.display = '');
+                }
+            }
+            
+            if (successCount > 0) {
+                const content = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(content);
+                link.href = url;
+                link.download = `documents_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                alert(`✅ ${successCount} تصویر با موفقیت دانلود شد`);
+            } else {
+                alert('❌ خطا در ایجاد تصاویر');
+            }
+            
+        } catch (err) {
+            console.error(err);
+            alert('❌ خطا در ایجاد تصاویر');
+        }
+        
+        btnText.innerHTML = originalText;
+        btn.disabled = false;
+    }
+    
     // ========== اتصال رویدادها به دکمه‌ها ==========
     document.getElementById('downloadImageBtn').addEventListener('click', downloadAllPagesAsImage);
     document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);

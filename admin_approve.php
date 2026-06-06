@@ -2,7 +2,6 @@
 session_start();
 require_once 'config/database.php';
 
-// تنظیم هدر JSON فقط برای درخواست‌های POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     header('Content-Type: application/json');
 }
@@ -16,30 +15,27 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     exit;
 }
 
-// دریافت پارامترها
 $user_id = $_GET['user_id'] ?? $_POST['user_id'] ?? '';
 $delivery_date = $_GET['delivery_date'] ?? $_POST['delivery_date'] ?? '';
+$admin_id = $_SESSION['user_id'];
 
-// اعتبارسنجی
-if (empty($user_id)) {
-    die("خطا: شناسه کاربر مشخص نشده است");
+if (empty($user_id) || empty($delivery_date)) {
+    die("خطا: شناسه کاربر یا تاریخ تحویل مشخص نشده است");
 }
 
-if (empty($delivery_date)) {
-    die("خطا: تاریخ تحویل مشخص نشده است");
-}
+// اطمینان از وجود رکورد در delivery_approvals برای این تاریخ
+$stmt = $db->prepare("INSERT IGNORE INTO delivery_approvals (user_id, delivery_date) VALUES (?, ?)");
+$stmt->execute([$user_id, $delivery_date]);
 
 $upload_dir = 'storage/signatures/admin/';
 if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-
-// مسیر فایل امضای ادمین (فقط یک فایل ثابت)
 $admin_signature_file = $upload_dir . 'admin.png';
 
-// پردازش POST (ذخیره امضا - جایگزینی امضای قبلی)
+// پردازش POST (ذخیره امضای ادمین)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['admin_signature'])) {
     if (move_uploaded_file($_FILES['admin_signature']['tmp_name'], $admin_signature_file)) {
-        $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW(), admin_signature_used = ? WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$admin_signature_file, $user_id, $delivery_date]);
+        $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW() WHERE user_id = ? AND delivery_date = ?");
+        $stmt->execute([$user_id, $delivery_date]);
         
         echo json_encode(['success' => true, 'message' => 'تایید نهایی با موفقیت ثبت شد']);
         exit;
@@ -49,11 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['admin_signature'])) {
     }
 }
 
-// استفاده از امضای قبلی ادمین (بدون کپی، فقط ارجاع)
+// استفاده از امضای قبلی ادمین
 if (isset($_GET['use_admin_default'])) {
     if (file_exists($admin_signature_file)) {
-        $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW(), admin_signature_used = ? WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$admin_signature_file, $user_id, $delivery_date]);
+        $stmt = $db->prepare("UPDATE delivery_approvals SET admin_approved_at = NOW() WHERE user_id = ? AND delivery_date = ?");
+        $stmt->execute([$user_id, $delivery_date]);
     }
     header('Location: print.php?user_id=' . urlencode($user_id) . '&delivery_date=' . urlencode($delivery_date) . '&admin_approved=1');
     exit;
@@ -68,13 +64,12 @@ if (isset($_GET['delete_signature'])) {
     exit;
 }
 
-// دریافت اطلاعات کاربر برای نمایش
+$has_admin_signature = file_exists($admin_signature_file);
+
 $stmt = $db->prepare("SELECT fullname, unit_name FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user_info = $stmt->fetch(PDO::FETCH_ASSOC);
 $user_name = $user_info ? $user_info['fullname'] : $user_id;
-
-$has_admin_signature = file_exists($admin_signature_file);
 ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
@@ -92,7 +87,6 @@ $has_admin_signature = file_exists($admin_signature_file);
         button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; margin: 8px; }
         .btn-default { background: #10b981; display: inline-block; text-decoration: none; color: white; padding: 10px 20px; border-radius: 12px; margin: 8px; }
         .btn-delete { background: #ef4444; }
-        .btn-delete:hover { background: #dc2626; }
         .info-box { background: #e0e7ff; padding: 12px; border-radius: 12px; margin-bottom: 15px; }
         hr { margin: 15px 0; }
         .current-signature { margin: 15px 0; padding: 10px; background: #f0fdf4; border-radius: 12px; }
