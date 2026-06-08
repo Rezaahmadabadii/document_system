@@ -568,6 +568,11 @@ if ($action == 'get_admin_users_stats') {
     foreach ($users as $user) {
         $user_id_val = $user['id'];
         
+        // دریافت آخرین تاریخ تحویل این کاربر
+        $stmt = $db->prepare("SELECT MAX(delivery_date) as last_delivery_date FROM documents WHERE user_id = ?");
+        $stmt->execute([$user_id_val]);
+        $last_date = $stmt->fetchColumn();
+        
         // اسناد امروز
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
         $stmt->execute([$user_id_val, $today]);
@@ -622,70 +627,36 @@ if ($action == 'get_admin_users_stats') {
         $stmt->execute([$user_id_val, $prev_year_start, $prev_year_end]);
         $prev_year_count = $stmt->fetchColumn();
         
-        // ========== تغییرات ==========
-        
-        // تغییر نسبت به دیروز
+        // تغییرات نسبت به دیروز
         $trend_diff = $today_count - $yesterday_count;
-        if ($trend_diff > 0) {
-            $trend_text = "▲ +{$trend_diff}";
-            $trend_class = 'trend-up';
-        } elseif ($trend_diff < 0) {
-            $trend_text = "▼ {$trend_diff}";
-            $trend_class = 'trend-down';
-        } else {
-            $trend_text = "● 0";
-            $trend_class = 'trend-neutral';
-        }
+        $trend_text = $trend_diff > 0 ? "▲ +{$trend_diff}" : ($trend_diff < 0 ? "▼ {$trend_diff}" : "● 0");
+        $trend_class = $trend_diff > 0 ? 'trend-up' : ($trend_diff < 0 ? 'trend-down' : 'trend-neutral');
         
-        // تغییر هفته
+        // تغییرات هفته
         $week_change = '---';
         $week_change_class = 'avg-change-neutral';
         if ($prev_week_count > 0) {
             $diff = $week_count - $prev_week_count;
-            if ($diff > 0) {
-                $week_change = "▲ +{$diff}";
-                $week_change_class = 'avg-change-up';
-            } elseif ($diff < 0) {
-                $week_change = "▼ {$diff}";
-                $week_change_class = 'avg-change-down';
-            } else {
-                $week_change = "● 0";
-                $week_change_class = 'avg-change-neutral';
-            }
+            $week_change = $diff > 0 ? "▲ +{$diff}" : ($diff < 0 ? "▼ {$diff}" : "● 0");
+            $week_change_class = $diff > 0 ? 'avg-change-up' : ($diff < 0 ? 'avg-change-down' : 'avg-change-neutral');
         }
         
-        // تغییر ماه
+        // تغییرات ماه
         $month_change = '---';
         $month_change_class = 'avg-change-neutral';
         if ($prev_month_count > 0) {
             $diff = $month_count - $prev_month_count;
-            if ($diff > 0) {
-                $month_change = "▲ +{$diff}";
-                $month_change_class = 'avg-change-up';
-            } elseif ($diff < 0) {
-                $month_change = "▼ {$diff}";
-                $month_change_class = 'avg-change-down';
-            } else {
-                $month_change = "● 0";
-                $month_change_class = 'avg-change-neutral';
-            }
+            $month_change = $diff > 0 ? "▲ +{$diff}" : ($diff < 0 ? "▼ {$diff}" : "● 0");
+            $month_change_class = $diff > 0 ? 'avg-change-up' : ($diff < 0 ? 'avg-change-down' : 'avg-change-neutral');
         }
         
-        // تغییر سال
+        // تغییرات سال
         $year_change = '---';
         $year_change_class = 'avg-change-neutral';
         if ($prev_year_count > 0) {
             $diff = $year_count - $prev_year_count;
-            if ($diff > 0) {
-                $year_change = "▲ +{$diff}";
-                $year_change_class = 'avg-change-up';
-            } elseif ($diff < 0) {
-                $year_change = "▼ {$diff}";
-                $year_change_class = 'avg-change-down';
-            } else {
-                $year_change = "● 0";
-                $year_change_class = 'avg-change-neutral';
-            }
+            $year_change = $diff > 0 ? "▲ +{$diff}" : ($diff < 0 ? "▼ {$diff}" : "● 0");
+            $year_change_class = $diff > 0 ? 'avg-change-up' : ($diff < 0 ? 'avg-change-down' : 'avg-change-neutral');
         }
         
         $result[] = [
@@ -695,6 +666,7 @@ if ($action == 'get_admin_users_stats') {
             'pending_today' => $today_count,
             'total_docs' => $total_docs,
             'yesterday_count' => $yesterday_count,
+            'last_delivery_date' => $last_date,
             'trend_text' => $trend_text,
             'trend_class' => $trend_class,
             'week_change' => $week_change,
@@ -706,8 +678,12 @@ if ($action == 'get_admin_users_stats') {
         ];
     }
     
+    // مرتب‌سازی بر اساس آخرین تاریخ تحویل (جدیدترین در بالا)
     usort($result, function($a, $b) {
-        return $b['total_docs'] - $a['total_docs'];
+        if ($a['last_delivery_date'] == $b['last_delivery_date']) return 0;
+        if ($a['last_delivery_date'] == null) return 1;
+        if ($b['last_delivery_date'] == null) return -1;
+        return strcmp($b['last_delivery_date'], $a['last_delivery_date']);
     });
     
     $max_user = !empty($result) ? $result[0] : null;
@@ -1290,7 +1266,13 @@ if ($action == 'get_all_approved_approvals') {
     
     foreach ($approvals as &$app) {
         $app['delivery_date_persian'] = toPersianNumber($app['delivery_date']);
-        $app['admin_approved_at_persian'] = jDateTime::date('Y/m/d H:i:s', strtotime($app['admin_approved_at']));
+        // تبدیل تاریخ میلادی دیتابیس به شمسی
+        if (!empty($app['admin_approved_at'])) {
+            $timestamp = strtotime($app['admin_approved_at']);
+            $app['admin_approved_at_fa'] = jDateTime::date('Y/m/d', $timestamp);
+        } else {
+            $app['admin_approved_at_fa'] = '-';
+        }
     }
     
     echo json_encode(['success' => true, 'approvals' => $approvals]);
@@ -1339,7 +1321,7 @@ if ($action == 'get_archive_list') {
     foreach ($approvals as &$item) {
         if (!empty($item['admin_approved_at'])) {
             $timestamp = strtotime($item['admin_approved_at']);
-            $item['admin_approved_at_fa'] = jDateTime::date('Y/m/d H:i:s', $timestamp);
+            $item['admin_approved_at_fa'] = jDateTime::date('Y/m/d', $timestamp);
         } else {
             $item['admin_approved_at_fa'] = '-';
         }

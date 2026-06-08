@@ -187,510 +187,66 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     <script src="assets/js/jszip.min.js"></script>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important;
-        }
-        
-        body {
-            background: #e5e7eb;
-            padding: 20px;
-        }
-        
-        .print-container {
-            max-width: 210mm;
-            margin: 0 auto;
-            background: white;
-            padding: 8mm;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .page-break {
-            page-break-before: always;
-            break-before: page;
-            margin-top: 0;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #2c5f8a;
-        }
-        
-        .header h2 {
-            font-size: 1.4rem;
-            margin-bottom: 5px;
-            color: #1a2c3e;
-            font-weight: 800;
-        }
-        
-        .header p {
-            color: #6c86a3;
-            font-size: 0.7rem;
-        }
-        
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 15px 0;
-            padding: 10px 15px;
-            background: #dcfce7;
-            border: 1px solid #bbf7d0;
-            border-radius: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .info-row div {
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .info-row strong {
-            color: #2c5f8a;
-        }
-        
-        .company-stats {
-            margin: 15px 0;
-            padding: 10px 15px;
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 10px;
-        }
-        
-        .company-stats-title {
-            font-weight: bold;
-            font-size: 0.75rem;
-            color: #166534;
-            border-right: 3px solid #22c55e;
-            padding-right: 8px;
-            white-space: nowrap;
-        }
-        
-        .company-stats-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        
-        .company-stat-item {
-            background: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            border: 1px solid #bbf7d0;
-            color: #166534;
-        }
-        
-        .company-stat-item strong {
-            font-weight: bold;
-            color: #2c5f8a;
-        }
-        
-        .two-columns {
-            display: flex;
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        .column {
-            flex: 1;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .single-column {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 15px;
-        }
-        
-        .section-title {
-            background: linear-gradient(135deg, #1a2c3e, #2c5f8a);
-            color: white;
-            padding: 8px 12px;
-            font-weight: 700;
-            font-size: 0.75rem;
-            text-align: center;
-        }
-        
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .data-table th {
-            background: #38bdf8;
-            padding: 10px 8px;
-            border: 1px solid #7dd3fc;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: white;
-            text-align: center;
-            text-shadow: 0 1px 1px rgba(0,0,0,0.2);
-        }
-        
-        .data-table td {
-            padding: 8px 6px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #1a2c3e;
-            background-color: #ffffff;
-        }
-        
-        .data-table tbody tr:nth-child(even) td {
-            background-color: #f0f9ff;
-        }
-        
-        .data-table tbody tr:nth-child(odd) td {
-            background-color: #ffffff;
-        }
-        
-        .data-table tbody tr:hover td {
-            background-color: #fef3c7;
-        }
-        
-        .data-table th:first-child,
-        .data-table td:first-child {
-            width: 40px;
-            min-width: 40px;
-            max-width: 40px;
-        }
-        
-        .data-table th:nth-child(2),
-        .data-table td:nth-child(2) {
-            width: 100px;
-            min-width: 100px;
-        }
-        
-        .data-table th:nth-child(3),
-        .data-table td:nth-child(3) {
-            width: 85px;
-            min-width: 85px;
-        }
-        
-        .data-table th:nth-child(4),
-        .data-table td:nth-child(4) {
-            width: 110px;
-            min-width: 110px;
-        }
-        
-        .data-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .descriptions-section {
-            margin-top: 25px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-        
-        .descriptions-title {
-            background: #38bdf8;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: inline-block;
-            text-shadow: 0 1px 1px rgba(0,0,0,0.2);
-        }
-        
-        .desc-item {
-            background: #f8fafc;
-            margin-bottom: 6px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border-right: 3px solid #38bdf8;
-        }
-        
-        .desc-text {
-            font-size: 0.7rem;
-            color: #1a2c3e;
-            line-height: 1.5;
-        }
-        
-        .report-section {
-            margin: 25px 0 15px 0;
-            padding: 12px;
-            background: #f0f9ff;
-            border-radius: 10px;
-            border-right: 3px solid #38bdf8;
-        }
-        
-        .report-title {
-            font-weight: 700;
-            margin-bottom: 8px;
-            font-size: 0.75rem;
-            color: #0284c7;
-        }
-        
-        .report-content {
-            line-height: 1.6;
-            font-size: 0.7rem;
-            color: #1a2c3e;
-        }
-        
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 35px;
-            padding-top: 20px;
-            border-top: 1px dashed #cbd5e1;
-        }
-        
-        .sign-box {
-            text-align: center;
-            width: 200px;
-        }
-        
-        .sign-line {
-            border-top: 1px solid #1a2c3e;
-            width: 180px;
-            margin-top: 25px;
-            margin-bottom: 8px;
-        }
-        
-        .sign-label {
-            font-size: 0.65rem;
-            color: #475569;
-            font-weight: 500;
-        }
-        
-        .sign-img {
-            max-width: 150px;
-            margin-top: 10px;
-            max-height: 60px;
-        }
-        
-        .sign-btn {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 6px 12px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 0.65rem;
-            transition: all 0.3s ease;
-        }
-        
-        .sign-btn:hover {
-            transform: scale(1.02);
-        }
-        
-        .pending-text {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 6px 12px;
-            background: #fef3c7;
-            color: #d97706;
-            border-radius: 8px;
-            font-size: 0.6rem;
-        }
-        
-        .btn-print, .btn-close {
-            padding: 8px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            margin-bottom: 15px;
-            border: none;
-            font-weight: 600;
-        }
-        
-        .btn-print {
-            background: #2c5f8a;
-            color: white;
-        }
-        
-        .btn-print:hover {
-            background: #1a2c3e;
-        }
-        
-        .btn-close {
-            background: #64748b;
-            color: white;
-            margin-right: 10px;
-        }
-        
-        .btn-close:hover {
-            background: #475569;
-        }
-        
-        .doc-count-badge {
-            background-color: #fef08a;
-            color: #854d0e;
-            font-weight: bold;
-            font-size: 0.9rem;
-            padding: 3px 10px;
-            border-radius: 20px;
-            display: inline-block;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important; }
+        body { background: #e5e7eb; padding: 20px; }
+        .print-container { max-width: 210mm; margin: 0 auto; background: white; padding: 8mm; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .page-break { page-break-before: always; break-before: page; margin-top: 0; }
+        .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid #2c5f8a; }
+        .header h2 { font-size: 1.4rem; margin-bottom: 5px; color: #1a2c3e; font-weight: 800; }
+        .header p { color: #6c86a3; font-size: 0.7rem; }
+        .info-row { display: flex; justify-content: space-between; margin: 15px 0; padding: 10px 15px; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 10px; flex-wrap: wrap; gap: 10px; }
+        .info-row div { font-size: 0.75rem; font-weight: 500; }
+        .info-row strong { color: #2c5f8a; }
+        .company-stats { margin: 15px 0; padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; }
+        .company-stats-title { font-weight: bold; font-size: 0.7rem; color: #166534; border-right: 3px solid #22c55e; padding-right: 8px; white-space: nowrap; }
+        .company-stats-items { display: flex; flex-wrap: wrap; gap: 8px; }
+        .company-stat-item { background: white; padding: 2px 8px; border-radius: 16px; font-size: 0.6rem; border: 1px solid #bbf7d0; color: #166534; }
+        .company-stat-item strong { font-weight: bold; color: #2c5f8a; }
+        .two-columns { display: flex; gap: 20px; margin-top: 15px; }
+        .column { flex: 1; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+        .single-column { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-top: 15px; }
+        .section-title { background: linear-gradient(135deg, #1a2c3e, #2c5f8a); color: white; padding: 8px 12px; font-weight: 700; font-size: 0.75rem; text-align: center; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #38bdf8; padding: 10px 8px; border: 1px solid #7dd3fc; font-size: 0.75rem; font-weight: 700; color: white; text-align: center; }
+        .data-table td { padding: 8px 6px; border: 1px solid #e2e8f0; text-align: center; font-size: 0.7rem; color: #1a2c3e; background: #fff; }
+        .data-table tbody tr:nth-child(even) td { background: #f0f9ff; }
+        .data-table tbody tr:nth-child(odd) td { background: #fff; }
+        .descriptions-section { margin-top: 25px; page-break-inside: avoid; break-inside: avoid; }
+        .descriptions-title { background: #38bdf8; color: white; padding: 6px 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .desc-item { background: #f8fafc; margin-bottom: 6px; padding: 8px 12px; border-radius: 8px; border-right: 3px solid #38bdf8; }
+        .desc-text { font-size: 0.7rem; color: #1a2c3e; line-height: 1.5; }
+        .report-section { margin: 25px 0 15px; padding: 12px; background: #f0f9ff; border-radius: 10px; border-right: 3px solid #38bdf8; }
+        .report-title { font-weight: 700; margin-bottom: 8px; font-size: 0.75rem; color: #0284c7; }
+        .report-content { line-height: 1.6; font-size: 0.7rem; color: #1a2c3e; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 35px; padding-top: 20px; border-top: 1px dashed #cbd5e1; gap: 40px; }
+        .sign-box { flex: 1; text-align: center; }
+        .sign-line { border-top: 1px solid #1a2c3e; width: 80%; margin: 25px auto 8px auto; }
+        .sign-label { font-size: 0.65rem; color: #475569; font-weight: 500; }
+        .sign-img { max-width: 150px; margin-top: 10px; max-height: 60px; }
+        .sign-btn { display: inline-block; margin-top: 10px; padding: 6px 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-size: 0.65rem; }
+        .btn-print, .btn-close { padding: 8px 20px; border-radius: 10px; cursor: pointer; font-size: 0.75rem; margin-bottom: 15px; border: none; font-weight: 600; }
+        .btn-print { background: #2c5f8a; color: white; }
+        .btn-close { background: #64748b; color: white; margin-right: 10px; }
+        .doc-count-badge { background: #fef08a; color: #854d0e; font-weight: bold; font-size: 0.9rem; padding: 3px 10px; border-radius: 20px; display: inline-block; }
         
         @media print {
-            body {
-                background: white;
-                padding: 0;
-                margin: 0;
-            }
-            .print-container {
-                padding: 0;
-                margin: 0;
-                width: 100%;
-                max-width: 100%;
-                box-shadow: none;
-            }
-            .no-print {
-                display: none;
-            }
-            .two-columns {
-                display: flex;
-                gap: 15px;
-                margin-top: 15px;
-            }
-            .column {
-                flex: 1;
-                border: 1px solid #cbd5e1;
-                border-radius: 8px;
-                overflow: hidden;
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-            .single-column {
-                border: 1px solid #cbd5e1;
-                border-radius: 8px;
-                overflow: hidden;
-                margin-top: 15px;
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-            .data-table th {
-                background: #e2e8f0;
-                padding: 6px 4px;
-                border: 1px solid #cbd5e1;
-                font-size: 0.65rem;
-                font-weight: 700;
-                color: #1a2c3e;
-                text-align: center;
-            }
-            .data-table td {
-                padding: 4px 3px;
-                border: 1px solid #cbd5e1;
-                text-align: center;
-                font-size: 0.6rem;
-                color: #1a2c3e;
-                background-color: white;
-            }
-            .data-table th:first-child,
-            .data-table td:first-child {
-                width: 35px;
-                min-width: 35px;
-            }
-            .data-table th:nth-child(2),
-            .data-table td:nth-child(2) {
-                width: 85px;
-                min-width: 85px;
-            }
-            .data-table th:nth-child(3),
-            .data-table td:nth-child(3) {
-                width: 70px;
-                min-width: 70px;
-            }
-            .data-table th:nth-child(4),
-            .data-table td:nth-child(4) {
-                width: 90px;
-                min-width: 90px;
-            }
-            .header h2 {
-                font-size: 1rem;
-            }
-            .header p {
-                font-size: 0.6rem;
-            }
-            .info-row {
-                margin: 8px 0;
-                padding: 6px 10px;
-            }
-            .info-row div {
-                font-size: 0.6rem;
-            }
-            .section-title {
-                padding: 4px 8px;
-                font-size: 0.6rem;
-            }
-            .descriptions-section, .report-section {
-                margin-top: 15px;
-            }
-            .descriptions-title, .report-title {
-                font-size: 0.65rem;
-                padding: 4px 8px;
-            }
-            .desc-text, .report-content {
-                font-size: 0.55rem;
-            }
-            .signatures {
-                margin-top: 25px;
-                padding-top: 15px;
-            }
-            .sign-box {
-                width: 150px;
-            }
-            .sign-line {
-                width: 130px;
-                margin-top: 15px;
-            }
-            .sign-label {
-                font-size: 0.55rem;
-            }
-            .sign-img {
-                max-width: 100px;
-                max-height: 40px;
-            }
-            thead {
-                display: table-header-group;
-            }
-            .two-columns, .single-column, .column {
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-            .company-stats {
-                margin: 6px 0;
-                padding: 4px 6px;
-            }
-            .company-stat-item {
-                font-size: 0.55rem;
-                padding: 2px 6px;
-            }
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; margin: 0; }
+            .print-container { padding: 0; margin: 0; width: 100%; max-width: 100%; box-shadow: none; }
+            .signatures { display: flex !important; justify-content: space-between !important; flex-direction: row !important; gap: 40px !important; }
+            .sign-box { flex: 1 !important; text-align: center !important; }
+            .info-row { display: flex !important; justify-content: space-between !important; flex-direction: row !important; }
+            .two-columns { display: flex !important; flex-direction: row !important; gap: 20px !important; }
+            .column { flex: 1 !important; }
+            .company-stats { display: block !important; }
+            .company-stats-items { display: flex !important; flex-wrap: wrap !important; }
         }
         
-        @media (max-width: 900px) {
-            .two-columns {
-                flex-direction: column;
-            }
-            .info-row {
-                flex-direction: column;
-                gap: 8px;
-            }
-            .signatures {
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-            }
-            .company-stats-items {
-                flex-direction: column;
-                gap: 5px;
-            }
+        @media (max-width: 768px) {
+            .signatures { flex-direction: column; gap: 20px; }
+            .info-row { flex-direction: column; }
+            .two-columns { flex-direction: column; }
+            .company-stats-items { justify-content: center; }
         }
     </style>
 </head>
@@ -859,7 +415,6 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                     <div class="sign-label">امضاء تحویل‌دهنده</div>
                     <?php if(file_exists($user_signature_file) && $has_user_approval): ?>
                         <img src="<?php echo $user_signature_file . '?t=' . time(); ?>" class="sign-img">
-                        <div style="font-size:0.55rem; color:#10b981; margin-top:5px;">✅ امضا ثبت شده</div>
                     <?php else: ?>
                         <?php if(!$is_admin && !$has_user_approval): ?>
                             <a href="signature_upload.php?delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-user"><i class="fas fa-pen"></i> ثبت امضا</a>
@@ -876,7 +431,6 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                     <div class="sign-label">امضاء بایگانی</div>
                     <?php if(file_exists($admin_signature_file) && $has_admin_approval): ?>
                         <img src="<?php echo $admin_signature_file . '?t=' . time(); ?>" class="sign-img">
-                        <div style="font-size:0.55rem; color:#10b981; margin-top:5px;">✅ تایید شده</div>
                     <?php else: ?>
                         <?php if($is_admin && $has_user_approval && !$has_admin_approval): ?>
                             <a href="admin_approve.php?user_id=<?php echo $user_id; ?>&delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-admin" onclick="return confirm('آیا از تایید نهایی این اسناد اطمینان دارید؟')"><i class="fas fa-check-circle"></i> تایید نهایی</a>
@@ -905,73 +459,102 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     }
     
     // ========== تابع دانلود PDF ==========
-    async function downloadAsPDF() {
-        const pages = document.querySelectorAll('.print-container');
-        const btn = document.getElementById('downloadPdfBtn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی PDF...';
-        btn.disabled = true;
-        
-        const { jsPDF } = window.jspdf;
-        const pdfWidth = 297;
-        let pdf = null;
-        
-        for (let i = 0; i < pages.length; i++) {
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
-            
-            const noPrintElements = pages[i].querySelectorAll('.no-print');
-            noPrintElements.forEach(el => el.style.display = 'none');
-            
-            try {
-                const canvas = await html2canvas(pages[i], {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    useCORS: true
-                });
-                
-                noPrintElements.forEach(el => el.style.display = '');
-                
-                const imgData = canvas.toDataURL('image/png');
-                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-                
-                if (pdf === null) {
-                    pdf = new jsPDF('l', 'mm', 'a4');
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-                } else {
-                    pdf.addPage('l', 'mm', 'a4');
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-                }
-                
-            } catch (err) {
-                console.error(err);
-                noPrintElements.forEach(el => el.style.display = '');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                alert('❌ خطا در پردازش صفحه ' + (i+1));
-                return;
-            }
-        }
-        
-        if (pdf !== null) {
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-            pdf.save(`document-${timestamp}.pdf`);
-        }
-        
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        alert('✅ PDF با موفقیت دانلود شد');
-    }
+async function downloadAsPDF() {
+    const pages = document.querySelectorAll('.print-container');
+    const btn = document.getElementById('downloadPdfBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی PDF...';
+    btn.disabled = true;
     
-    // ========== تابع دانلود عکس ==========
-    async function downloadAllPagesAsImage() {
-        const pages = document.querySelectorAll('.print-container');
-        const btn = document.getElementById('downloadImageBtn');
-        const btnText = document.getElementById('downloadBtnText');
-        const originalText = btnText.innerHTML;
-        btnText.innerHTML = 'در حال آماده‌سازی...';
-        btn.disabled = true;
+    const { jsPDF } = window.jspdf;
+    const pdfWidth = 297;
+    let pdf = null;
+    
+    for (let i = 0; i < pages.length; i++) {
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
+        
+        const noPrintElements = pages[i].querySelectorAll('.no-print');
+        noPrintElements.forEach(el => el.style.display = 'none');
         
         try {
+            const canvas = await html2canvas(pages[i], {
+                scale: 3,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false
+            });
+            
+            noPrintElements.forEach(el => el.style.display = '');
+            
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pdfWidth;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            if (pdf === null) {
+                pdf = new jsPDF('l', 'mm', 'a4');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            } else {
+                pdf.addPage('l', 'mm', 'a4');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            }
+        } catch (err) {
+            console.error(err);
+            noPrintElements.forEach(el => el.style.display = '');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            alert('❌ خطا در پردازش صفحه ' + (i+1));
+            return;
+        }
+    }
+    
+    if (pdf !== null) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        pdf.save(`document-${timestamp}.pdf`);
+    }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    alert('✅ PDF با موفقیت دانلود شد');
+}
+    
+    // ========== تابع دانلود عکس ==========
+async function downloadAllPagesAsImage() {
+    const pages = document.querySelectorAll('.print-container');
+    const btn = document.getElementById('downloadImageBtn');
+    const btnText = document.getElementById('downloadBtnText');
+    const originalText = btnText.innerHTML;
+    
+    if (pages.length === 0) {
+        alert('هیچ صفحه‌ای یافت نشد');
+        return;
+    }
+    
+    btnText.innerHTML = 'در حال آماده‌سازی...';
+    btn.disabled = true;
+    
+    try {
+        // اگر فقط یک صفحه باشد، مستقیماً PNG دانلود کن
+        if (pages.length === 1) {
+            const noPrintElements = pages[0].querySelectorAll('.no-print');
+            noPrintElements.forEach(el => el.style.display = 'none');
+            
+            const canvas = await html2canvas(pages[0], {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true
+            });
+            
+            noPrintElements.forEach(el => el.style.display = '');
+            
+            const link = document.createElement('a');
+            link.download = `document_page_1.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            alert('✅ تصویر با موفقیت دانلود شد');
+        } 
+        // اگر چند صفحه باشد، فایل ZIP دانلود کن
+        else {
             const zip = new JSZip();
             let successCount = 0;
             
@@ -994,7 +577,6 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                     const base64Data = imgData.split(',')[1];
                     zip.file(`page_${i+1}.png`, base64Data, { base64: true });
                     successCount++;
-                    
                 } catch (err) {
                     console.error(err);
                     noPrintElements.forEach(el => el.style.display = '');
@@ -1015,15 +597,15 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
             } else {
                 alert('❌ خطا در ایجاد تصاویر');
             }
-            
-        } catch (err) {
-            console.error(err);
-            alert('❌ خطا در ایجاد تصاویر');
         }
-        
+    } catch (err) {
+        console.error(err);
+        alert('❌ خطا در ایجاد تصویر');
+    } finally {
         btnText.innerHTML = originalText;
         btn.disabled = false;
     }
+}
     
     // ========== اتصال رویدادها به دکمه‌ها ==========
     document.getElementById('downloadImageBtn').addEventListener('click', downloadAllPagesAsImage);

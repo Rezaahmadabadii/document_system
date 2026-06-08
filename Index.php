@@ -41,12 +41,12 @@ if ($is_admin) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سیستم بایگانی اسناد تایید شده</title>
-	<link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="shortcut icon" href="favicon.ico">
+	<link rel="icon" type="image/x-icon" href="favicon.png">
+    <link rel="shortcut icon" href="favicon.png">
     <script defer src="assets/js/all.min.js"></script>
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, 'Tahoma', sans-serif !important;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, 'Tahoma', sans-serif !important; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; font-size: 14px; }
         .main-header { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e2e8f0; }
         .header-container { max-width: 1400px; margin: 0 auto; padding: 12px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
@@ -72,11 +72,45 @@ if ($is_admin) {
         .menu-item.active i { color: white; }
         .left-content { padding: 16px; }
         .left-section-title { font-size: 0.85rem; font-weight: 700; color: #1a2c3e; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #667eea; display: flex; align-items: center; gap: 8px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: linear-gradient(135deg, #f8fafc, #fff); border-radius: 12px; padding: 8px 6px; text-align: center; border: 1px solid #eef2f5; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-value { font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .stat-label { font-size: 0.55rem; color: #6c86a3; margin-top: 3px; }
-        .stat-small { font-size: 0.6rem; color: #475569; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eef2f5; }
+        
+        /* ========== استایل جدید آمار کاربر عادی ========== */
+        .stats-grid-new { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card-new { background: linear-gradient(135deg, #ffffff, #eff6ff); border-radius: 20px; padding: 14px 12px; border: 1px solid #dbeafe; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .stat-card-new:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -8px rgba(59,130,246,0.2); border-color: #93c5fd; }
+        .stat-card-new-primary { background: linear-gradient(135deg, #ffffff, #eff6ff); border-radius: 20px; padding: 14px 12px; border: 1px solid #dbeafe; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .stat-card-new-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -8px rgba(59,130,246,0.2); border-color: #93c5fd; }
+        .stat-card-new-primary .stat-header { border-bottom-color: #dbeafe; }
+        .stat-card-new-primary .stat-title { color: #1e40af; }
+        .stat-card-new-primary .stat-icon { color: #3b82f6; }
+        .stat-header { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px dashed #dbeafe; }
+        .stat-icon { font-size: 0.85rem; }
+        .stat-title { font-size: 0.65rem; font-weight: 600; color: #1e40af; }
+        .stat-main { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-bottom: 8px; }
+        .stat-main-center { text-align: center; margin-bottom: 8px; }
+        .stat-big { font-size: 1.5rem; font-weight: 800; color: #1e293b; }
+        .stat-sep { font-size: 1rem; color: #93c5fd; }
+        .stat-today, .stat-yesterday { text-align: center; background: #dbeafe; padding: 4px 12px; border-radius: 30px; min-width: 60px; }
+        .stat-small-label { font-size: 0.5rem; color: #1e40af; display: block; }
+        .stat-small-value { font-size: 0.8rem; font-weight: 700; color: #1e3a8a; }
+        .stat-trend { font-size: 0.65rem; font-weight: 600; text-align: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid #dbeafe; }
+        .stat-companies { display: flex; flex-direction: column; gap: 8px; }
+        .company-most, .company-least { display: flex; align-items: center; justify-content: space-between; font-size: 0.65rem; }
+        .company-label { font-weight: 500; color: #1e40af; }
+        .company-name { font-weight: 700; }
+        .company-count { font-size: 0.55rem; color: #64748b; }
+        .avg-stats-new { display: flex; justify-content: space-around; gap: 10px; }
+        .avg-item-new { display: flex; align-items: center; gap: 6px; background: #dbeafe; padding: 8px 12px; border-radius: 40px; flex: 1; justify-content: center; }
+        .avg-item-new.avg-change-up { background: #d1fae5; }
+        .avg-item-new.avg-change-down { background: #fee2e2; }
+        .avg-item-new.avg-change-neutral { background: #fef3c7; }
+        .avg-icon { font-size: 0.7rem; color: #1e40af; }
+        .avg-value { font-size: 0.7rem; font-weight: 700; color: #1e3a8a; }
+        .avg-change-up .avg-value { color: #065f46; }
+        .avg-change-down .avg-value { color: #991b1b; }
+        .avg-change-neutral .avg-value { color: #b45309; }
+        .avg-label { font-size: 0.55rem; color: #64748b; }
+        @media (max-width: 640px) { .stats-grid-new { grid-template-columns: 1fr; gap: 10px; } .avg-stats-new { flex-wrap: wrap; } .avg-item-new { flex: auto; } }
+        
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
         .data-table th { background: #f1f5f9; padding: 10px 8px; border: 1px solid #e2e8f0; font-weight: 700; color: #475569; text-align: center; }
         .data-table td { padding: 8px 6px; border: 1px solid #e2e8f0; text-align: center; color: #334155; }
@@ -139,67 +173,74 @@ if ($is_admin) {
         @media (max-width: 900px) { .documents-layout { flex-direction: column; } .right-panel-panel { width: 100%; position: relative; top: 0; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .companies-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .companies-grid { grid-template-columns: repeat(1, 1fr); } }
 		
-        /* ========== استایل بایگانی ========== */
-        .archive-list { display: flex; flex-direction: column; gap: 10px; }
-        .archive-item { background: #f8fafc; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eef2f5; transition: all 0.2s; }
-        .archive-item:hover { background: #f1f5f9; border-color: #667eea; }
-        .archive-item-left { display: flex; align-items: center; gap: 12px; }
-        .archive-item-icon { width: 35px; height: 35px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #667eea; }
-        .archive-item-date { font-weight: 600; font-size: 0.85rem; color: #1a2c3e; }
-        .archive-item-user { font-size: 0.7rem; color: #6c86a3; margin-top: 2px; }
-        .archive-view-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s; }
-        .archive-view-btn:hover { transform: scale(1.02); opacity: 0.9; }
+        /* ========== استایل بایگانی گروهی (تاریخ محور) با رنگ جذاب ========== */
+        .archive-stats-container { display: flex; flex-direction: column; gap: 16px; }
+        .archive-date-card { background: linear-gradient(135deg, #ffffff, #fef9f0); border-radius: 24px; border: 1px solid rgba(249, 115, 22, 0.15); overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .archive-date-card:hover { transform: translateY(-3px); box-shadow: 0 20px 30px -12px rgba(249, 115, 22, 0.2); border-color: #f97316; }
+        .archive-date-header { background: linear-gradient(135deg, #fff7ed, #ffedd5); padding: 14px 18px; border-bottom: 2px solid #fed7aa; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .archive-date-title { font-size: 0.9rem; font-weight: 800; color: #9a3412; background: white; padding: 5px 16px; border-radius: 40px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .archive-date-title i { color: #f97316; font-size: 0.9rem; }
+        .archive-count-badge { background: #f97316; color: white; padding: 4px 12px; border-radius: 30px; font-size: 0.65rem; font-weight: 600; box-shadow: 0 2px 6px rgba(249,115,22,0.3); }
+        .archive-users-list { padding: 14px 18px; display: flex; flex-wrap: wrap; gap: 12px; background: #ffffff; }
+        .archive-user-tag { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #fef9f0, #ffffff); border: 1px solid #fed7aa; border-radius: 40px; padding: 6px 14px 6px 8px; transition: all 0.2s; cursor: pointer; }
+        .archive-user-tag:hover { background: #fff7ed; border-color: #f97316; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(249,115,22,0.15); }
+        .archive-user-avatar { width: 26px; height: 26px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.65rem; font-weight: bold; box-shadow: 0 2px 6px rgba(234,88,12,0.3); }
+        .archive-user-name { font-size: 0.7rem; font-weight: 600; color: #431407; }
+        .archive-view-btn { background: #fef3c7; border: none; color: #f97316; font-size: 0.7rem; cursor: pointer; padding: 5px 10px; border-radius: 30px; transition: all 0.2s; }
+        .archive-view-btn:hover { background: #f97316; color: white; transform: scale(1.02); }
+        @media (max-width: 640px) { .archive-date-header { flex-direction: column; align-items: flex-start; } .archive-users-list { gap: 10px; } }
         
-        /* ========== استایل‌های جدید آمار کاربران ========== */
-        .user-stats-container { display: flex; flex-direction: column; gap: 15px; }
-        .user-card { background: white; border-radius: 16px; padding: 15px; border: 1px solid #eef2f5; transition: all 0.3s ease; cursor: pointer; }
-        .user-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); transform: translateY(-2px); border-color: #667eea; }
-        .user-card.selected { background: linear-gradient(135deg, #667eea10, #764ba210); border: 2px solid #667eea; }
-        .user-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .user-avatar { width: 45px; height: 45px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; }
-        .user-details h4 { font-size: 0.9rem; font-weight: 700; color: #1a2c3e; margin: 0 0 3px 0; }
-        .user-details .user-unit { font-size: 0.6rem; color: #6c86a3; }
-        .user-stats-badges { display: flex; gap: 15px; }
-        .stat-badge { text-align: center; background: #f8fafc; padding: 5px 12px; border-radius: 12px; }
-        .stat-badge .stat-value { font-size: 1rem; font-weight: 700; }
-        .stat-badge .stat-label { font-size: 0.55rem; color: #6c86a3; }
-        .progress-section { margin: 12px 0; }
-        .progress-bar-container { background: #e2e8f0; border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 5px; }
-        .progress-bar { background: linear-gradient(135deg, #667eea, #764ba2); height: 100%; border-radius: 10px; transition: width 0.5s ease; }
-        .progress-text { font-size: 0.6rem; color: #475569; text-align: left; }
-        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f5; flex-wrap: wrap; gap: 10px; }
-        .trend-up { color: #10b981; font-size: 0.65rem; font-weight: 600; }
-        .trend-down { color: #ef4444; font-size: 0.65rem; font-weight: 600; }
-        .trend-neutral { color: #f59e0b; font-size: 0.65rem; font-weight: 600; }
-        /* استایل میانگین در کارت کاربر */
-        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f5; flex-wrap: wrap; gap: 15px; }
-        .trend-info { display: flex; align-items: center; gap: 5px; background: #fef3c7; padding: 4px 10px; border-radius: 20px; }
-        .trend-up { color: #10b981; font-size: 0.7rem; font-weight: 600; }
-        .trend-down { color: #ef4444; font-size: 0.7rem; font-weight: 600; }
-        .trend-neutral { color: #f59e0b; font-size: 0.7rem; font-weight: 600; }
-        .trend-label { font-size: 0.6rem; color: #6c86a3; }
-        .avg-box { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 5px 15px; border-radius: 20px; }
-        .avg-text { font-size: 0.7rem; color: #475569; font-weight: 500; }
-        .avg-arrow { font-size: 1rem; color: #ef4444; animation: arrowMove 0.8s ease-in-out infinite; }
-        @keyframes arrowMove { 0% { transform: translateX(0); } 50% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-        .avg-stats-mini { display: flex; gap: 8px; }
-        .avg-item-mini { display: flex; align-items: center; gap: 4px; background: white; padding: 4px 12px; border-radius: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: help; }
-        .avg-icon-mini { font-size: 0.75rem; }
-        .avg-value-mini { font-weight: 700; font-size: 0.85rem; color: #1a2c3e; }
-        .avg-change { font-size: 0.6rem; font-weight: 600; margin-left: 3px; }
-        .avg-change-up { color: #10b981; }
-        .avg-change-down { color: #ef4444; }
-        .avg-change-neutral { color: #f59e0b; }
-        .avg-label-mini { font-size: 0.55rem; color: #6c86a3; margin-right: 2px; }
-        @media (max-width: 768px) { .user-card-footer { flex-direction: column; align-items: stretch; } .avg-box { flex-wrap: wrap; justify-content: center; } .avg-stats-mini { flex-wrap: wrap; justify-content: center; } }
+        /* ========== استایل کارت کاربران با رنگ جذاب ========== */
+        .user-stats-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        @media (max-width: 768px) { .user-stats-container { grid-template-columns: 1fr; } }
+        .user-card { background: linear-gradient(135deg, #ffffff, #faf9ff); border-radius: 20px; padding: 12px; transition: all 0.25s ease; border: 1px solid rgba(102,126,234,0.15); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+        .user-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -10px rgba(102,126,234,0.25); border-color: #818cf8; background: white; }
+        .user-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #818cf8, #c084fc); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(129,140,248,0.4); }
+        .user-details h4 { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin: 0 0 2px 0; }
+        .user-details .user-unit { font-size: 0.55rem; color: #64748b; background: #eef2ff; padding: 2px 10px; border-radius: 20px; display: inline-block; }
+        .user-stats-badges { display: flex; gap: 8px; }
+        .stat-badge { text-align: center; background: linear-gradient(135deg, #f8fafc, #f1f5f9); padding: 5px 8px; border-radius: 14px; min-width: 55px; border: 1px solid #e2e8f0; }
+        .stat-badge .stat-value { font-size: 0.9rem; font-weight: 800; background: linear-gradient(135deg, #1e293b, #334155); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-badge .stat-label { font-size: 0.5rem; color: #64748b; margin-top: 2px; }
+        .user-card-middle { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
+        .trend-chip { display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; padding: 4px 12px; border-radius: 30px; font-size: 0.6rem; border: 1px solid #e2e8f0; }
+        .trend-up { color: #10b981; font-weight: 700; }
+        .trend-down { color: #ef4444; font-weight: 700; }
+        .trend-neutral { color: #f59e0b; font-weight: 700; }
+        .trend-label { color: #64748b; font-size: 0.55rem; margin-right: 3px; }
+        .avg-chips { display: flex; gap: 6px; }
+        .avg-chip { background: #f8fafc; padding: 4px 10px; border-radius: 30px; display: inline-flex; align-items: center; gap: 5px; font-size: 0.6rem; font-weight: 500; border: 1px solid #e2e8f0; }
+        .avg-chip span:first-child { font-size: 0.7rem; }
+        .avg-up { color: #10b981; font-weight: 600; }
+        .avg-down { color: #ef4444; font-weight: 600; }
+        .avg-neutral { color: #f59e0b; font-weight: 600; }
+        .avg-label { color: #64748b; font-size: 0.55rem; }
+        @media (max-width: 640px) { .user-card-header { flex-wrap: wrap; gap: 10px; } .user-stats-badges { flex: 1; justify-content: flex-end; } .user-card-middle { flex-direction: column; align-items: flex-start; } }
+        
+        /* ========== استایل بایگانی کاربر عادی (دکمه‌های گرد کوچک) ========== */
+        .archive-months-container { display: flex; flex-direction: column; gap: 16px; }
+        .archive-month-card { background: white; border-radius: 20px; border: 1px solid #eef2ff; overflow: hidden; }
+        .archive-month-header { background: linear-gradient(135deg, #f8fafc, #ffffff); padding: 10px 16px; border-bottom: 1px solid #eef2ff; display: flex; justify-content: space-between; align-items: center; }
+        .archive-month-title { font-size: 0.85rem; font-weight: 700; color: #1e293b; display: inline-flex; align-items: center; gap: 6px; }
+        .archive-month-title i { color: #667eea; }
+        .archive-month-count { background: #eef2ff; color: #667eea; padding: 2px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 500; }
+        .archive-days-list { padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .archive-day-item { display: inline-flex; align-items: center; justify-content: center; gap: 4px; background: #f1f5f9; border-radius: 40px; padding: 6px 12px; cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; }
+        .archive-day-item:hover { background: #eef2ff; border-color: #667eea; transform: translateY(-2px); }
+        .archive-day-number { font-size: 0.7rem; font-weight: 600; color: #1e293b; }
+        .archive-day-eye { font-size: 0.6rem; color: #667eea; opacity: 0.7; }
+        .archive-day-item:hover .archive-day-eye { opacity: 1; }
+        @media (max-width: 480px) { .archive-days-list { gap: 8px; } .archive-day-item { padding: 4px 10px; } }
+        
         /* ========== استایل رادیو باتن بایگانی کاربران ========== */
-        .radio-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        .radio-label { display: inline-flex; align-items: center; gap: 5px; background: #f1f5f9; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; }
-        .radio-label:hover { background: #eef2ff; border-color: #667eea; }
-        .radio-label input[type="radio"] { width: 12px; height: 12px; margin: 0; cursor: pointer; accent-color: #667eea; }
-        .radio-label span { color: #334155; }
-        .radio-label:has(input:checked) { background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea; }
+        .radio-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .radio-label { display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; padding: 5px 12px; border-radius: 40px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; }
+        .radio-label:hover { background: #eef2ff; border-color: #818cf8; transform: translateY(-1px); }
+        .radio-label input[type="radio"] { width: 12px; height: 12px; margin: 0; cursor: pointer; accent-color: #818cf8; }
+        .radio-label span { color: #334155; font-weight: 500; }
+        .radio-label:has(input:checked) { background: linear-gradient(135deg, #818cf8, #c084fc); border-color: #818cf8; box-shadow: 0 2px 8px rgba(129,140,248,0.3); }
         .radio-label:has(input:checked) span { color: white; }
         /* ========== پایان استایل‌ها ========== */
     </style>
@@ -239,6 +280,7 @@ if ($is_admin) {
                     <div class="menu-item" data-section="filters" onclick="showLeftContent('filters')"><i class="fas fa-filter"></i> جستجوی اسناد</div>
                     <div class="menu-item" data-section="approvals" onclick="showLeftContent('approvals')"><i class="fas fa-check-double"></i> تاییدات نهایی</div>
                     <div class="menu-item" data-section="archive" onclick="showLeftContent('archive')"><i class="fas fa-archive"></i> بایگانی</div>
+					<div class="menu-item" onclick="window.open('export_excel.php', '_blank')"><i class="fas fa-file-excel"></i> خروجی اکسل</div>
                 </div>
                                 
                 <div id="adminFiltersPanel" class="admin-filter-box">
@@ -513,51 +555,96 @@ async function loadUserStats() {
         if (data.success) {
             let dateRange = '';
             if (data.first_date !== '-' && data.last_date !== '-') {
-                dateRange = `<div style="font-size: 0.55rem; color: #6c86a3; margin-top: 3px;">از ${data.first_date} تا ${data.last_date}</div>`;
+                dateRange = `<div style="font-size: 0.55rem; color: #94a3b8; margin-top: 4px;">از ${data.first_date} تا ${data.last_date}</div>`;
+            }
+            
+            let trendIcon = '';
+            let trendColor = '';
+            if (data.trend_text.includes('▲')) {
+                trendIcon = '📈';
+                trendColor = '#10b981';
+            } else if (data.trend_text.includes('▼')) {
+                trendIcon = '📉';
+                trendColor = '#ef4444';
+            } else {
+                trendIcon = '➖';
+                trendColor = '#f59e0b';
             }
             
             let html = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">${data.today_count}</div>
-                        <div class="stat-label">اسناد امروز</div>
-                        <div class="stat-small" style="${data.trend_class} margin-top: 4px; font-size: 0.55rem;">${data.trend_icon} ${data.trend_text}</div>
-                        <div class="stat-label" style="font-size: 0.55rem; margin-top: 2px;">نسبت به دیروز (${data.yesterday_count})</div>
+                <div class="stats-grid-new">
+                    <div class="stat-card-new">
+                        <div class="stat-header">
+                            <span class="stat-icon">📊</span>
+                            <span class="stat-title">پیشرفت نسبت به لیست قبل</span>
+                        </div>
+                        <div class="stat-main">
+                            <div class="stat-today">
+                                <span class="stat-small-label">امروز</span>
+                                <span class="stat-small-value">${data.today_count}</span>
+                            </div>
+                            <span class="stat-sep">|</span>
+                            <div class="stat-yesterday">
+                                <span class="stat-small-label">دیروز</span>
+                                <span class="stat-small-value">${data.yesterday_count}</span>
+                            </div>
+                        </div>
+                        <div class="stat-trend" style="color: ${trendColor}">
+                            ${trendIcon} ${data.trend_text}
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${data.total_docs}</div>
-                        <div class="stat-label">کل اسناد</div>
+                    
+                    <div class="stat-card-new">
+                        <div class="stat-header">
+                            <span class="stat-icon">📊</span>
+                            <span class="stat-title">کل اسناد</span>
+                        </div>
+                        <div class="stat-main-center">
+                            <span class="stat-big">${data.total_docs}</span>
+                        </div>
                         ${dateRange}
                     </div>
-                    <div class="stat-card">
-                        <div style="text-align: right;">
-                            <div style="margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
-                                <span style="font-weight: 600; font-size: 0.7rem;">بیشترین:</span>
-                                <span style="font-weight: 700; font-size: 0.8rem; color: #10b981; margin-right: 4px;">${data.most_company}</span>
-                                <span style="font-size: 0.65rem;">(${data.most_count})</span>
+                    
+                    <div class="stat-card-new">
+                        <div class="stat-header">
+                            <span class="stat-icon">🏢</span>
+                            <span class="stat-title">پراکندگی شرکت</span>
+                        </div>
+                        <div class="stat-companies">
+                            <div class="company-most">
+                                <span class="company-label">بیشترین</span>
+                                <span class="company-name" style="color: #10b981;">${data.most_company}</span>
+                                <span class="company-count">(${data.most_count})</span>
                             </div>
-                            <div>
-                                <span style="font-weight: 600; font-size: 0.7rem;">کمترین:</span>
-                                <span style="font-weight: 700; font-size: 0.8rem; color: #ef4444; margin-right: 4px;">${data.least_company}</span>
-                                <span style="font-size: 0.65rem;">(${data.least_count})</span>
+                            <div class="company-least">
+                                <span class="company-label">کمترین</span>
+                                <span class="company-name" style="color: #ef4444;">${data.least_company}</span>
+                                <span class="company-count">(${data.least_count})</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="stat-card" style="margin-top: 10px;">
-                    <div class="stat-label">میانگین پیشرفت اسناد</div>
-                    <div style="display: flex; justify-content: space-around; margin-top: 8px;">
-                        <div>
-                            <span style="font-weight: 700; font-size: 0.9rem; ${data.week_change_class}">${data.week_change}</span>
-                            <br><span style="font-size: 0.55rem;">نسبت به هفته قبل</span>
+                
+                <div class="stat-card-new-primary">
+                    <div class="stat-header">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-title">پیشرفت اسناد تایید شده</span>
+                    </div>
+                    <div class="avg-stats-new">
+                        <div class="avg-item-new ${data.week_change_class}">
+                            <span class="avg-icon">📅</span>
+                            <span class="avg-value">${data.week_change}</span>
+                            <span class="avg-label">هفته</span>
                         </div>
-                        <div>
-                            <span style="font-weight: 700; font-size: 0.9rem; ${data.month_change_class}">${data.month_change}</span>
-                            <br><span style="font-size: 0.55rem;">نسبت به ماه قبل</span>
+                        <div class="avg-item-new ${data.month_change_class}">
+                            <span class="avg-icon">📆</span>
+                            <span class="avg-value">${data.month_change}</span>
+                            <span class="avg-label">ماه</span>
                         </div>
-                        <div>
-                            <span style="font-weight: 700; font-size: 0.9rem; ${data.year_change_class}">${data.year_change}</span>
-                            <br><span style="font-size: 0.55rem;">نسبت به سال قبل</span>
+                        <div class="avg-item-new ${data.year_change_class}">
+                            <span class="avg-icon">📅</span>
+                            <span class="avg-value">${data.year_change}</span>
+                            <span class="avg-label">سال</span>
                         </div>
                     </div>
                 </div>
@@ -572,16 +659,27 @@ async function loadUserStats() {
 
 function saveDocument() {
     const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn.disabled) return; // جلوگیری از ارسال مجدد
+    if (submitBtn.disabled) return;
     
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ثبت...';
     
     const delivery_date = document.getElementById('delivery_date')?.value || '';
     const company_id = document.getElementById('company_id')?.value || '';
+    const company_number = document.getElementById('company_number')?.value || '';
     const doc_number = document.getElementById('doc_number')?.value || '';
     let doc_date = document.getElementById('doc_date')?.value || '-';
     const description = document.getElementById('doc_description')?.value || '';
+    
+    let finalCompanyId = company_id;
+    if (company_number && !company_id) {
+        const companySelect = document.getElementById('company_id');
+        const options = companySelect.options;
+        if (company_number <= options.length) {
+            finalCompanyId = options[company_number - 1].value;
+            companySelect.value = finalCompanyId;
+        }
+    }
     
     if (!doc_number) {
         alert('شماره سند الزامی است');
@@ -595,7 +693,7 @@ function saveDocument() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             delivery_date: delivery_date,
-            company_id: company_id,
+            company_id: finalCompanyId,
             doc_number: doc_number,
             doc_date: doc_date,
             description: description
@@ -605,9 +703,18 @@ function saveDocument() {
     .then(data => {
         if (data.success) {
             showToast('سند با موفقیت ثبت شد');
+            
+            // پاک کردن فیلدها
             document.getElementById('doc_number').value = '';
             if (document.getElementById('doc_date')) document.getElementById('doc_date').value = '';
             document.getElementById('doc_description').value = '';
+            
+            // ========== خالی کردن شماره شرکت (بدون تغییر شرکت انتخاب شده) ==========
+            const companyNumberInput = document.getElementById('company_number');
+            if (companyNumberInput) {
+                companyNumberInput.value = '';
+            }
+            // ====================================================================
             
             const currentDate = document.getElementById('delivery_date').value;
             loadDocumentsForDeliveryDate(currentDate);
@@ -936,37 +1043,88 @@ let currentUserName = '<?php echo $fullname; ?>';
         if (dateInput) { dateInput.value = deliveryYear + '/' + monthStr + '/' + dayStr; }
     }
       
-// ========== بایگانی کاربر عادی ==========
-
 function loadUserArchiveList() {
-    const container = document.getElementById('archive_list_content');
+    const container = document.getElementById('userArchiveList');
     if (!container) return;
     
-    container.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+    container.innerHTML = '<div id="archive_list_content"><div class="empty-state">در حال بارگذاری...</div></div>';
     
-    // استفاده از اکشن جداگانه برای خود کاربر (همه تاریخ‌ها)
     fetch(`api/ajax.php?action=get_my_archived_dates`)
         .then(res => res.json())
         .then(data => {
             if (data.success && data.dates && data.dates.length > 0) {
-                let html = '';
+                // تبدیل اعداد فارسی به انگلیسی
+                const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+                const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                
+                const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+                
+                const monthMap = new Map();
+                
                 data.dates.forEach(item => {
+                    let dateStr = item.delivery_date;
+                    // تبدیل اعداد فارسی به انگلیسی
+                    for (let i = 0; i < persianNumbers.length; i++) {
+                        dateStr = dateStr.replaceAll(persianNumbers[i], englishNumbers[i]);
+                    }
+                    // حالا dateStr به شکل "1405/03/18" است
+                    const parts = dateStr.split('/');
+                    if (parts.length === 3) {
+                        const year = parts[0];
+                        const monthNum = parseInt(parts[1], 10);
+                        const day = parts[2];
+                        const monthName = monthNames[monthNum - 1];
+                        const key = `${year}-${monthNum}`;
+                        
+                        if (!monthMap.has(key)) {
+                            monthMap.set(key, {
+                                year: year,
+                                monthName: monthName,
+                                monthNum: monthNum,
+                                days: []
+                            });
+                        }
+                        monthMap.get(key).days.push({
+                            day: day,
+                            raw: item.delivery_date_raw
+                        });
+                    }
+                });
+                
+                const sortedMonths = Array.from(monthMap.values()).sort((a, b) => {
+                    if (a.year !== b.year) return parseInt(b.year) - parseInt(a.year);
+                    return b.monthNum - a.monthNum;
+                });
+                
+                let html = '<div class="archive-months-container">';
+                for (const month of sortedMonths) {
+                    month.days.sort((a, b) => parseInt(a.day) - parseInt(b.day));
+                    
                     html += `
-                        <div class="archive-item">
-                            <div class="archive-item-left">
-                                <div class="archive-item-icon">
-                                    <i class="fas fa-calendar-check"></i>
+                        <div class="archive-month-card">
+                            <div class="archive-month-header">
+                                <div class="archive-month-title">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>${month.monthName} ${month.year}</span>
                                 </div>
-                                <div>
-                                    <div class="archive-item-date">${item.delivery_date}</div>
-                                </div>
+                                <div class="archive-month-count">${month.days.length} سند</div>
                             </div>
-                            <button class="archive-view-btn" onclick="viewArchiveDocument('${item.delivery_date_raw}', ${currentUserId})">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            <div class="archive-days-list">
+                    `;
+                    for (const day of month.days) {
+                        html += `
+                            <div class="archive-day-item" onclick="viewArchiveDocument('${day.raw}')">
+                                <span class="archive-day-number">${day.day}</span>
+                                <i class="fas fa-eye archive-day-eye"></i>
+                            </div>
+                        `;
+                    }
+                    html += `
+                            </div>
                         </div>
                     `;
-                });
+                }
+                html += '</div>';
                 container.innerHTML = html;
             } else {
                 container.innerHTML = '<div class="empty-state">هیچ سند تایید شده‌ای یافت نشد</div>';
@@ -1462,10 +1620,23 @@ async function loadApprovedApprovals() {
         if (data.success && data.approvals && data.approvals.length > 0) {
             let html = '';
             for (let app of data.approvals) {
-                html += `<div class="archive-item" style="margin-bottom:10px;"><div><div style="font-weight:bold;">${escapeHtml(app.fullname)} (${escapeHtml(app.unit_name)})</div><div style="font-size:0.65rem;">تاریخ تحویل: ${escapeHtml(app.delivery_date)}</div><div style="font-size:0.6rem; color:#10b981;">تایید شده در: ${escapeHtml(app.admin_approved_at)}</div></div><div class="archive-actions"><button class="archive-btn view" onclick="window.open('print.php?user_id=${app.user_id}&delivery_date=${encodeURIComponent(app.delivery_date)}', '_blank')"><i class="fas fa-print"></i> پرینت</button></div></div>`;
+                html += `<div class="archive-item" style="margin-bottom:10px;">
+                    <div>
+                        <div style="font-weight:bold;">${escapeHtml(app.fullname)} (${escapeHtml(app.unit_name)})</div>
+                        <div style="font-size:0.65rem;">تاریخ تحویل: ${escapeHtml(app.delivery_date)}</div>
+                        <div style="font-size:0.6rem; color:#10b981;">تایید شده در: ${escapeHtml(app.admin_approved_at_fa)}</div>
+                    </div>
+                    <div class="archive-actions">
+                        <button class="archive-btn view" onclick="window.open('print.php?user_id=${app.user_id}&delivery_date=${encodeURIComponent(app.delivery_date)}', '_blank')">
+                            <i class="fas fa-print"></i> پرینت
+                        </button>
+                    </div>
+                </div>`;
             }
             container.innerHTML = html;
-        } else { container.innerHTML = '<div class="empty-state">هیچ تایید نهایی ثبت نشده است</div>'; }
+        } else { 
+            container.innerHTML = '<div class="empty-state">هیچ تایید نهایی ثبت نشده است</div>'; 
+        }
     } catch(e) { console.error(e); }
 }
 
@@ -1505,118 +1676,13 @@ function loadAdminUsersStats() {
                     document.getElementById('minUserCount').innerHTML = `${data.min_user.total_docs} سند`;
                 }
                 
-                const maxDocs = Math.max(...data.users.map(u => u.total_docs), 1);
-                
                 let usersHtml = '<div class="user-stats-container">';
                 data.users.forEach(user => {
-                    const progressPercent = (user.total_docs / maxDocs) * 100;
-                    const todayIcon = user.pending_today > 0 ? '📄' : '📭';
-                    
-                    let trendHtml = '';
-                    let trendClass = '';
-                    const change = user.total_docs - user.yesterday_count;
-                    if (user.yesterday_count > 0) {
-                        if (change > 0) {
-                            trendHtml = `▲ +${change}`;
-                            trendClass = 'trend-up';
-                        } else if (change < 0) {
-                            trendHtml = `▼ ${change}`;
-                            trendClass = 'trend-down';
-                        } else {
-                            trendHtml = `● بدون تغییر`;
-                            trendClass = 'trend-neutral';
-                        }
-                    } else {
-                        trendHtml = user.total_docs > 0 ? `▲ +${user.total_docs}` : `● بدون سند`;
-                        trendClass = user.total_docs > 0 ? 'trend-up' : 'trend-neutral';
-                    }
-                    
-                    // ========== هفته ==========
-                    let weekChange = '';
-                    let weekChangeClass = '';
-                    let weekTooltip = '';
-                    
-                    if (user.prev_week_count === 0 && user.week_count === 0) {
-                        weekChange = `---`;
-                        weekChangeClass = 'avg-change-neutral';
-                        weekTooltip = `دوره هنوز کامل نشده (نیاز به ۱۴ روز)`;
-                    } else if (user.prev_week_count === 0 && user.week_count > 0) {
-                        weekChange = `---`;
-                        weekChangeClass = 'avg-change-neutral';
-                        weekTooltip = `دوره هنوز کامل نشده (نیاز به ۱۴ روز)`;
-                    } else {
-                        let diff = user.week_count - user.prev_week_count;
-                        if (diff > 0) {
-                            weekChange = `▲ +${diff}`;
-                            weekChangeClass = 'avg-change-up';
-                        } else if (diff < 0) {
-                            weekChange = `▼ ${diff}`;
-                            weekChangeClass = 'avg-change-down';
-                        } else {
-                            weekChange = `● 0`;
-                            weekChangeClass = 'avg-change-neutral';
-                        }
-                        weekTooltip = `هفته گذشته: ${user.week_count} سند | هفته قبل‌تر: ${user.prev_week_count} سند | تغییر: ${weekChange}`;
-                    }
-                    
-                    // ========== ماه ==========
-                    let monthChange = '';
-                    let monthChangeClass = '';
-                    let monthTooltip = '';
-                    
-                    if (user.prev_month_count === 0 && user.month_count === 0) {
-                        monthChange = `---`;
-                        monthChangeClass = 'avg-change-neutral';
-                        monthTooltip = `دوره هنوز کامل نشده (نیاز به ۶۰ روز)`;
-                    } else if (user.prev_month_count === 0 && user.month_count > 0) {
-                        monthChange = `---`;
-                        monthChangeClass = 'avg-change-neutral';
-                        monthTooltip = `دوره هنوز کامل نشده (نیاز به ۶۰ روز)`;
-                    } else {
-                        let diff = user.month_count - user.prev_month_count;
-                        if (diff > 0) {
-                            monthChange = `▲ +${diff}`;
-                            monthChangeClass = 'avg-change-up';
-                        } else if (diff < 0) {
-                            monthChange = `▼ ${diff}`;
-                            monthChangeClass = 'avg-change-down';
-                        } else {
-                            monthChange = `● 0`;
-                            monthChangeClass = 'avg-change-neutral';
-                        }
-                        monthTooltip = `ماه گذشته: ${user.month_count} سند | ماه قبل‌تر: ${user.prev_month_count} سند | تغییر: ${monthChange}`;
-                    }
-                    
-                    // ========== سال ==========
-                    let yearChange = '';
-                    let yearChangeClass = '';
-                    let yearTooltip = '';
-                    
-                    if (user.prev_year_count === 0 && user.year_count === 0) {
-                        yearChange = `---`;
-                        yearChangeClass = 'avg-change-neutral';
-                        yearTooltip = `دوره هنوز کامل نشده (نیاز به ۷۳۰ روز)`;
-                    } else if (user.prev_year_count === 0 && user.year_count > 0) {
-                        yearChange = `---`;
-                        yearChangeClass = 'avg-change-neutral';
-                        yearTooltip = `دوره هنوز کامل نشده (نیاز به ۷۳۰ روز)`;
-                    } else {
-                        let diff = user.year_count - user.prev_year_count;
-                        if (diff > 0) {
-                            yearChange = `▲ +${diff}`;
-                            yearChangeClass = 'avg-change-up';
-                        } else if (diff < 0) {
-                            yearChange = `▼ ${diff}`;
-                            yearChangeClass = 'avg-change-down';
-                        } else {
-                            yearChange = `● 0`;
-                            yearChangeClass = 'avg-change-neutral';
-                        }
-                        yearTooltip = `سال گذشته: ${user.year_count} سند | سال قبل‌تر: ${user.prev_year_count} سند | تغییر: ${yearChange}`;
-                    }
+                    let trendArrow = user.trend_text.includes('▲') ? '▲' : (user.trend_text.includes('▼') ? '▼' : '●');
+                    let trendValue = user.trend_text.replace(/[▲▼●]/g, '').trim();
                     
                     usersHtml += `
-                        <div class="user-card" data-user-id="${user.id}">
+                        <div class="user-card">
                             <div class="user-card-header">
                                 <div class="user-info">
                                     <div class="user-avatar"><i class="fas fa-user"></i></div>
@@ -1628,45 +1694,28 @@ function loadAdminUsersStats() {
                                 <div class="user-stats-badges">
                                     <div class="stat-badge">
                                         <div class="stat-value">${user.total_docs}</div>
-                                        <div class="stat-label">کل اسناد</div>
+                                        <div class="stat-label">کل</div>
                                     </div>
                                     <div class="stat-badge">
-                                        <div class="stat-value">${todayIcon} ${user.pending_today}</div>
-                                        <div class="stat-label">اسناد امروز</div>
+                                        <div class="stat-value">${user.pending_today}</div>
+                                        <div class="stat-label">امروز</div>
+                                    </div>
+                                    <div class="stat-badge">
+                                        <div class="stat-value">${user.yesterday_count}</div>
+                                        <div class="stat-label">دیروز</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="progress-section">
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: ${progressPercent}%;"></div>
+                            <div class="user-card-middle">
+                                <div class="trend-chip">
+                                    <span class="trend-arrow ${user.trend_class}">${trendArrow}</span>
+                                    <span class="${user.trend_class}">${trendValue}</span>
+                                    <span class="trend-label">نسبت به دیروز</span>
                                 </div>
-                                <div class="progress-text">${user.total_docs} از ${maxDocs} سند</div>
-                            </div>
-                            <div class="user-card-footer">
-                                <div class="trend-info">
-                                    <span class="${user.trend_class}">${user.trend_text}</span>
-                                    <span class="trend-label">نسبت به دیروز (${user.yesterday_count})</span>
-                                </div>
-                                <div class="avg-box">
-                                    <span class="avg-text">میانگین پیشرفت اسناد</span>
-                                    <i class="fas fa-arrow-left avg-arrow"></i>
-                                    <div class="avg-stats-mini">
-                                        <div class="avg-item-mini" title="نسبت به هفته قبل">
-                                            <span class="avg-icon-mini">📅</span>
-                                            <span class="avg-change ${user.week_change_class}">${user.week_change}</span>
-                                            <span class="avg-label-mini">نسبت به هفته قبل</span>
-                                        </div>
-                                        <div class="avg-item-mini" title="نسبت به ماه قبل">
-                                            <span class="avg-icon-mini">📆</span>
-                                            <span class="avg-change ${user.month_change_class}">${user.month_change}</span>
-                                            <span class="avg-label-mini">نسبت به ماه قبل</span>
-                                        </div>
-                                        <div class="avg-item-mini" title="نسبت به سال قبل">
-                                            <span class="avg-icon-mini">📅</span>
-                                            <span class="avg-change ${user.year_change_class}">${user.year_change}</span>
-                                            <span class="avg-label-mini">نسبت به سال قبل</span>
-                                        </div>
-                                    </div>
+                                <div class="avg-chips">
+                                    <div class="avg-chip"><span>📅</span><span class="${user.week_change_class}">${user.week_change}</span><span class="avg-label">هفته</span></div>
+                                    <div class="avg-chip"><span>📆</span><span class="${user.month_change_class}">${user.month_change}</span><span class="avg-label">ماه</span></div>
+                                    <div class="avg-chip"><span>📅</span><span class="${user.year_change_class}">${user.year_change}</span><span class="avg-label">سال</span></div>
                                 </div>
                             </div>
                         </div>
@@ -1835,25 +1884,53 @@ function loadAdminArchiveList() {
         .then(res => res.json())
         .then(data => {
             if (data.success && data.dates && data.dates.length > 0) {
-                let html = '<div class="archive-list">';
+                // گروه‌بندی بر اساس تاریخ
+                const groupedByDate = {};
                 data.dates.forEach(item => {
+                    if (!groupedByDate[item.delivery_date]) {
+                        groupedByDate[item.delivery_date] = [];
+                    }
+                    groupedByDate[item.delivery_date].push({
+                        user_id: item.user_id,
+                        user_name: item.user_name
+                    });
+                });
+                
+                let html = '<div class="archive-stats-container">';
+                for (const [deliveryDate, users] of Object.entries(groupedByDate)) {
                     html += `
-                        <div class="archive-item">
-                            <div class="archive-item-left">
-                                <div class="archive-item-icon">
-                                    <i class="fas fa-user-check"></i>
+                        <div class="archive-date-card">
+                            <div class="archive-date-header">
+                                <div class="archive-date-title">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>${deliveryDate}</span>
                                 </div>
-                                <div>
-                                    <div class="archive-item-date">${item.delivery_date}</div>
-                                    <div class="archive-item-user">${escapeHtml(item.user_name)}</div>
+                                <div class="archive-count-badge">
+                                    <i class="fas fa-users"></i> ${users.length} کاربر
                                 </div>
                             </div>
-                            <button class="archive-view-btn" onclick="viewAdminArchiveDocument('${item.delivery_date_raw}', ${item.user_id})">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            <div class="archive-users-list">
+                    `;
+                    users.forEach(user => {
+                        // حرف اول نام برای آواتار
+                        const firstChar = user.user_name.charAt(0);
+                        html += `
+                            <div class="archive-user-tag" onclick="viewAdminArchiveDocument('${deliveryDate}', ${user.user_id})">
+                                <div class="archive-user-avatar">${escapeHtml(firstChar)}</div>
+                                <div>
+                                    <span class="archive-user-name">${escapeHtml(user.user_name)}</span>
+                                </div>
+                                <button class="archive-view-btn" onclick="event.stopPropagation(); viewAdminArchiveDocument('${deliveryDate}', ${user.user_id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                    html += `
+                            </div>
                         </div>
                     `;
-                });
+                }
                 html += '</div>';
                 container.innerHTML = html;
             } else {
@@ -2033,6 +2110,46 @@ function loadCompaniesList() {
             }
         });
 }
+
+// ========== رفرش خودکار (Polling) ==========
+let refreshInterval = null;
+
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    
+    refreshInterval = setInterval(function() {
+        // فقط در صورتی که کاربر در بخش آمار کاربران باشد
+        const statsContent = document.getElementById('statsContent');
+        if (statsContent && statsContent.style.display !== 'none') {
+            if (typeof loadAdminUsersStats === 'function') {
+                loadAdminUsersStats();
+            }
+        }
+        
+        // اگر در بخش مدیریت کاربران است
+        const usersContent = document.getElementById('usersContent');
+        if (usersContent && usersContent.style.display !== 'none') {
+            if (typeof loadUsersList === 'function') {
+                loadUsersList();
+            }
+        }
+    }, 5000); // هر 5 ثانیه
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+}
+
+// شروع رفرش خودکار
+startAutoRefresh();
+
+// توقف رفرش هنگام بسته شدن صفحه (اختیاری)
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
 
 function showAddUserModal() {
     document.getElementById('userModalTitle').innerText = 'افزودن کاربر جدید';
