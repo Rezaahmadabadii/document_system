@@ -1,4 +1,5 @@
 <?php
+session_name('doc_system');
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -8,6 +9,75 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once 'config/database.php';
 require_once 'config/jdatetime.class.php';
+
+// ========== بررسی وجود جداول دیتابیس ==========
+try {
+    // چک کردن وجود جدول companies
+    $check = $db->query("SHOW TABLES LIKE 'companies'");
+    if ($check->rowCount() == 0) {
+        throw new PDOException("جداول دیتابیس وجود ندارند");
+    }
+} catch (PDOException $e) {
+    // نمایش پیام مناسب به جای خطای فنی
+    ?>
+    <!DOCTYPE html>
+    <html dir="rtl" lang="fa">
+    <head>
+        <meta charset="UTF-8">
+        <title>خطا در دیتابیس</title>
+        <link rel="stylesheet" href="assets/css/vazirmatn.css">
+        <style>
+            body {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Vazirmatn', sans-serif;
+                margin: 0;
+                padding: 20px;
+            }
+            .error-box {
+                background: white;
+                border-radius: 24px;
+                padding: 40px;
+                text-align: center;
+                max-width: 550px;
+                box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            }
+            .error-box h2 {
+                color: #ef4444;
+                margin-bottom: 15px;
+            }
+            .error-box p {
+                color: #64748b;
+                margin-bottom: 25px;
+                line-height: 1.8;
+            }
+            .btn-back {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                padding: 10px 25px;
+                border-radius: 12px;
+                text-decoration: none;
+                display: inline-block;
+            }
+            .btn-back:hover { opacity: 0.9; }
+        </style>
+    </head>
+    <body>
+        <div class="error-box">
+            <h2>⚠️ خطا در ارتباط با دیتابیس</h2>
+            <p>دیتابیس سیستم به درستی تنظیم نشده است یا اطلاعات آن حذف شده است.<br>
+            لطفاً با مدیر سیستم تماس بگیرید.</p>
+            <a href="logout.php" class="btn-back">خروج و تلاش مجدد</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+// ============================================
 
 $user_id = $_SESSION['user_id'];
 $is_admin = $_SESSION['is_admin'] ?? 0;
@@ -41,8 +111,8 @@ if ($is_admin) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سیستم بایگانی اسناد تایید شده</title>
-	<link rel="icon" type="image/x-icon" href="favicon.png">
-    <link rel="shortcut icon" href="favicon.png">
+	<link rel="icon" type="image/x-icon" href="favicon.svg">
+    <link rel="shortcut icon" href="favicon.svg">
     <script defer src="assets/js/all.min.js"></script>
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
     <style>
@@ -200,6 +270,8 @@ if ($is_admin) {
         .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #818cf8, #c084fc); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(129,140,248,0.4); }
         .user-details h4 { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin: 0 0 2px 0; }
         .user-details .user-unit { font-size: 0.55rem; color: #64748b; background: #eef2ff; padding: 2px 10px; border-radius: 20px; display: inline-block; }
+        .user-first-register { font-size: 0.55rem; color: #64748b; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+        .user-first-register i { font-size: 0.45rem; color: #94a3b8; }
         .user-stats-badges { display: flex; gap: 8px; }
         .stat-badge { text-align: center; background: linear-gradient(135deg, #f8fafc, #f1f5f9); padding: 5px 8px; border-radius: 14px; min-width: 55px; border: 1px solid #e2e8f0; }
         .stat-badge .stat-value { font-size: 0.9rem; font-weight: 800; background: linear-gradient(135deg, #1e293b, #334155); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -242,6 +314,57 @@ if ($is_admin) {
         .radio-label span { color: #334155; font-weight: 500; }
         .radio-label:has(input:checked) { background: linear-gradient(135deg, #818cf8, #c084fc); border-color: #818cf8; box-shadow: 0 2px 8px rgba(129,140,248,0.3); }
         .radio-label:has(input:checked) span { color: white; }
+        
+        /* ========== استایل کارت بیشترین و کمترین سند ========== */
+        .max-user-card, .min-user-card { border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; cursor: default; }
+        .max-user-card { background: #d1fae5; border: 1px solid #10b981; }
+        .min-user-card { background: #fee2e2; border: 1px solid #ef4444; }
+        .max-user-card i, .min-user-card i { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.2rem; }
+        .max-user-card i { background: #10b98120; color: #059669; }
+        .min-user-card i { background: #ef444420; color: #dc2626; }
+        .max-user-card .info, .min-user-card .info { flex: 1; }
+        .max-user-card .stat-label, .min-user-card .stat-label { font-size: 0.65rem; font-weight: 500; margin-bottom: 6px; }
+        .max-user-card .stat-label { color: #065f46; }
+        .min-user-card .stat-label { color: #991b1b; }
+        .max-user-card .user-detail, .min-user-card .user-detail { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .max-user-card .stat-value, .min-user-card .stat-value { font-weight: 700; font-size: 0.9rem; }
+        .max-user-card .stat-value { color: #065f46; }
+        .min-user-card .stat-value { color: #991b1b; }
+        .max-user-card .stat-count, .min-user-card .stat-count { font-size: 0.6rem; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
+        .max-user-card .stat-count { background: #10b98120; color: #047857; }
+        .min-user-card .stat-count { background: #ef444420; color: #b91c1c; }
+        .max-user-card .user-first-date, .min-user-card .user-first-date { font-size: 0.55rem; margin-top: 6px; opacity: 0.8; display: flex; align-items: center; gap: 4px; }
+        .max-user-card .user-first-date { color: #065f46; }
+        .min-user-card .user-first-date { color: #991b1b; }
+        .max-user-card .user-first-date i, .min-user-card .user-first-date i { font-size: 0.5rem; width: auto; height: auto; background: transparent; }
+        
+        /* ========== استایل باکس کل اسناد ========== */
+        .total-stats-card { background: linear-gradient(135deg, #ffffff, #eff6ff); border-radius: 16px; padding: 12px 15px; border: 1px solid #dbeafe; text-align: center; transition: all 0.2s; }
+        .total-stats-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -8px rgba(59,130,246,0.2); border-color: #93c5fd; }
+        .total-stats-card .stat-title { font-size: 0.7rem; font-weight: 600; color: #1e40af; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .total-stats-card .stat-big { font-size: 1.1rem; font-weight: 800; color: #1e293b; background: #e0e7ff; padding: 2px 10px; border-radius: 20px; }
+        .total-stats-card .stat-comparison { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .comparison-item { font-size: 0.65rem; background: #f8fafc; padding: 6px 10px; border-radius: 20px; text-align: center; border: 1px solid #eef2ff; }
+        .comparison-item i { margin-left: 5px; color: #667eea; }
+        
+        /* ========== استایل باکس مقایسه بیشترین و کمترین ========== */
+        .compare-stats-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
+        .compare-stats-header { background: #f8fafc; padding: 10px 12px; font-size: 0.7rem; font-weight: 600; color: #475569; border-bottom: 1px solid #eef2ff; display: flex; align-items: center; gap: 6px; }
+        .compare-stats-header i { color: #667eea; }
+        .compare-stats-content { padding: 10px 12px; }
+        .compare-item { display: flex; align-items: center; gap: 10px; }
+        .compare-icon i { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1rem; }
+        .max-compare .compare-icon i { background: #d1fae5; color: #059669; }
+        .min-compare .compare-icon i { background: #fee2e2; color: #dc2626; }
+        .compare-info { flex: 1; }
+        .compare-label { font-size: 0.55rem; color: #94a3b8; }
+        .compare-name { font-size: 0.75rem; font-weight: 700; color: #1e293b; }
+        .compare-date { font-size: 0.5rem; color: #94a3b8; margin-top: 3px; display: flex; align-items: center; gap: 3px; }
+        .compare-date i { font-size: 0.45rem; }
+        .compare-number { font-size: 1.1rem; font-weight: 800; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; min-width: 55px; text-align: center; }
+        .max-compare .compare-number { background: #d1fae5; color: #047857; }
+        .min-compare .compare-number { background: #fee2e2; color: #b91c1c; }
+        .compare-divider { height: 1px; background: #eef2ff; margin: 10px 0; }
         /* ========== پایان استایل‌ها ========== */
     </style>
 </head>
@@ -332,6 +455,23 @@ if ($is_admin) {
                     </div>
                 </div>
                 <?php endif; ?>
+                
+                <!-- ========== Footer در پنل راست ========== -->
+                <div class="right-panel-footer" style="margin-top: 20px; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #eef2ff; text-align: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div>
+                            <img src="/document_system/assets/logo.png" alt="لوگو" style="max-height: 35px; width: auto;" onerror="this.style.display='none'">
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.65rem; color: #64748b;">
+                                <i class="fas fa-code"></i> توسعه توسط Reza.ahmadabadi | 
+                                <i class="fas fa-phone"></i> 09353984864
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- ========== پایان Footer ========== -->
+                
             </div>
         </div>
 
@@ -344,17 +484,47 @@ if ($is_admin) {
                         <span class="today-badge" style="font-size: 0.6rem; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; margin-right: 10px;" id="statsTodayDate"></span>
                     </div>
                     
-                    <!-- کارت بیشترین و کمترین -->
+                    <!-- کارت بیشترین، کل تایید شده‌ها و کمترین -->
                     <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                        <div id="maxUserCard" class="stat-card" style="flex: 1; background: linear-gradient(135deg, #10b98120, #05966920); border: 1px solid #10b981;">
-                            <div class="stat-label" style="color: #10b981;">🏆 بیشترین سند</div>
-                            <div class="stat-value" style="font-size: 0.9rem;" id="maxUserName">-</div>
-                            <div class="stat-small" id="maxUserCount">0 سند</div>
+                        <!-- یک باکس واحد برای بیشترین و کمترین -->
+                        <div id="compareStatsCard" class="compare-stats-card" style="flex: 0.3;">
+                            <div class="compare-stats-header">
+                                <i class="fas fa-chart-simple"></i> مقایسه کاربران
+                            </div>
+                            <div class="compare-stats-content">
+                                <div class="compare-item max-compare">
+                                    <div class="compare-icon"><i class="fas fa-trophy"></i></div>
+                                    <div class="compare-info">
+                                        <div class="compare-label">بیشترین سند</div>
+                                        <div class="compare-name" id="maxUserName">-</div>
+                                        <div class="compare-date"><i class="fas fa-calendar-alt"></i> شروع ثبت از : <span id="maxUserFirstDateText">-</span></div>
+                                    </div>
+                                    <div class="compare-number" id="maxUserCount">0</div>
+                                </div>
+                                <div class="compare-divider"></div>
+                                <div class="compare-item min-compare">
+                                    <div class="compare-icon"><i class="fas fa-chart-line"></i></div>
+                                    <div class="compare-info">
+                                        <div class="compare-label">کمترین سند</div>
+                                        <div class="compare-name" id="minUserName">-</div>
+                                        <div class="compare-date"><i class="fas fa-calendar-alt"></i> شروع ثبت از : <span id="minUserFirstDateText">-</span></div>
+                                    </div>
+                                    <div class="compare-number" id="minUserCount">0</div>
+                                </div>
+                            </div>
                         </div>
-                        <div id="minUserCard" class="stat-card" style="flex: 1; background: linear-gradient(135deg, #ef444420, #dc262620); border: 1px solid #ef4444;">
-                            <div class="stat-label" style="color: #ef4444;">⚠️ کمترین سند</div>
-                            <div class="stat-value" style="font-size: 0.9rem;" id="minUserName">-</div>
-                            <div class="stat-small" id="minUserCount">0 سند</div>
+                        
+                        <!-- باکس کل اسناد تایید شده -->
+                        <div id="totalStatsCard" class="total-stats-card" style="flex: 0.4;">
+                            <div class="stat-title">
+                                <span><i class="fas fa-check-circle"></i> کل اسناد تایید شده</span>
+                                <span class="stat-big" id="totalApprovedCount">0</span>
+                            </div>
+                            <div class="stat-comparison">
+                                <span class="comparison-item" id="vsYesterday"><i class="fas fa-calendar-day"></i> امروز : -</span>
+                                <span class="comparison-item" id="vsLastWeek"><i class="fas fa-calendar-week"></i> هفته : -</span>
+                                <span class="comparison-item" id="vsLastMonth"><i class="fas fa-calendar-alt"></i> ماه : -</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -391,6 +561,7 @@ if ($is_admin) {
                 </div>
                 <?php endif; ?>
             </div>
+            <!-- ========== بدون footer در پنل چپ ========== -->
         </div>
     </div>
 </div>
@@ -580,12 +751,12 @@ async function loadUserStats() {
                         </div>
                         <div class="stat-main">
                             <div class="stat-today">
-                                <span class="stat-small-label">امروز</span>
+                                <span class="stat-small-label">لیست آخر : </span>
                                 <span class="stat-small-value">${data.today_count}</span>
                             </div>
                             <span class="stat-sep">|</span>
                             <div class="stat-yesterday">
-                                <span class="stat-small-label">دیروز</span>
+                                <span class="stat-small-label">لیست قبل : </span>
                                 <span class="stat-small-value">${data.yesterday_count}</span>
                             </div>
                         </div>
@@ -668,7 +839,7 @@ function saveDocument() {
     const company_id = document.getElementById('company_id')?.value || '';
     const company_number = document.getElementById('company_number')?.value || '';
     const doc_number = document.getElementById('doc_number')?.value || '';
-    let doc_date = document.getElementById('doc_date')?.value || '-';
+    let doc_date = document.getElementById('doc_date')?.value || '';
     const description = document.getElementById('doc_description')?.value || '';
     
     let finalCompanyId = company_id;
@@ -682,7 +853,7 @@ function saveDocument() {
     }
     
     if (!doc_number) {
-        alert('شماره سند الزامی است');
+        showToast('شماره سند الزامی است', true);
         submitBtn.disabled = false;
         submitBtn.innerHTML = '✓ ثبت سند';
         return;
@@ -702,19 +873,19 @@ function saveDocument() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast('سند با موفقیت ثبت شد');
+            showToast('سند با موفقیت ثبت شد', false);
             
-            // پاک کردن فیلدها
             document.getElementById('doc_number').value = '';
             if (document.getElementById('doc_date')) document.getElementById('doc_date').value = '';
             document.getElementById('doc_description').value = '';
             
-            // ========== خالی کردن شماره شرکت (بدون تغییر شرکت انتخاب شده) ==========
             const companyNumberInput = document.getElementById('company_number');
             if (companyNumberInput) {
                 companyNumberInput.value = '';
             }
-            // ====================================================================
+            
+            // ✅ تغییر: فوکوس روی شماره سند
+            document.getElementById('doc_number').focus();
             
             const currentDate = document.getElementById('delivery_date').value;
             loadDocumentsForDeliveryDate(currentDate);
@@ -723,12 +894,12 @@ function saveDocument() {
                 loadUserStats();
             }
         } else {
-            alert('خطا: ' + (data.error || 'مشخص نیست'));
+            showToast(data.error || 'خطا در ثبت سند', true);
         }
     })
     .catch(err => {
         console.error('خطا در ثبت سند:', err);
-        alert('خطا در ارتباط با سرور');
+        showToast('خطا در ارتباط با سرور', true);
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -1669,18 +1840,27 @@ function loadAdminUsersStats() {
                 
                 if (data.max_user) {
                     document.getElementById('maxUserName').innerHTML = data.max_user.fullname;
-                    document.getElementById('maxUserCount').innerHTML = `${data.max_user.total_docs} سند`;
+                    document.getElementById('maxUserCount').innerHTML = data.max_user.total_docs;
+                    document.getElementById('maxUserFirstDateText').innerHTML = data.max_user.first_date || '-';
                 }
+                
                 if (data.min_user) {
                     document.getElementById('minUserName').innerHTML = data.min_user.fullname;
-                    document.getElementById('minUserCount').innerHTML = `${data.min_user.total_docs} سند`;
+                    document.getElementById('minUserCount').innerHTML = data.min_user.total_docs;
+                    if (data.min_user.total_docs == 0) {
+                        document.getElementById('minUserFirstDateText').innerHTML = 'سندی ثبت نشده';
+                    } else {
+                        document.getElementById('minUserFirstDateText').innerHTML = data.min_user.first_date || '-';
+                    }
                 }
+                
+                document.getElementById('totalApprovedCount').innerHTML = data.total_approved;
+                document.getElementById('vsYesterday').innerHTML = `<div class="compare-item" style="display: flex; justify-content: space-between; align-items: center; direction: ltr;"><span style="text-align: right; direction: rtl; flex: 1;">آخرین لیست : ${data.vs_yesterday.split('|')[0]}</span><span style="margin: 0 8px; color: #cbd5e1;">|</span><span style="text-align: left; flex: 1;">${data.vs_yesterday.split('|')[1]}</span></div>`;
+                document.getElementById('vsLastWeek').innerHTML = `<div class="compare-item" style="display: flex; justify-content: space-between; align-items: center; direction: ltr;"><span style="text-align: right; direction: rtl; flex: 1;">هفته جاری : ${data.vs_last_week.split('|')[0]}</span><span style="margin: 0 8px; color: #cbd5e1;">|</span><span style="text-align: left; flex: 1;">${data.vs_last_week.split('|')[1]}</span></div>`;
+                document.getElementById('vsLastMonth').innerHTML = `<div class="compare-item" style="display: flex; justify-content: space-between; align-items: center; direction: ltr;"><span style="text-align: right; direction: rtl; flex: 1;">ماه جاری :  ${data.vs_last_month.split('|')[0]}</span><span style="margin: 0 8px; color: #cbd5e1;">|</span><span style="text-align: left; flex: 1;">${data.vs_last_month.split('|')[1]}</span></div>`;
                 
                 let usersHtml = '<div class="user-stats-container">';
                 data.users.forEach(user => {
-                    let trendArrow = user.trend_text.includes('▲') ? '▲' : (user.trend_text.includes('▼') ? '▼' : '●');
-                    let trendValue = user.trend_text.replace(/[▲▼●]/g, '').trim();
-                    
                     usersHtml += `
                         <div class="user-card">
                             <div class="user-card-header">
@@ -1689,33 +1869,21 @@ function loadAdminUsersStats() {
                                     <div class="user-details">
                                         <h4>${escapeHtml(user.fullname)}</h4>
                                         <div class="user-unit">${escapeHtml(user.unit_name)}</div>
+                                        <div class="user-first-register"><i class="fas fa-calendar-alt"></i> شروع ثبت از : ${user.first_date !== '-' ? user.first_date : '---'}</div>
                                     </div>
                                 </div>
                                 <div class="user-stats-badges">
-                                    <div class="stat-badge">
-                                        <div class="stat-value">${user.total_docs}</div>
-                                        <div class="stat-label">کل</div>
-                                    </div>
-                                    <div class="stat-badge">
-                                        <div class="stat-value">${user.pending_today}</div>
-                                        <div class="stat-label">امروز</div>
-                                    </div>
-                                    <div class="stat-badge">
-                                        <div class="stat-value">${user.yesterday_count}</div>
-                                        <div class="stat-label">دیروز</div>
-                                    </div>
+                                    <div class="stat-badge"><div class="stat-value">${user.total_docs}</div><div class="stat-label">کل</div></div>
+                                    <div class="stat-badge"><div class="stat-value">${user.pending_today}</div><div class="stat-label">لیست آخر : </div></div>
+                                    <div class="stat-badge"><div class="stat-value">${user.yesterday_count}</div><div class="stat-label">لیست قبل : </div></div>
                                 </div>
                             </div>
                             <div class="user-card-middle">
-                                <div class="trend-chip">
-                                    <span class="trend-arrow ${user.trend_class}">${trendArrow}</span>
-                                    <span class="${user.trend_class}">${trendValue}</span>
-                                    <span class="trend-label">نسبت به دیروز</span>
-                                </div>
+                                <div class="trend-chip"><span class="trend-label">نسبت به لیست قبل : </span><span class="${user.trend_class}">${user.trend_text}</span></div>
                                 <div class="avg-chips">
-                                    <div class="avg-chip"><span>📅</span><span class="${user.week_change_class}">${user.week_change}</span><span class="avg-label">هفته</span></div>
-                                    <div class="avg-chip"><span>📆</span><span class="${user.month_change_class}">${user.month_change}</span><span class="avg-label">ماه</span></div>
-                                    <div class="avg-chip"><span>📅</span><span class="${user.year_change_class}">${user.year_change}</span><span class="avg-label">سال</span></div>
+                                    <div class="avg-chip"><span>📅</span><span class="${user.week_change_class}">${user.week_change}</span><span class="avg-label"> هفته</span></div>
+                                    <div class="avg-chip"><span>📆</span><span class="${user.month_change_class}">${user.month_change}</span><span class="avg-label"> ماه</span></div>
+                                    <div class="avg-chip"><span>📅</span><span class="${user.year_change_class}">${user.year_change}</span><span class="avg-label"> سال</span></div>
                                 </div>
                             </div>
                         </div>
@@ -1726,6 +1894,16 @@ function loadAdminUsersStats() {
             }
         })
         .catch(err => console.error(err));
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 function selectUserForStats(userId, userName) {
@@ -1760,7 +1938,7 @@ function selectUserForStats(userId, userName) {
                     <div class="stats-detail-wrapper">
                         <div class="stats-detail-card">
                             <div class="stats-detail-value">${data.pending_today}</div>
-                            <div class="stats-detail-label">📅 اسناد امروز</div>
+                            <div class="stats-detail-label">📅 اسناد جاری</div>
                         </div>
                         <div class="stats-detail-card-green">
                             <div class="stats-detail-value">${data.total_docs}</div>
@@ -1768,7 +1946,7 @@ function selectUserForStats(userId, userName) {
                         </div>
                         <div class="stats-detail-trend" style="background: ${trendColor};">
                             <div class="stats-detail-value-small">${trendIcon} ${data.trend}</div>
-                            <div class="stats-detail-label-small">نسبت به دیروز (${data.yesterday_count})</div>
+                            <div class="stats-detail-label-small">نسبت به لیست قبل (${data.yesterday_count})</div>
                         </div>
                         <div class="stats-detail-avg">
                             <div class="avg-item">

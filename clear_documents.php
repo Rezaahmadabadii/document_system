@@ -1,4 +1,5 @@
 <?php
+session_name('doc_system');
 session_start();
 
 // فقط ادمین میتونه این کار رو انجام بده

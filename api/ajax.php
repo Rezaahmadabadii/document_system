@@ -1,6 +1,8 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+error_reporting(0);
+ini_set('display_errors', 0);
+ini_set('log_errors', 0);
+session_name('doc_system');
 session_start();
 require_once '../config/database.php';
 require_once '../config/jdatetime.class.php';
@@ -159,7 +161,7 @@ if ($action == 'get_documents') {
 
     if (!empty($doc_number)) {
         $sql .= " AND d.doc_number LIKE :doc_number";
-        $params[':doc_number'] = "%$doc_number%";
+        $params[':doc_number'] = "$doc_number%";
     }
     if (!empty($doc_date)) {
         $doc_date = toEnglishNumber($doc_date);
@@ -223,11 +225,16 @@ if ($action == 'save_document') {
         exit;
     }
     
+    // دریافت تنظیمات کاربر برای اجباری بودن تاریخ سند
+    $stmt = $db->prepare("SELECT require_doc_date FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $require_doc_date = $stmt->fetchColumn();
+    
     $data = json_decode(file_get_contents('php://input'), true);
     $delivery_date = $data['delivery_date'] ?? jDateTime::date('Y/m/d');
     $company_id = $data['company_id'] ?? 0;
     $doc_number = $data['doc_number'] ?? '';
-    $doc_date = $data['doc_date'] ?? '-';
+    $doc_date = $data['doc_date'] ?? '';
     $description = $data['description'] ?? '';
     
     if (empty($doc_number)) {
@@ -235,8 +242,21 @@ if ($action == 'save_document') {
         exit;
     }
     
-    if ($doc_date !== '-') {
+    // بررسی اجباری بودن تاریخ سند
+    if ($require_doc_date == 1) {
+        if (empty($doc_date) || $doc_date == '-') {
+            echo json_encode(['success' => false, 'error' => 'تاریخ سند الزامی است']);
+            exit;
+        }
+        // تبدیل تاریخ به عدد انگلیسی
         $doc_date = toEnglishNumber($doc_date);
+    } else {
+        // اگر اختیاری است و خالی بود، خط تیره بگذار
+        if (empty($doc_date)) {
+            $doc_date = '-';
+        } else {
+            $doc_date = toEnglishNumber($doc_date);
+        }
     }
     
     $stmt = $db->prepare("INSERT INTO documents (user_id, company_id, doc_number, doc_date, delivery_date, description) 
@@ -310,6 +330,12 @@ if ($action == 'update_document') {
         exit;
     }
     
+    // ✅ اضافه کردن این ۴ خط - بررسی مالکیت سند
+    if (!$is_admin && $doc['user_id'] != $user_id) {
+        echo json_encode(['success' => false, 'error' => 'شما دسترسی به ویرایش این سند ندارید']);
+        exit;
+    }
+    
     $can_edit = $is_admin || (time() - strtotime($doc['created_at'])) <= (2 * 86400);
     if (!$can_edit) {
         echo json_encode(['success' => false, 'error' => 'امکان ویرایش بعد از ۲ روز وجود ندارد']);
@@ -338,6 +364,12 @@ if ($action == 'delete_document') {
     
     if (!$doc) {
         echo json_encode(['success' => false, 'error' => 'سند یافت نشد']);
+        exit;
+    }
+    
+    // ✅ اضافه کردن این ۴ خط - بررسی مالکیت سند
+    if (!$is_admin && $doc['user_id'] != $user_id) {
+        echo json_encode(['success' => false, 'error' => 'شما دسترسی به حذف این سند ندارید']);
         exit;
     }
     
@@ -377,20 +409,155 @@ if ($action == 'change_password') {
     exit;
 }
 
+// ========== تابع کمکی برای تبدیل تاریخ شمسی به تایم‌استمپ ==========
+function shamsi_to_timestamp($shamsi_date) {
+    list($y, $m, $d) = explode('/', $shamsi_date);
+    $g = jDateTime::toGregorian($y, $m, $d);
+    if (is_array($g)) {
+        return strtotime($g[0] . '-' . str_pad($g[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($g[2], 2, '0', STR_PAD_LEFT));
+    }
+    return strtotime($g);
+}
+
+// ========== تابع کمکی برای محاسبه هفته بر اساس تاریخ شروع ==========
+function get_week_range_based_on_start($start_date, $target_date) {
+    $start_timestamp = shamsi_to_timestamp($start_date);
+    $target_timestamp = shamsi_to_timestamp($target_date);
+    
+    // محاسبه روز هفته برای تاریخ شروع (0=شنبه تا 6=جمعه)
+    $start_weekday = date('w', $start_timestamp);
+    $start_weekday = ($start_weekday + 1) % 7;
+    
+    // محاسبه روز هفته برای تاریخ هدف
+    $target_weekday = date('w', $target_timestamp);
+    $target_weekday = ($target_weekday + 1) % 7;
+    
+    // محاسبه هفته جاری بر اساس تاریخ شروع
+    $days_since_start = floor(($target_timestamp - $start_timestamp) / (60 * 60 * 24));
+    $current_week_number = floor($days_since_start / 7) + 1;
+    
+    // شروع هفته جاری
+    $current_week_start_timestamp = $start_timestamp + ($current_week_number - 1) * 7 * 24 * 60 * 60;
+    $current_week_start = jDateTime::date('Y/m/d', $current_week_start_timestamp);
+    $current_week_end_timestamp = $current_week_start_timestamp + 6 * 24 * 60 * 60;
+    $current_week_end = jDateTime::date('Y/m/d', $current_week_end_timestamp);
+    
+    // هفته قبل
+    $prev_week_start_timestamp = $current_week_start_timestamp - 7 * 24 * 60 * 60;
+    $prev_week_start = jDateTime::date('Y/m/d', $prev_week_start_timestamp);
+    $prev_week_end_timestamp = $prev_week_start_timestamp + 6 * 24 * 60 * 60;
+    $prev_week_end = jDateTime::date('Y/m/d', $prev_week_end_timestamp);
+    
+    return [
+        'current_week_start' => $current_week_start,
+        'current_week_end' => $current_week_end,
+        'prev_week_start' => $prev_week_start,
+        'prev_week_end' => $prev_week_end,
+        'current_week_number' => $current_week_number
+    ];
+}
+
 // ========== آمار کاربر عادی ==========
 if ($action == 'get_user_stats') {
-    $today = jDateTime::date('Y/m/d');
-    $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
     
-    // اسناد امروز
-    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-    $stmt->execute([$user_id, $today]);
-    $today_count = $stmt->fetchColumn();
+    // دریافت تاریخ امروز شمسی
+    $today_shamsi = jDateTime::date('Y/m/d');
     
-    // اسناد دیروز
-    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-    $stmt->execute([$user_id, $yesterday]);
-    $yesterday_count = $stmt->fetchColumn();
+    // ========== دریافت اولین تاریخ ثبت کاربر ==========
+    $stmt = $db->prepare("SELECT MIN(delivery_date) as first_date FROM documents WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $user_first_date = $stmt->fetchColumn();
+    
+    // اگر کاربر سند ندارد
+    if (!$user_first_date) {
+        echo json_encode([
+            'success' => true,
+            'today_count' => 0,
+            'yesterday_count' => 0,
+            'total_docs' => 0,
+            'first_date' => '-',
+            'last_date' => '-',
+            'most_company' => '-',
+            'most_count' => 0,
+            'least_company' => '-',
+            'least_count' => 0,
+            'trend_text' => '● 0',
+            'trend_class' => 'color: #f59e0b;',
+            'trend_icon' => '➖',
+            'week_change' => '⏳',
+            'week_change_class' => 'avg-change-neutral',
+            'month_change' => '⏳',
+            'month_change_class' => 'avg-change-neutral',
+            'year_change' => '⏳',
+            'year_change_class' => 'avg-change-neutral'
+        ]);
+        exit;
+    }
+    
+    // ========== محاسبه هفته بر اساس اولین تاریخ ثبت کاربر ==========
+    $week_info = get_week_range_based_on_start($user_first_date, $today_shamsi);
+    $current_week_start = $week_info['current_week_start'];
+    $current_week_end = $week_info['current_week_end'];
+    $prev_week_start = $week_info['prev_week_start'];
+    $prev_week_end = $week_info['prev_week_end'];
+    $current_week_number = $week_info['current_week_number'];
+    
+    // ========== محاسبه ماه جاری و ماه قبل (بر اساس تقویم عادی) ==========
+    $current_month_start = jDateTime::date('Y/m/01');
+    $current_month_end = jDateTime::date('Y/m/t');
+    
+    $prev_month_start = jDateTime::date('Y/m/01', strtotime('-1 month'));
+    $prev_month_end = jDateTime::date('Y/m/t', strtotime('-1 month'));
+    
+    // ========== محاسبه سال جاری و سال قبل ==========
+    $current_year_start = jDateTime::date('Y/01/01');
+    $prev_year_start = jDateTime::date('Y/01/01', strtotime('-1 year'));
+    $prev_year_end = jDateTime::date('Y/12/30', strtotime('-1 year'));
+    
+    // ========== تعیین کامل بودن هفته جاری ==========
+    // هفته کامل شده است؟ (آیا امروز >= آخرین روز هفته جاری)
+    $current_week_end_timestamp = shamsi_to_timestamp($current_week_end);
+    $today_timestamp = shamsi_to_timestamp($today_shamsi);
+    $is_week_complete = ($today_timestamp >= $current_week_end_timestamp);
+    
+    // ========== تعیین کامل بودن ماه ==========
+    $current_day = (int)jDateTime::date('j');
+    $current_month_last_day = (int)jDateTime::date('t');
+    $is_month_complete = ($current_day == $current_month_last_day);
+    
+    // ========== تعیین کامل بودن سال ==========
+    $current_month_num = (int)jDateTime::date('m');
+    $is_year_complete = ($current_month_num == 12 && $current_day >= 29);
+    
+    // دریافت آخرین تاریخ تحویل کاربر
+    $stmt = $db->prepare("SELECT MAX(delivery_date) as last_date FROM documents WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $last_date = $stmt->fetchColumn();
+    
+    if ($last_date) {
+        // تعداد اسناد در آخرین تاریخ تحویل (لیست آخر)
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
+        $stmt->execute([$user_id, $last_date]);
+        $today_count = $stmt->fetchColumn();
+        
+        // دریافت تاریخ قبل از آخرین تاریخ تحویل
+        $stmt = $db->prepare("SELECT DISTINCT delivery_date FROM documents WHERE user_id = ? AND delivery_date < ? ORDER BY delivery_date DESC");
+        $stmt->execute([$user_id, $last_date]);
+        $prev_dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (!empty($prev_dates)) {
+            $prev_date = $prev_dates[0];
+            $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
+            $stmt->execute([$user_id, $prev_date]);
+            $yesterday_count = $stmt->fetchColumn();
+        } else {
+            $yesterday_count = 0;
+        }
+    } else {
+        $today_count = 0;
+        $yesterday_count = 0;
+        $last_date = null;
+    }
     
     // کل اسناد
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
@@ -419,112 +586,125 @@ if ($action == 'get_user_stats') {
     $least_company = !empty($company_stats) ? $company_stats[count($company_stats)-1]['company_name'] : '-';
     $least_count = !empty($company_stats) ? $company_stats[count($company_stats)-1]['doc_count'] : 0;
     
-    // ========== هفته جاری (7 روز اخیر) ==========
-    $week_ago = jDateTime::date('Y/m/d', strtotime('-7 days'));
-    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-    $stmt->execute([$user_id, $week_ago, $today]);
-    $week_count = $stmt->fetchColumn();
-    
-    // هفته قبل (7 روز قبل از هفته جاری)
-    $prev_week_start = jDateTime::date('Y/m/d', strtotime('-14 days'));
-    $prev_week_end = jDateTime::date('Y/m/d', strtotime('-8 days'));
+    // ========== محاسبه هفته جاری (تا امروز) و هفته کامل قبل ==========
+    // هفته کامل قبل
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$user_id, $prev_week_start, $prev_week_end]);
     $prev_week_count = $stmt->fetchColumn();
     
-    // ========== ماه جاری (30 روز اخیر) ==========
-    $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
+    // هفته جاری (تا امروز)
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-    $stmt->execute([$user_id, $month_ago, $today]);
-    $month_count = $stmt->fetchColumn();
+    $stmt->execute([$user_id, $current_week_start, $today_shamsi]);
+    $week_count = $stmt->fetchColumn();
     
-    // ماه قبل (30 روز قبل از ماه جاری)
-    $prev_month_start = jDateTime::date('Y/m/d', strtotime('-60 days'));
-    $prev_month_end = jDateTime::date('Y/m/d', strtotime('-31 days'));
+    // ========== محاسبه ماه جاری (تا امروز) و ماه کامل قبل ==========
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$user_id, $prev_month_start, $prev_month_end]);
     $prev_month_count = $stmt->fetchColumn();
     
-    // ========== سال جاری (365 روز اخیر) ==========
-    $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-    $stmt->execute([$user_id, $year_ago, $today]);
-    $year_count = $stmt->fetchColumn();
+    $stmt->execute([$user_id, $current_month_start, $today_shamsi]);
+    $month_count = $stmt->fetchColumn();
     
-    // سال قبل (365 روز قبل از سال جاری)
-    $prev_year_start = jDateTime::date('Y/m/d', strtotime('-730 days'));
-    $prev_year_end = jDateTime::date('Y/m/d', strtotime('-366 days'));
+    // ========== محاسبه سال جاری (تا امروز) و سال کامل قبل ==========
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$user_id, $prev_year_start, $prev_year_end]);
     $prev_year_count = $stmt->fetchColumn();
     
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$user_id, $current_year_start, $today_shamsi]);
+    $year_count = $stmt->fetchColumn();
+    
     // ========== تغییرات ==========
     
-    // تغییر نسبت به دیروز
-    $trend_diff = $today_count - $yesterday_count;
-    if ($trend_diff > 0) {
-        $trend_text = "▲ +{$trend_diff}";
+    // تغییر نسبت به لیست قبل
+    if ($yesterday_count == 0 && $today_count > 0) {
+        $trend_text = "▲ +{$today_count}";
         $trend_class = "color: #10b981;";
         $trend_icon = "📈";
-    } elseif ($trend_diff < 0) {
-        $trend_text = "▼ {$trend_diff}";
-        $trend_class = "color: #ef4444;";
-        $trend_icon = "📉";
+    } elseif ($yesterday_count > 0) {
+        $trend_diff = $today_count - $yesterday_count;
+        if ($trend_diff > 0) {
+            $trend_text = "▲ +{$trend_diff}";
+            $trend_class = "color: #10b981;";
+            $trend_icon = "📈";
+        } elseif ($trend_diff < 0) {
+            $trend_text = "▼ {$trend_diff}";
+            $trend_class = "color: #ef4444;";
+            $trend_icon = "📉";
+        } else {
+            $trend_text = "● 0";
+            $trend_class = "color: #f59e0b;";
+            $trend_icon = "➖";
+        }
     } else {
         $trend_text = "● 0";
         $trend_class = "color: #f59e0b;";
         $trend_icon = "➖";
     }
     
-    // تغییر هفته
-    $week_change = '---';
-    $week_change_class = 'avg-change-neutral';
-    if ($prev_week_count > 0) {
-        $diff = $week_count - $prev_week_count;
-        if ($diff > 0) {
-            $week_change = "▲ +{$diff}";
+    // تغییر هفته (بر اساس هفته‌های کاربر)
+    $has_week_doc = ($week_count > 0);
+    
+    // اگر هفته اول کاربر است و کامل نشده، ساعت شنی نشان بده
+    if ($current_week_number == 1 && !$is_week_complete) {
+        $week_change = '⏳';
+        $week_change_class = 'avg-change-neutral';
+    } elseif ($is_week_complete && $has_week_doc) {
+        $week_diff = $week_count - $prev_week_count;
+        if ($week_diff > 0) {
+            $week_change = "▲ +{$week_diff}";
             $week_change_class = 'avg-change-up';
-        } elseif ($diff < 0) {
-            $week_change = "▼ {$diff}";
+        } elseif ($week_diff < 0) {
+            $week_change = "▼ {$week_diff}";
             $week_change_class = 'avg-change-down';
         } else {
             $week_change = "● 0";
             $week_change_class = 'avg-change-neutral';
         }
+    } else {
+        $week_change = '⏳';
+        $week_change_class = 'avg-change-neutral';
     }
     
     // تغییر ماه
-    $month_change = '---';
-    $month_change_class = 'avg-change-neutral';
-    if ($prev_month_count > 0) {
-        $diff = $month_count - $prev_month_count;
-        if ($diff > 0) {
-            $month_change = "▲ +{$diff}";
+    $has_month_doc = ($month_count > 0);
+    
+    if ($is_month_complete && $has_month_doc) {
+        $month_diff = $month_count - $prev_month_count;
+        if ($month_diff > 0) {
+            $month_change = "▲ +{$month_diff}";
             $month_change_class = 'avg-change-up';
-        } elseif ($diff < 0) {
-            $month_change = "▼ {$diff}";
+        } elseif ($month_diff < 0) {
+            $month_change = "▼ {$month_diff}";
             $month_change_class = 'avg-change-down';
         } else {
             $month_change = "● 0";
             $month_change_class = 'avg-change-neutral';
         }
+    } else {
+        $month_change = '⏳';
+        $month_change_class = 'avg-change-neutral';
     }
     
     // تغییر سال
-    $year_change = '---';
-    $year_change_class = 'avg-change-neutral';
-    if ($prev_year_count > 0) {
-        $diff = $year_count - $prev_year_count;
-        if ($diff > 0) {
-            $year_change = "▲ +{$diff}";
+    $has_year_doc = ($year_count > 0);
+    
+    if ($is_year_complete && $has_year_doc) {
+        $year_diff = $year_count - $prev_year_count;
+        if ($year_diff > 0) {
+            $year_change = "▲ +{$year_diff}";
             $year_change_class = 'avg-change-up';
-        } elseif ($diff < 0) {
-            $year_change = "▼ {$diff}";
+        } elseif ($year_diff < 0) {
+            $year_change = "▼ {$year_diff}";
             $year_change_class = 'avg-change-down';
         } else {
             $year_change = "● 0";
             $year_change_class = 'avg-change-neutral';
         }
+    } else {
+        $year_change = '⏳';
+        $year_change_class = 'avg-change-neutral';
     }
     
     echo json_encode([
@@ -558,8 +738,85 @@ if ($action == 'get_admin_users_stats') {
         exit;
     }
     
-    $today = jDateTime::date('Y/m/d');
-    $yesterday = jDateTime::date('Y/m/d', strtotime('-1 days'));
+    // دریافت تاریخ امروز شمسی
+    $today_shamsi = jDateTime::date('Y/m/d');
+    
+    // ========== محاسبه خودکار هفته جاری و هفته قبل ==========
+    $timestamp = shamsi_to_timestamp($today_shamsi);
+    $weekday = date('w', $timestamp); // 0=یکشنبه, 6=شنبه
+    $weekday = ($weekday + 1) % 7; // تبدیل به شنبه=0
+    
+    // اول هفته جاری (شنبه)
+    $current_week_start_timestamp = strtotime("-$weekday days", $timestamp);
+    $current_week_start = jDateTime::date('Y/m/d', $current_week_start_timestamp);
+    $current_week_end = jDateTime::date('Y/m/d', strtotime('+6 days', $current_week_start_timestamp));
+    
+    // هفته قبل
+    $prev_week_start_timestamp = strtotime('-7 days', $current_week_start_timestamp);
+    $prev_week_start = jDateTime::date('Y/m/d', $prev_week_start_timestamp);
+    $prev_week_end = jDateTime::date('Y/m/d', strtotime('+6 days', $prev_week_start_timestamp));
+    
+    // ========== محاسبه آمار کل اسناد ثبت شده ==========
+    $stmt = $db->query("SELECT COUNT(*) FROM documents");
+    $total_approved = $stmt->fetchColumn();
+    
+    // دریافت تمام تاریخ‌های تحویل موجود به ترتیب نزولی
+    $stmt = $db->query("SELECT DISTINCT delivery_date FROM documents ORDER BY delivery_date DESC");
+    $all_dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    if (count($all_dates) >= 1) {
+        $last_date = $all_dates[0];
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date = ?");
+        $stmt->execute([$last_date]);
+        $today_approved = $stmt->fetchColumn();
+        
+        if (count($all_dates) >= 2) {
+            $prev_last_date = $all_dates[1];
+            $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date = ?");
+            $stmt->execute([$prev_last_date]);
+            $yesterday_approved = $stmt->fetchColumn();
+        } else {
+            $yesterday_approved = 0;
+        }
+    } else {
+        $today_approved = 0;
+        $yesterday_approved = 0;
+    }
+    
+    // محاسبه کل اسناد هفته جاری
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$current_week_start, $current_week_end]);
+    $week_approved = (int)$stmt->fetchColumn();
+    
+    // محاسبه کل اسناد هفته قبل
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$prev_week_start, $prev_week_end]);
+    $prev_week_approved = (int)$stmt->fetchColumn();
+    
+    // ========== محاسبه ماه جاری و ماه قبل ==========
+    $current_month_start = jDateTime::date('Y/m/01');
+    $current_month_end = jDateTime::date('Y/m/t');
+    
+    $prev_month_start = jDateTime::date('Y/m/01', strtotime('-1 month'));
+    $prev_month_end = jDateTime::date('Y/m/t', strtotime('-1 month'));
+    
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$current_month_start, $current_month_end]);
+    $month_approved = (int)$stmt->fetchColumn();
+    
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date >= ? AND delivery_date <= ?");
+    $stmt->execute([$prev_month_start, $prev_month_end]);
+    $prev_month_approved = (int)$stmt->fetchColumn();
+    
+    // ========== ساخت متن برای باکس کل اسناد ==========
+    $vs_yesterday = $today_approved . ' سند | لیست قبلی :  ' . $yesterday_approved;
+    $vs_yesterday_class = $today_approved > $yesterday_approved ? 'up' : ($today_approved < $yesterday_approved ? 'down' : 'neutral');
+    
+    $vs_last_week = ($week_approved > 0 ? $week_approved . ' سند' : '⏳') . ' | هفته قبل :  ' . $prev_week_approved;
+    $vs_last_week_class = $week_approved > $prev_week_approved ? 'up' : ($week_approved < $prev_week_approved ? 'down' : 'neutral');
+    
+    $vs_last_month = ($month_approved > 0 ? $month_approved . ' سند' : '⏳') . ' | ماه قبل :  ' . ($prev_month_approved > 0 ? $prev_month_approved : '⏳');
+    $vs_last_month_class = $month_approved > $prev_month_approved ? 'up' : ($month_approved < $prev_month_approved ? 'down' : 'neutral');
     
     $stmt = $db->query("SELECT id, fullname, unit_name FROM users WHERE is_admin = 0 ORDER BY fullname");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -568,72 +825,77 @@ if ($action == 'get_admin_users_stats') {
     foreach ($users as $user) {
         $user_id_val = $user['id'];
         
-        // دریافت آخرین تاریخ تحویل این کاربر
         $stmt = $db->prepare("SELECT MAX(delivery_date) as last_delivery_date FROM documents WHERE user_id = ?");
         $stmt->execute([$user_id_val]);
         $last_date = $stmt->fetchColumn();
         
-        // اسناد امروز
-        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$user_id_val, $today]);
-        $today_count = $stmt->fetchColumn();
+        if ($last_date) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
+            $stmt->execute([$user_id_val, $last_date]);
+            $today_count = $stmt->fetchColumn();
+            
+            $stmt = $db->prepare("SELECT DISTINCT delivery_date FROM documents WHERE user_id = ? AND delivery_date < ? ORDER BY delivery_date DESC");
+            $stmt->execute([$user_id_val, $last_date]);
+            $prev_dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            if (!empty($prev_dates)) {
+                $prev_date = $prev_dates[0];
+                $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
+                $stmt->execute([$user_id_val, $prev_date]);
+                $yesterday_count = $stmt->fetchColumn();
+            } else {
+                $yesterday_count = 0;
+            }
+        } else {
+            $today_count = 0;
+            $yesterday_count = 0;
+            $last_date = null;
+        }
         
-        // اسناد دیروز
-        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date = ?");
-        $stmt->execute([$user_id_val, $yesterday]);
-        $yesterday_count = $stmt->fetchColumn();
-        
-        // کل اسناد ثبت شده
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
         $stmt->execute([$user_id_val]);
         $total_docs = $stmt->fetchColumn();
         
-        // هفته جاری (7 روز اخیر)
-        $week_ago = jDateTime::date('Y/m/d', strtotime('-7 days'));
+        $stmt = $db->prepare("SELECT MIN(delivery_date) as first_date FROM documents WHERE user_id = ?");
+        $stmt->execute([$user_id_val]);
+        $first_date = $stmt->fetchColumn();
+        if (!$first_date) $first_date = '-';
+        
+        // اسناد این هفته برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id_val, $week_ago, $today]);
+        $stmt->execute([$user_id_val, $current_week_start, $current_week_end]);
         $week_count = $stmt->fetchColumn();
         
-        // هفته قبل (7 روز قبل از هفته جاری)
-        $prev_week_start = jDateTime::date('Y/m/d', strtotime('-14 days'));
-        $prev_week_end = jDateTime::date('Y/m/d', strtotime('-8 days'));
+        // اسناد هفته قبل برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $prev_week_start, $prev_week_end]);
         $prev_week_count = $stmt->fetchColumn();
         
-        // ماه جاری (30 روز اخیر)
-        $month_ago = jDateTime::date('Y/m/d', strtotime('-30 days'));
+        // اسناد این ماه برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id_val, $month_ago, $today]);
+        $stmt->execute([$user_id_val, $current_month_start, $current_month_end]);
         $month_count = $stmt->fetchColumn();
         
-        // ماه قبل (30 روز قبل از ماه جاری)
-        $prev_month_start = jDateTime::date('Y/m/d', strtotime('-60 days'));
-        $prev_month_end = jDateTime::date('Y/m/d', strtotime('-31 days'));
+        // اسناد ماه قبل برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $prev_month_start, $prev_month_end]);
         $prev_month_count = $stmt->fetchColumn();
         
-        // سال جاری (365 روز اخیر)
-        $year_ago = jDateTime::date('Y/m/d', strtotime('-365 days'));
-        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id_val, $year_ago, $today]);
-        $year_count = $stmt->fetchColumn();
-        
-        // سال قبل (365 روز قبل از سال جاری)
-        $prev_year_start = jDateTime::date('Y/m/d', strtotime('-730 days'));
-        $prev_year_end = jDateTime::date('Y/m/d', strtotime('-366 days'));
-        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
-        $stmt->execute([$user_id_val, $prev_year_start, $prev_year_end]);
-        $prev_year_count = $stmt->fetchColumn();
-        
-        // تغییرات نسبت به دیروز
-        $trend_diff = $today_count - $yesterday_count;
-        $trend_text = $trend_diff > 0 ? "▲ +{$trend_diff}" : ($trend_diff < 0 ? "▼ {$trend_diff}" : "● 0");
-        $trend_class = $trend_diff > 0 ? 'trend-up' : ($trend_diff < 0 ? 'trend-down' : 'trend-neutral');
+        // تغییرات نسبت به لیست قبل
+        if ($yesterday_count == 0 && $today_count > 0) {
+            $trend_text = "▲ +{$today_count}";
+            $trend_class = 'trend-up';
+        } elseif ($yesterday_count > 0) {
+            $trend_diff = $today_count - $yesterday_count;
+            $trend_text = $trend_diff > 0 ? "▲ +{$trend_diff}" : ($trend_diff < 0 ? "▼ {$trend_diff}" : "● 0");
+            $trend_class = $trend_diff > 0 ? 'trend-up' : ($trend_diff < 0 ? 'trend-down' : 'trend-neutral');
+        } else {
+            $trend_text = "● 0";
+            $trend_class = 'trend-neutral';
+        }
         
         // تغییرات هفته
-        $week_change = '---';
+        $week_change = '⏳';
         $week_change_class = 'avg-change-neutral';
         if ($prev_week_count > 0) {
             $diff = $week_count - $prev_week_count;
@@ -642,7 +904,7 @@ if ($action == 'get_admin_users_stats') {
         }
         
         // تغییرات ماه
-        $month_change = '---';
+        $month_change = '⏳';
         $month_change_class = 'avg-change-neutral';
         if ($prev_month_count > 0) {
             $diff = $month_count - $prev_month_count;
@@ -651,7 +913,7 @@ if ($action == 'get_admin_users_stats') {
         }
         
         // تغییرات سال
-        $year_change = '---';
+        $year_change = '⏳';
         $year_change_class = 'avg-change-neutral';
         if ($prev_year_count > 0) {
             $diff = $year_count - $prev_year_count;
@@ -674,27 +936,78 @@ if ($action == 'get_admin_users_stats') {
             'month_change' => $month_change,
             'month_change_class' => $month_change_class,
             'year_change' => $year_change,
-            'year_change_class' => $year_change_class
+            'year_change_class' => $year_change_class,
+            'first_date' => $first_date
         ];
     }
     
-    // مرتب‌سازی بر اساس آخرین تاریخ تحویل (جدیدترین در بالا)
-    usort($result, function($a, $b) {
-        if ($a['last_delivery_date'] == $b['last_delivery_date']) return 0;
-        if ($a['last_delivery_date'] == null) return 1;
-        if ($b['last_delivery_date'] == null) return -1;
-        return strcmp($b['last_delivery_date'], $a['last_delivery_date']);
-    });
+    // پیدا کردن بیشترین و کمترین
+    $max_user = null;
+    $min_users_count = 0;
+    $min_docs = null;
+    $min_users_names = [];
     
-    $max_user = !empty($result) ? $result[0] : null;
-    $min_user = !empty($result) ? $result[count($result) - 1] : null;
+    if (!empty($result)) {
+        $max_docs = max(array_column($result, 'total_docs'));
+        $min_docs = min(array_column($result, 'total_docs'));
+        
+        foreach ($result as $user) {
+            if ($user['total_docs'] == $max_docs) {
+                $max_user = $user;
+            }
+            if ($user['total_docs'] == $min_docs) {
+                $min_users_count++;
+                $min_users_names[] = $user['fullname'];
+            }
+        }
+    }
+    
+    $min_user_info = null;
+    if ($min_users_count > 0) {
+        if ($min_users_count == 1) {
+            $first_date_min = '-';
+            foreach ($result as $user) {
+                if ($user['total_docs'] == $min_docs) {
+                    $first_date_min = $user['first_date'];
+                    break;
+                }
+            }
+            $min_user_info = [
+                'fullname' => $min_users_names[0],
+                'total_docs' => $min_docs,
+                'first_date' => $first_date_min,
+                'count' => 1
+            ];
+        } else {
+            $min_user_info = [
+                'fullname' => count($min_users_names) . ' کاربر',
+                'total_docs' => $min_docs,
+                'first_date' => '-',
+                'count' => $min_users_count,
+                'users_list' => $min_users_names
+            ];
+        }
+    }
     
     echo json_encode([
         'success' => true,
         'users' => $result,
         'max_user' => $max_user,
-        'min_user' => $min_user,
-        'today_date' => toPersianNumber($today)
+        'min_user' => $min_user_info,
+        'today_date' => toPersianNumber($today_shamsi),
+        'total_approved' => (int)$total_approved,
+        'today_approved' => (int)$today_approved,
+        'yesterday_approved' => (int)$yesterday_approved,
+        'week_approved' => (int)$week_approved,
+        'prev_week_approved' => (int)$prev_week_approved,
+        'month_approved' => (int)$month_approved,
+        'prev_month_approved' => (int)$prev_month_approved,
+        'vs_yesterday' => $vs_yesterday,
+        'vs_yesterday_class' => $vs_yesterday_class,
+        'vs_last_week' => $vs_last_week,
+        'vs_last_week_class' => $vs_last_week_class,
+        'vs_last_month' => $vs_last_month,
+        'vs_last_month_class' => $vs_last_month_class
     ]);
     exit;
 }
@@ -1170,7 +1483,7 @@ if ($action == 'search_admin_documents') {
     
     if (!empty($doc_number)) {
         $sql .= " AND d.doc_number LIKE :doc_number";
-        $params[':doc_number'] = "%$doc_number%";
+        $params[':doc_number'] = "$doc_number%";
     }
     if (!empty($doc_date)) {
         $sql .= " AND d.doc_date LIKE :doc_date";

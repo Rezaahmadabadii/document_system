@@ -7,5 +7,9 @@
 # جلوگیری از لیست شدن محتویات پوشه
 Options -Indexes
 
-# تنظیم پیش‌فرصت charset
+# تنظیم پیش‌فرض charset
 AddDefaultCharset UTF-8
+
+# مسدود کردن دسترسی به فایل‌های PHP در پوشه storage (اما اجازه به تصاویر)
+RewriteEngine On
+RewriteRule ^storage/.*\.(php|phtml)$ - [F,L]

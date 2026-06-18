@@ -1,4 +1,5 @@
 <?php
+session_name('doc_system');
 session_start();
 require_once 'config/database.php';
 

@@ -1,4 +1,5 @@
 <?php
+session_name('doc_system');
 session_start();
 require_once 'config/database.php';
 require_once 'config/jdatetime.class.php';
@@ -180,7 +181,8 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     
     <!-- فونت Vazirmatn -->
     <link href="assets/css/vazirmatn.css" rel="stylesheet" type="text/css" />
-    
+	<link rel="icon" type="image/x-icon" href="print.svg">
+    <link rel="shortcut icon" href="print.svg">    
     <!-- کتابخانه‌ها -->
     <script src="assets/js/html2canvas.min.js"></script>
     <script src="assets/js/jspdf.umd.min.js"></script>
@@ -253,9 +255,8 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
 <body>
     <div style="text-align: center; margin-bottom: 15px;" class="no-print">
         <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> چاپ</button>
-        <button class="btn-print" id="downloadPdfBtn" style="background:#dc2626;"><i class="fas fa-file-pdf"></i> دانلود PDF</button>
-        <button class="btn-print" id="downloadImageBtn" style="background:#059669;"><i class="fas fa-image"></i> <span id="downloadBtnText">دانلود عکس</span></button>
-        <button class="btn-close" onclick="closePrintWindow()"><i class="fas fa-times"></i> بستن</button>
+        <button class="btn-print" id="downloadImageBtn" style="background:#059669;"><i class="fas fa-image"></i> دانلود عکس</button>
+        <button class="btn-close" onclick="window.close()"><i class="fas fa-times"></i> بستن</button>
     </div>
     
     <?php if(isset($_GET['error']) && $_GET['error'] == 'locked'): ?>
@@ -375,9 +376,10 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
-                    <td>
+                    </table>
                 </div>
             </div>
+            <div style="clear: both;"></div>
             <?php endif; ?>
             
             <?php if($page_index == $total_pages - 1): ?>
@@ -457,86 +459,39 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     function closePrintWindow() {
         window.close();
     }
-    
-    // ========== تابع دانلود PDF ==========
-async function downloadAsPDF() {
-    const pages = document.querySelectorAll('.print-container');
-    const btn = document.getElementById('downloadPdfBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی PDF...';
-    btn.disabled = true;
-    
-    const { jsPDF } = window.jspdf;
-    const pdfWidth = 297;
-    let pdf = null;
-    
-    for (let i = 0; i < pages.length; i++) {
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
         
-        const noPrintElements = pages[i].querySelectorAll('.no-print');
-        noPrintElements.forEach(el => el.style.display = 'none');
-        
-        try {
-            const canvas = await html2canvas(pages[i], {
-                scale: 3,
-                backgroundColor: '#ffffff',
-                useCORS: true,
-                logging: false
-            });
-            
-            noPrintElements.forEach(el => el.style.display = '');
-            
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = pdfWidth;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            
-            if (pdf === null) {
-                pdf = new jsPDF('l', 'mm', 'a4');
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            } else {
-                pdf.addPage('l', 'mm', 'a4');
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            }
-        } catch (err) {
-            console.error(err);
-            noPrintElements.forEach(el => el.style.display = '');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            alert('❌ خطا در پردازش صفحه ' + (i+1));
-            return;
-        }
-    }
-    
-    if (pdf !== null) {
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-        pdf.save(`document-${timestamp}.pdf`);
-    }
-    
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-    alert('✅ PDF با موفقیت دانلود شد');
-}
-    
-    // ========== تابع دانلود عکس ==========
+// ========== تابع دانلود عکس ==========
 async function downloadAllPagesAsImage() {
-    const pages = document.querySelectorAll('.print-container');
     const btn = document.getElementById('downloadImageBtn');
     const btnText = document.getElementById('downloadBtnText');
-    const originalText = btnText.innerHTML;
     
-    if (pages.length === 0) {
-        alert('هیچ صفحه‌ای یافت نشد');
+    if (!btn) {
+        console.error('دکمه دانلود عکس پیدا نشد');
         return;
     }
     
-    btnText.innerHTML = 'در حال آماده‌سازی...';
+    const originalText = btnText ? btnText.innerHTML : 'دانلود عکس';
+    const originalBtnHTML = btn.innerHTML;
+    
+    // تغییر دکمه به حالت در حال بارگذاری
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
     btn.disabled = true;
     
+    const pages = document.querySelectorAll('.print-container');
+    
+    if (pages.length === 0) {
+        alert('هیچ صفحه‌ای یافت نشد');
+        btn.innerHTML = originalBtnHTML;
+        btn.disabled = false;
+        return;
+    }
+    
     try {
-        // اگر فقط یک صفحه باشد، مستقیماً PNG دانلود کن
         if (pages.length === 1) {
             const noPrintElements = pages[0].querySelectorAll('.no-print');
             noPrintElements.forEach(el => el.style.display = 'none');
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال عکاسی...';
             
             const canvas = await html2canvas(pages[0], {
                 scale: 2,
@@ -552,14 +507,19 @@ async function downloadAllPagesAsImage() {
             link.click();
             
             alert('✅ تصویر با موفقیت دانلود شد');
-        } 
-        // اگر چند صفحه باشد، فایل ZIP دانلود کن
-        else {
+        } else {
+            if (typeof JSZip === 'undefined') {
+                alert('کتابخانه JSZip لود نشده است');
+                btn.innerHTML = originalBtnHTML;
+                btn.disabled = false;
+                return;
+            }
+            
             const zip = new JSZip();
             let successCount = 0;
             
             for (let i = 0; i < pages.length; i++) {
-                btnText.innerHTML = `در حال پردازش صفحه ${i+1} از ${pages.length}...`;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
                 
                 const noPrintElements = pages[i].querySelectorAll('.no-print');
                 noPrintElements.forEach(el => el.style.display = 'none');
@@ -584,6 +544,8 @@ async function downloadAllPagesAsImage() {
             }
             
             if (successCount > 0) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ساخت فایل...';
+                
                 const content = await zip.generateAsync({ type: 'blob' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(content);
@@ -602,14 +564,18 @@ async function downloadAllPagesAsImage() {
         console.error(err);
         alert('❌ خطا در ایجاد تصویر');
     } finally {
-        btnText.innerHTML = originalText;
+        btn.innerHTML = originalBtnHTML;
         btn.disabled = false;
     }
 }
-    
-    // ========== اتصال رویدادها به دکمه‌ها ==========
-    document.getElementById('downloadImageBtn').addEventListener('click', downloadAllPagesAsImage);
-    document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
+
+// اتصال رویداد (بعد از لود صفحه)
+document.addEventListener('DOMContentLoaded', function() {
+    const imageBtn = document.getElementById('downloadImageBtn');
+    if (imageBtn) {
+        imageBtn.addEventListener('click', downloadAllPagesAsImage);
+    }
+});
     </script>
 </body>
 </html>
