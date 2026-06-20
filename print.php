@@ -416,7 +416,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                     <div class="sign-line"></div>
                     <div class="sign-label">امضاء تحویل‌دهنده</div>
                     <?php if(file_exists($user_signature_file) && $has_user_approval): ?>
-                        <img src="<?php echo $user_signature_file . '?t=' . time(); ?>" class="sign-img">
+                        <img src="<?php echo $user_signature_file . '?t=' . time(); ?>" style="width: auto; height: auto; max-width: 50%;">
                     <?php else: ?>
                         <?php if(!$is_admin && !$has_user_approval): ?>
                             <a href="signature_upload.php?delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-user"><i class="fas fa-pen"></i> ثبت امضا</a>
@@ -432,7 +432,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                     <div class="sign-line"></div>
                     <div class="sign-label">امضاء بایگانی</div>
                     <?php if(file_exists($admin_signature_file) && $has_admin_approval): ?>
-                        <img src="<?php echo $admin_signature_file . '?t=' . time(); ?>" class="sign-img">
+                        <img src="<?php echo $admin_signature_file . '?t=' . time(); ?>" style="width: auto; height: auto; max-width: 25%;">
                     <?php else: ?>
                         <?php if($is_admin && $has_user_approval && !$has_admin_approval): ?>
                             <a href="admin_approve.php?user_id=<?php echo $user_id; ?>&delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-admin" onclick="return confirm('آیا از تایید نهایی این اسناد اطمینان دارید؟')"><i class="fas fa-check-circle"></i> تایید نهایی</a>

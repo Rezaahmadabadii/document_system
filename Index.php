@@ -115,6 +115,7 @@ if ($is_admin) {
     <link rel="shortcut icon" href="favicon.svg">
     <script defer src="assets/js/all.min.js"></script>
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, 'Tahoma', sans-serif !important; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; font-size: 14px; }
@@ -365,6 +366,9 @@ if ($is_admin) {
         .max-compare .compare-number { background: #d1fae5; color: #047857; }
         .min-compare .compare-number { background: #fee2e2; color: #b91c1c; }
         .compare-divider { height: 1px; background: #eef2ff; margin: 10px 0; }
+        /* ========== انیمیشن Toast ========== */
+        #toast { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 14px; color: white; font-size: 0.85rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; align-items: center; gap: 10px; z-index: 9999; max-width: 400px; direction: rtl; animation-duration: 0.5s; }
+        #toast i { font-size: 1.1rem; }
         /* ========== پایان استایل‌ها ========== */
     </style>
 </head>
@@ -460,7 +464,7 @@ if ($is_admin) {
                 <div class="right-panel-footer" style="margin-top: 20px; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #eef2ff; text-align: center;">
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                         <div>
-                            <img src="/document_system/assets/logo.png" alt="لوگو" style="max-height: 35px; width: auto;" onerror="this.style.display='none'">
+							<img src="/document_system/assets/logo.png" alt="لوگو" style="max-height: 40px; width: auto; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onerror="this.style.display='none'">
                         </div>
                         <div>
                             <p style="margin: 0; font-size: 0.65rem; color: #64748b;">
@@ -596,10 +600,31 @@ async function checkLockStatus(deliveryDate) {
 
 function showToast(msg, isError = false) {
     let toast = document.getElementById('toast');
+    
+    // اگر پیغام قبلی در حال نمایش است، ابتدا مخفی کن
+    if (toast.style.display === 'flex') {
+        toast.classList.remove('animate__fadeInDownBig', 'animate__fadeOutDown', 'animate__slow');
+        toast.style.display = 'none';
+        clearTimeout(toast._timeout);
+    }
+    
+    // تنظیم محتوا و رنگ
     toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
     toast.style.background = isError ? '#ef4444' : '#10b981';
     toast.style.display = 'flex';
-    setTimeout(() => toast.style.display = 'none', 2500);
+    
+    // حذف کلاس‌های قبلی و اضافه کردن انیمیشن ورود با سرعت آرام
+    toast.classList.remove('animate__fadeOutDown', 'animate__fadeInDownBig', 'animate__slow');
+    toast.classList.add('animate__animated', 'animate__fadeInDownBig', 'animate__slow');
+    
+    // تنظیم تایمر برای خروج
+    toast._timeout = setTimeout(() => {
+        toast.classList.remove('animate__fadeInDownBig', 'animate__slow');
+        toast.classList.add('animate__fadeOutDown', 'animate__slow');
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 1000); // مدت زمان انیمیشن خروج با سرعت آرام
+    }, 2000); // مدت زمان نمایش پیغام (۳.۵ ثانیه)
 }
 
 function escapeHtml(str) {
