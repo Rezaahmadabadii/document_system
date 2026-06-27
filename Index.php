@@ -366,6 +366,92 @@ if ($is_admin) {
         .max-compare .compare-number { background: #d1fae5; color: #047857; }
         .min-compare .compare-number { background: #fee2e2; color: #b91c1c; }
         .compare-divider { height: 1px; background: #eef2ff; margin: 10px 0; }
+        /* ========== گزارش برهان ========== */
+        .reports-filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 5px; }
+        .reports-filters .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .reports-filters .filter-group label { font-size: 0.6rem; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; }
+        .reports-filters .filter-group label i { font-size: 0.6rem; color: #667eea; }
+        .reports-filters .filter-group select, .reports-filters .filter-group input { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; font-size: 0.7rem; transition: all 0.2s; }
+        .reports-filters .filter-group select:focus, .reports-filters .filter-group input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+        @media (max-width: 900px) { .reports-filters { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .reports-filters { grid-template-columns: 1fr; } }
+        
+        #reportTable th { position: sticky; top: 0; z-index: 10; }
+        #reportTable tbody tr:nth-child(even) { background: #f8fafc; }
+        #reportTable tbody tr:hover { background: #eef2ff; }
+        #reportTable tbody tr.row-new { background: #d1fae5 !important; }
+        #reportTable tbody tr.row-new:hover { background: #a7f3d0 !important; }
+        #reportTable tbody tr.row-edit { background: #fef3c7 !important; }
+        #reportTable tbody tr.row-edit:hover { background: #fde68a !important; }
+        #reportTable tbody tr.row-delete { background: #fee2e2 !important; }
+        #reportTable tbody tr.row-delete:hover { background: #fca5a5 !important; }
+        
+        .badge { padding: 2px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 600; }
+        .badge-success { background: #10b981; color: white; }
+        .badge-warning { background: #f59e0b; color: white; }
+        .badge-danger { background: #ef4444; color: white; }
+        .badge-neutral { background: #f1f5f9; color: #475569; }
+        
+        /* ========== سایز فونت ستون‌ها ========== */
+        #reportTable td:nth-child(2),
+        #reportTable td:nth-child(3),
+        #reportTable td:nth-child(5),
+        #reportTable td:nth-child(6),
+        #reportTable td:nth-child(10),
+        #reportTable td:nth-child(11) { font-size: 0.55rem !important; }
+        #reportTable td:nth-child(4),
+        #reportTable td:nth-child(7),
+        #reportTable td:nth-child(12) { font-size: 0.7rem !important; }
+        
+        /* ========== آمار لحظه‌ای ========== */
+        .report-stats-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 15px; }
+        .report-stats-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .report-stats-title { font-size: 0.75rem; font-weight: 700; color: #1e293b; }
+        .report-stats-title i { color: #667eea; margin-left: 6px; }
+        .report-stats-date { display: flex; align-items: center; gap: 8px; }
+        .report-stats-date .date-quick-btn { padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; color: #475569; }
+        .report-stats-date .date-quick-btn:hover { background: #667eea; color: white; border-color: #667eea; }
+        .report-stats-date input { padding: 4px 10px; border-radius: 20px; border: 1px solid #e2e8f0; font-size: 0.6rem; width: 100px; text-align: center; }
+        .report-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat-card-new { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; transition: all 0.2s; }
+        .stat-card-new:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .stat-card-new .stat-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1rem; }
+        .stat-card-new .stat-info { flex: 1; }
+        .stat-card-new .stat-label { font-size: 0.6rem; font-weight: 500; color: #64748b; }
+        .stat-card-new .stat-number { font-size: 1.1rem; font-weight: 800; }
+        .stat-new { background: #d1fae5; }
+        .stat-new .stat-icon { background: #10b98120; color: #059669; }
+        .stat-new .stat-number { color: #065f46; }
+        .stat-edit { background: #fef3c7; }
+        .stat-edit .stat-icon { background: #f59e0b20; color: #b45309; }
+        .stat-edit .stat-number { color: #92400e; }
+        .stat-delete { background: #fee2e2; }
+        .stat-delete .stat-icon { background: #ef444420; color: #dc2626; }
+        .stat-delete .stat-number { color: #991b1b; }
+        .stat-total { background: #dbeafe; }
+        .stat-total .stat-icon { background: #3b82f620; color: #2563eb; }
+        .stat-total .stat-number { color: #1e40af; }
+        @media (max-width: 768px) { .report-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .report-stats-grid { grid-template-columns: 1fr; } }
+        
+        /* ========== انیمیشن دایره اعلان ========== */
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .report-notification {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            margin-right: 6px;
+            animation: pulse-dot 1.5s infinite;
+        }
+        .report-notification.green { background: #10b981; }
+        .report-notification.yellow { background: #f59e0b; }
+        .report-notification.red { background: #ef4444; }
+        
         /* ========== انیمیشن Toast ========== */
         #toast { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 14px; color: white; font-size: 0.85rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; align-items: center; gap: 10px; z-index: 9999; max-width: 400px; direction: rtl; animation-duration: 0.5s; }
         #toast i { font-size: 1.1rem; }
@@ -401,13 +487,30 @@ if ($is_admin) {
                 
                 <?php if($is_admin): ?>
                 <div class="admin-menu">
-                    <div class="menu-item active" data-section="stats" onclick="showLeftContent('stats')"><i class="fas fa-chart-line"></i> آمار کاربران</div>
-                    <div class="menu-item" data-section="users" onclick="showLeftContent('users')"><i class="fas fa-users"></i> مدیریت کاربران</div>
-                    <div class="menu-item" data-section="companies" onclick="showLeftContent('companies')"><i class="fas fa-building"></i> مدیریت شرکت‌ها</div>
-                    <div class="menu-item" data-section="filters" onclick="showLeftContent('filters')"><i class="fas fa-filter"></i> جستجوی اسناد</div>
-                    <div class="menu-item" data-section="approvals" onclick="showLeftContent('approvals')"><i class="fas fa-check-double"></i> تاییدات نهایی</div>
-                    <div class="menu-item" data-section="archive" onclick="showLeftContent('archive')"><i class="fas fa-archive"></i> بایگانی</div>
-					<div class="menu-item" onclick="window.open('export_excel.php', '_blank')"><i class="fas fa-file-excel"></i> خروجی اکسل</div>
+                    <div class="menu-item" data-section="reports" onclick="showLeftContent('reports')">
+                        <i class="fas fa-chart-pie"></i> گزارش برهان
+                    </div>
+                    <div class="menu-item active" data-section="stats" onclick="showLeftContent('stats')">
+                        <i class="fas fa-chart-line"></i> آمار کاربران
+                    </div>
+                    <div class="menu-item" data-section="users" onclick="showLeftContent('users')">
+                        <i class="fas fa-users"></i> مدیریت کاربران
+                    </div>
+                    <div class="menu-item" data-section="companies" onclick="showLeftContent('companies')">
+                        <i class="fas fa-building"></i> مدیریت شرکت‌ها
+                    </div>
+                    <div class="menu-item" data-section="filters" onclick="showLeftContent('filters')">
+                        <i class="fas fa-filter"></i> جستجوی اسناد
+                    </div>
+                    <div class="menu-item" data-section="approvals" onclick="showLeftContent('approvals')">
+                        <i class="fas fa-check-double"></i> تاییدات نهایی
+                    </div>
+                    <div class="menu-item" data-section="archive" onclick="showLeftContent('archive')">
+                        <i class="fas fa-archive"></i> بایگانی
+                    </div>
+                    <div class="menu-item" onclick="window.open('export_excel.php', '_blank')">
+                        <i class="fas fa-file-excel"></i> خروجی اکسل
+                    </div>
                 </div>
                                 
                 <div id="adminFiltersPanel" class="admin-filter-box">
@@ -543,6 +646,160 @@ if ($is_admin) {
                 <div id="filtersContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-list-ul"></i> نتیجه جستجو</div><div id="adminDocumentsList" class="docs-list"><div class="empty-state">برای جستجو از فیلدهای سمت راست استفاده کنید</div></div></div>
                 <div id="approvalsContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-check-double"></i> تایید نهایی اسناد</div><div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;"><button class="tab-btn active" onclick="showApprovalsTab('pending')" style="background:none; border:none; padding:8px 16px; cursor:pointer; font-weight:500; color:#667eea; border-bottom:2px solid #667eea;">⏳ در انتظار تایید</button><button class="tab-btn" onclick="showApprovalsTab('revert')" style="background:none; border:none; padding:8px 16px; cursor:pointer; font-weight:500; color:#475569;">🔄 درخواست بازیابی</button><button class="tab-btn" onclick="showApprovalsTab('approved')" style="background:none; border:none; padding:8px 16px; cursor:pointer; font-weight:500; color:#475569;">✅ تایید شده‌ها</button></div><div id="pendingApprovalsTab"><div id="usersPendingList"><div class="empty-state">در حال بارگذاری...</div></div><div id="userDatesContainer" style="display:none; margin-top: 20px;"><div class="left-section-title"><i class="fas fa-calendar"></i> تاریخ‌های تحویل<button class="btn-secondary" onclick="backToUsersList()" style="margin-right:auto; padding:4px 12px;">← بازگشت</button></div><div id="userDatesList"></div></div></div><div id="revertRequestsTab" style="display:none;"><div id="revertRequestsList"><div class="empty-state">در حال بارگذاری...</div></div></div><div id="approvedApprovalsTab" style="display:none;"><div id="approvedApprovalsList"><div class="empty-state">در حال بارگذاری...</div></div></div></div>
                 <div id="archiveContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-archive"></i> بایگانی اسناد تایید شده</div><div id="archiveList"><div class="empty-state">در حال بارگذاری...</div></div></div>
+                
+                <!-- ========== گزارش برهان ========== -->
+                <div id="reportsContent" class="left-content" style="display:none;">
+                    <div class="left-section-title">
+                        <i class="fas fa-chart-pie"></i> گزارش برهان
+                        <span id="reportNewBadge" style="display:none; font-size:0.6rem; background:#ef4444; color:white; padding:2px 10px; border-radius:20px; margin-right:8px;"></span>
+                        <button class="btn-secondary" onclick="resetReportFilters()" style="margin-right:auto; padding:4px 12px; font-size:0.65rem;">
+                            <i class="fas fa-undo"></i> حذف فیلتر
+                        </button>
+                        <button class="btn-primary" onclick="manualRefreshReport()" style="padding:4px 12px; font-size:0.65rem;">
+                            <i class="fas fa-sync"></i> بروزرسانی
+                        </button>
+                    </div>
+                    
+                    <!-- ========== آمار لحظه‌ای ========== -->
+                    <div class="report-stats-container">
+                        <div class="report-stats-header">
+                            <div class="report-stats-title">
+                                <i class="fas fa-chart-bar"></i> آمار لحظه‌ای
+                            </div>
+                            <div class="report-stats-date">
+                                <button class="date-quick-btn" onclick="setReportDate('today')">امروز</button>
+                                <button class="date-quick-btn" onclick="setReportDate('yesterday')">دیروز</button>
+                                <input type="text" id="report_stats_date" placeholder="1404/01/01" value="<?php echo $today; ?>" onchange="loadReportStats()">
+                            </div>
+                        </div>
+                        <div class="report-stats-grid" id="reportStatsGrid">
+                            <div class="stat-card-new stat-new">
+                                <div class="stat-icon"><i class="fas fa-plus-circle"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-label">موجودیت جدید</div>
+                                    <div class="stat-number" id="statNewCount">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-card-new stat-edit">
+                                <div class="stat-icon"><i class="fas fa-edit"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-label">ویرایش موجودیت</div>
+                                    <div class="stat-number" id="statEditCount">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-card-new stat-delete">
+                                <div class="stat-icon"><i class="fas fa-trash-alt"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-label">حذف موجودیت</div>
+                                    <div class="stat-number" id="statDeleteCount">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-card-new stat-total">
+                                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-label">کل ثبت‌ها</div>
+                                    <div class="stat-number" id="statTotalCount">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== پایان آمار لحظه‌ای ========== -->
+                    
+                    <!-- فیلترها -->
+                    <div class="reports-filters">
+                        <div class="filter-group">
+                            <label><i class="fas fa-building"></i> شرکت</label>
+                            <select id="report_filter_company" onchange="applyReportFilters()">
+                                <option value="">همه شرکت‌ها</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-alt"></i> سال مالی</label>
+                            <select id="report_filter_year" onchange="applyReportFilters()">
+                                <option value="">همه سال‌ها</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-user"></i> کاربر</label>
+                            <select id="report_filter_user" onchange="applyReportFilters()">
+                                <option value="">همه کاربران</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-hashtag"></i> شماره سند</label>
+                            <input type="text" id="report_filter_number" placeholder="جستجوی شماره..." oninput="applyReportFilters()">
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-tag"></i> نوع ثبت</label>
+                            <select id="report_filter_type" onchange="applyReportFilters()">
+                                <option value="">همه</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-file-alt"></i> نوع سند</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+                                <label style="font-size:0.6rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                    <input type="checkbox" class="doc-type-filter" value="سند حسابداري" checked onchange="applyReportFilters()"> حسابداري
+                                </label>
+                                <label style="font-size:0.6rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                    <input type="checkbox" class="doc-type-filter" value="سند انبار" onchange="applyReportFilters()"> انبار
+                                </label>
+                                <label style="font-size:0.6rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                    <input type="checkbox" class="doc-type-filter" value="سند خزانه" checked onchange="applyReportFilters()"> خزانه
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-day"></i> از تاریخ</label>
+                            <input type="text" id="report_filter_date_from" placeholder="1404/01/01" oninput="formatDateInput(this); applyReportFilters();">
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-day"></i> تا تاریخ</label>
+                            <input type="text" id="report_filter_date_to" placeholder="1404/01/01" oninput="formatDateInput(this); applyReportFilters();">
+                        </div>
+                    </div>
+                    
+                    <!-- جدول نتایج -->
+                    <div id="reportTableContainer" style="margin-top: 15px; display: none;">
+                        <div style="overflow-x: auto; max-height: 450px; overflow-y: auto; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <table class="data-table" id="reportTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>شعبه</th>
+                                        <th>سال مالی</th>
+                                        <th>کاربر</th>
+                                        <th>تاریخ</th>
+                                        <th>زمان</th>
+                                        <th>نوع ثبت</th>
+                                        <th>سیستم</th>
+                                        <th>نوع سند</th>
+                                        <th>شماره</th>
+                                        <th>تاریخ سند</th>
+                                        <th>توضیحات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 12px; padding: 8px 12px; background: #f8fafc; border-radius: 10px;">
+                            <span style="font-size: 0.7rem; color: #64748b;">
+                                <i class="fas fa-file-alt"></i> تعداد کل: <strong id="reportTotalCount">0</strong>
+                            </span>
+                            <span style="font-size: 0.7rem; color: #64748b;">
+                                <i class="fas fa-filter"></i> فیلتر شده: <strong id="reportFilteredCount">0</strong>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div id="reportEmptyState" class="empty-state" style="margin-top: 20px;">
+                        <i class="fas fa-file-csv" style="font-size: 2rem; opacity: 0.5;"></i>
+                        <p style="margin-top: 10px;">برای مشاهده گزارش، فایل CSV را در مسیر storage/reports/Logs.csv قرار دهید</p>
+                    </div>
+                </div>
+                <!-- ========== پایان گزارش برهان ========== -->
+                
                 <?php else: ?>
                 <div id="userStatsContent" class="left-content">
                     <div class="left-section-title"><i class="fas fa-chart-line"></i> آمار شما</div>
@@ -1708,11 +1965,12 @@ async function searchAdminDocuments() {
         let res = await fetch(`${apiUrl}?${params.toString()}`);
         let data = await res.json();
         let container = document.getElementById('adminDocumentsList');
-        if (data.success && data.results && data.results.length > 0) {
+        if (data.success && data.documents && data.documents.length > 0) {
             let html = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>تاریخ تحویل</th><th>شرکت</th><th>کاربر</th><th>عملیات</th></tr></thead><tbody>`;
-            for (let i = 0; i < data.results.length; i++) {
-                let doc = data.results[i];
+            for (let i = 0; i < data.documents.length; i++) {
+                let doc = data.documents[i];
                 let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
+                // ✅ اضافه کردن company_id به openEditModal
                 html += `<tr>
                     <td>${i+1}</td>
                     <td>${escapeHtml(doc.doc_number)}</td>
@@ -1720,7 +1978,7 @@ async function searchAdminDocuments() {
                     <td>${escapeHtml(doc.delivery_date)}</td>
                     <td>${escapeHtml(doc.company_name)}</td>
                     <td>${escapeHtml(doc.user_fullname)}</td>
-                    <td><button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button></td>
+                    <td><button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}', ${doc.company_id})"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button></td>
                 </tr>`;
             }
             html += `</tbody></table></div>`;
@@ -2188,9 +2446,278 @@ function loadPendingUsersList(forceRefresh = false) {
         });
 }
 
+// ========== گزارش برهان ==========
+let reportData = [];
+
+// فرمت تاریخ شمسی
+function formatDateInput(input) {
+    let raw = input.value.replace(/\D/g, '');
+    if (raw.length === 0) { input.value = ''; return; }
+    if (raw.length > 8) raw = raw.slice(0, 8);
+    if (raw.length <= 4) { input.value = raw; }
+    else if (raw.length <= 6) { input.value = raw.slice(0, 4) + '/' + raw.slice(4, 6); }
+    else { input.value = raw.slice(0, 4) + '/' + raw.slice(4, 6) + '/' + raw.slice(6, 8); }
+}
+
+// بارگذاری فیلترها از فایل CSV
+function loadReportFilters() {
+    fetch('api/ajax.php?action=load_report_data')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.data) {
+                reportData = data.data;
+                populateReportFilters(reportData);
+                applyReportFilters();
+                document.getElementById('reportEmptyState').style.display = 'none';
+                
+                // نمایش تعداد رکوردهای جدید
+                const badge = document.getElementById('reportNewBadge');
+                if (data.new_count > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.innerHTML = `🆕 ${data.new_count} رکورد جدید (${data.current_time})`;
+                    badge.style.background = '#ef4444';
+                } else {
+                    badge.style.display = 'none';
+                }
+                
+                // بارگذاری آمار لحظه‌ای
+                loadReportStats();
+                
+            } else {
+                document.getElementById('reportEmptyState').style.display = 'block';
+                document.getElementById('reportEmptyState').innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; opacity: 0.5; color: #ef4444;"></i>
+                    <p style="margin-top: 10px;">خطا در بارگذاری فایل</p>
+                    <p style="font-size: 0.7rem; color: #94a3b8;">${data.error || 'فایل CSV یافت نشد'}</p>
+                `;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('reportEmptyState').style.display = 'block';
+            document.getElementById('reportEmptyState').innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; opacity: 0.5; color: #ef4444;"></i>
+                <p style="margin-top: 10px;">خطا در ارتباط با سرور</p>
+            `;
+        });
+}
+
+function populateReportFilters(data) {
+    const companies = [...new Set(data.map(row => row[1]).filter(Boolean))].sort();
+    const years = [...new Set(data.map(row => row[2]).filter(Boolean))].sort((a, b) => b - a);
+    const users = [...new Set(data.map(row => row[3]).filter(Boolean))].sort();
+    const types = [...new Set(data.map(row => row[6]).filter(Boolean))].sort();
+    const docTypes = [...new Set(data.map(row => row[8]).filter(Boolean))].sort();
+    
+    populateSelect('report_filter_company', companies);
+    populateSelect('report_filter_year', years);
+    populateSelect('report_filter_user', users);
+    populateSelect('report_filter_type', types);
+    populateSelect('report_filter_doc_type', docTypes);
+}
+
+function populateSelect(id, options) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const currentValue = select.value;
+    select.innerHTML = `<option value="">همه</option>`;
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        select.appendChild(option);
+    });
+    if (currentValue) select.value = currentValue;
+}
+
+// اعمال فیلترها (خودکار)
+function applyReportFilters() {
+    const company = document.getElementById('report_filter_company').value;
+    const year = document.getElementById('report_filter_year').value;
+    const user = document.getElementById('report_filter_user').value;
+    const number = document.getElementById('report_filter_number').value.trim();
+    const type = document.getElementById('report_filter_type').value;
+    const dateFrom = document.getElementById('report_filter_date_from').value.trim();
+    const dateTo = document.getElementById('report_filter_date_to').value.trim();
+    
+    // ✅ دریافت مقادیر چک‌باکس‌های نوع سند
+    const docTypeCheckboxes = document.querySelectorAll('.doc-type-filter:checked');
+    const selectedDocTypes = Array.from(docTypeCheckboxes).map(cb => cb.value);
+    
+    let filtered = reportData.filter(row => {
+        if (company && row[1] !== company) return false;
+        if (year && row[2] !== year) return false;
+        if (user && row[3] !== user) return false;
+        if (number && !row[9].includes(number)) return false;
+        if (type && row[6] !== type) return false;
+        if (dateFrom && row[4] < dateFrom) return false;
+        if (dateTo && row[4] > dateTo) return false;
+        // ✅ فیلتر نوع سند با چک‌باکس‌ها
+        if (selectedDocTypes.length > 0 && !selectedDocTypes.includes(row[8])) return false;
+        return true;
+    });
+    
+    renderReportTable(filtered);
+}
+
+// حذف همه فیلترها
+function resetReportFilters() {
+    document.getElementById('report_filter_company').value = '';
+    document.getElementById('report_filter_year').value = '';
+    document.getElementById('report_filter_user').value = '';
+    document.getElementById('report_filter_number').value = '';
+    document.getElementById('report_filter_type').value = '';
+    document.getElementById('report_filter_doc_type').value = '';
+    document.getElementById('report_filter_date_from').value = '';
+    document.getElementById('report_filter_date_to').value = '';
+    applyReportFilters();
+}
+// ========== بروزرسانی دستی گزارش برهان ==========
+function manualRefreshReport() {
+    const btn = document.querySelector('.btn-primary[onclick="manualRefreshReport()"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال بروزرسانی...';
+    btn.disabled = true;
+    
+    // پاک کردن کش و بارگذاری مجدد
+    reportData = [];
+    loadReportFilters();
+    
+    // مخفی کردن بج بعد از ۳ ثانیه (اختیاری)
+    setTimeout(() => {
+        const badge = document.getElementById('reportNewBadge');
+        if (badge) badge.style.display = 'none';
+    }, 3000);
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }, 1000);
+}
+
+// ========== آمار لحظه‌ای گزارش برهان ==========
+function loadReportStats() {
+    let dateInput = document.getElementById('report_stats_date');
+    let date = dateInput ? dateInput.value : '';
+    
+    // اگر تاریخ خالی بود، آخرین تاریخ موجود را بگیر
+    if (!date && reportData.length > 0) {
+        const dates = [...new Set(reportData.map(row => row[4]))].sort();
+        if (dates.length > 0) {
+            date = dates[dates.length - 1];
+            dateInput.value = date;
+        }
+    }
+    
+    if (!date) {
+        document.getElementById('statNewCount').textContent = '0';
+        document.getElementById('statEditCount').textContent = '0';
+        document.getElementById('statDeleteCount').textContent = '0';
+        document.getElementById('statTotalCount').textContent = '0';
+        return;
+    }
+    
+    fetch(`api/ajax.php?action=get_report_stats&date=${encodeURIComponent(date)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('statNewCount').textContent = data.new_count || 0;
+                document.getElementById('statEditCount').textContent = data.edit_count || 0;
+                document.getElementById('statDeleteCount').textContent = data.delete_count || 0;
+                document.getElementById('statTotalCount').textContent = data.total || 0;
+            }
+        })
+        .catch(err => console.error(err));
+}
+
+function setReportDate(type) {
+    if (reportData.length === 0) {
+        showToast('داده‌ای برای نمایش وجود ندارد', true);
+        return;
+    }
+    
+    // دریافت همه تاریخ‌های موجود و مرتب‌سازی
+    const dates = [...new Set(reportData.map(row => row[4]))].sort();
+    
+    if (dates.length === 0) {
+        showToast('هیچ تاریخی یافت نشد', true);
+        return;
+    }
+    
+    const input = document.getElementById('report_stats_date');
+    if (!input) return;
+    
+    if (type === 'today') {
+        input.value = dates[dates.length - 1]; // آخرین تاریخ
+    } else if (type === 'yesterday') {
+        if (dates.length >= 2) {
+            input.value = dates[dates.length - 2]; // تاریخ قبل از آخرین
+        } else {
+            input.value = dates[dates.length - 1];
+            showToast('فقط یک تاریخ موجود است', false);
+        }
+    }
+    loadReportStats();
+}
+
+function renderReportTable(data) {
+    const container = document.getElementById('reportTableContainer');
+    const tbody = document.getElementById('reportTableBody');
+    const totalCount = document.getElementById('reportTotalCount');
+    const filteredCount = document.getElementById('reportFilteredCount');
+    
+    if (data.length === 0) {
+        container.style.display = 'none';
+        document.getElementById('reportEmptyState').style.display = 'block';
+        document.getElementById('reportEmptyState').innerHTML = `
+            <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p style="margin-top: 10px;">هیچ رکوردی با فیلترهای انتخاب شده یافت نشد</p>
+        `;
+        return;
+    }
+    
+    document.getElementById('reportEmptyState').style.display = 'none';
+    container.style.display = 'block';
+    
+    let html = '';
+    data.forEach((row, index) => {
+        const type = row[6] || '';
+        let rowClass = '';
+        if (type.includes('موجوديت جديد')) rowClass = 'row-new';
+        else if (type.includes('ويرايش')) rowClass = 'row-edit';
+        else if (type.includes('حذف')) rowClass = 'row-delete';
+        
+        html += `<tr class="${rowClass}">
+            <td>${index + 1}</td>
+            <td>${escapeHtml(row[1] || '')}</td>
+            <td>${escapeHtml(row[2] || '')}</td>
+            <td>${escapeHtml(row[3] || '')}</td>
+            <td>${escapeHtml(row[4] || '')}</td>
+            <td>${escapeHtml(row[5] || '')}</td>
+            <td><span class="badge ${getTypeBadgeClass(type)}">${escapeHtml(type)}</span></td>
+            <td>${escapeHtml(row[7] || '')}</td>
+            <td>${escapeHtml(row[8] || '')}</td>
+            <td>${escapeHtml(row[9] || '')}</td>
+            <td>${escapeHtml(row[10] || '')}</td>
+            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(row[11] || '')}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+    totalCount.textContent = reportData.length;
+    filteredCount.textContent = data.length;
+}
+
+function getTypeBadgeClass(type) {
+    if (!type) return 'badge-neutral';
+    if (type.includes('موجوديت جديد')) return 'badge-success';
+    if (type.includes('ويرايش')) return 'badge-warning';
+    if (type.includes('حذف')) return 'badge-danger';
+    return 'badge-neutral';
+}
+
 function showLeftContent(section) {
     // مخفی کردن همه بخش‌ها
-    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent', 'approvalsContent'];
+    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent', 'approvalsContent', 'reportsContent'];
     sections.forEach(s => {
         const el = document.getElementById(s);
         if (el) el.style.display = 'none';
@@ -2225,7 +2752,23 @@ function showLeftContent(section) {
     if (section === 'archive') loadAdminArchiveList();
     if (section === 'approvals') {
         if (typeof loadPendingUsersList === 'function') {
-            loadPendingUsersList(true); // بارگذاری تازه بدون کش
+            loadPendingUsersList(true);
+        }
+    }
+    if (section === 'reports') {
+        // پاک کردن اعلان گزارش برهان
+        fetch('api/ajax.php?action=clear_report_notification', { method: 'POST' });
+        
+        // حذف دایره اعلان از منو
+        const menuItem = document.querySelector('.menu-item[data-section="reports"]');
+        if (menuItem) {
+            const dot = menuItem.querySelector('.report-notification');
+            if (dot) dot.remove();
+        }
+        
+        // بارگذاری فیلترهای گزارش برهان
+        if (typeof loadReportFilters === 'function') {
+            loadReportFilters();
         }
     }
 }
@@ -2464,25 +3007,84 @@ document.getElementById('admin_filter_date')?.addEventListener('input', searchAd
 document.getElementById('admin_filter_company')?.addEventListener('change', searchAdminDocuments);
 document.getElementById('admin_filter_delivery')?.addEventListener('input', searchAdminDocuments);
 
-window.openEditModal = function(id, number, date, description) {
-    let editId = document.getElementById('edit_id'), editNumber = document.getElementById('edit_number'), editDate = document.getElementById('edit_date'), editCompany = document.getElementById('edit_company_id');
+window.openEditModal = function(id, number, date, description, companyId) {
+    let editId = document.getElementById('edit_id');
+    let editNumber = document.getElementById('edit_number');
+    let editDate = document.getElementById('edit_date');
+    let editCompany = document.getElementById('edit_company_id');
+    
     if (editId) editId.value = id;
     if (editNumber) editNumber.value = number;
     if (editDate) editDate.value = (date === '-' ? '' : date);
+    
+    // ✅ اگر companyId معتبر نیست، مقدار 0 نده
+    if (editCompany) {
+        if (companyId && companyId > 0) {
+            editCompany.value = companyId;
+        } else {
+            // اگر companyId معتبر نبود، اولین شرکت فعال را انتخاب کن
+            let options = editCompany.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value > 0) {
+                    editCompany.value = options[i].value;
+                    break;
+                }
+            }
+        }
+    }
+    
     let modal = document.getElementById('editModal');
     if (modal) modal.classList.add('active');
 }
 
-window.closeEditModal = function() { document.getElementById('editModal').classList.remove('active'); }
+window.closeEditModal = function() { 
+    document.getElementById('editModal').classList.remove('active'); 
+}
 
 window.saveEdit = async function() {
-    let id = document.getElementById('edit_id').value, number = document.getElementById('edit_number').value.trim(), date = document.getElementById('edit_date').value.trim();
+    let id = document.getElementById('edit_id').value;
+    let number = document.getElementById('edit_number').value.trim();
+    let date = document.getElementById('edit_date').value.trim();
+    let companyId = document.getElementById('edit_company_id').value; // ← اضافه شد
+    
     if (!id) { showToast('شناسه سند یافت نشد', true); return; }
     if (!number) { showToast('شماره سند الزامی است', true); return; }
-    let res = await fetch(`${apiUrl}?action=update_document`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, doc_number: number, doc_date: date || '-' }) });
-    let result = await res.json();
-    if (result.success) { showToast('ویرایش شد'); closeEditModal(); if (document.getElementById('filtersContent').style.display !== 'none') { searchAdminDocuments(); } }
-    else { showToast(result.error || 'خطا در ویرایش', true); }
+    
+    // اگر companyId 0 یا خالی بود، null ارسال کن
+    if (!companyId || companyId == 0) {
+        companyId = null;
+    }
+    
+    try {
+        let res = await fetch(`${apiUrl}?action=update_document`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: id,
+                doc_number: number,
+                doc_date: date || '-',
+                company_id: companyId // ← اضافه شد
+            })
+        });
+        
+        let result = await res.json();
+        if (result.success) {
+            showToast('ویرایش شد', false);
+            closeEditModal();
+            const currentDate = document.getElementById('delivery_date')?.value || '';
+            if (currentDate) {
+                loadDocumentsForDeliveryDate(currentDate);
+            }
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
+        } else {
+            showToast(result.error || 'خطا در ویرایش', true);
+        }
+    } catch(e) {
+        console.error(e);
+        showToast('خطا در ارتباط با سرور', true);
+    }
 }
 
 window.deleteDocument = async function(id) {
@@ -2663,6 +3265,86 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== بارگذاری بایگانی ادمین ==========
     if (document.getElementById('adminArchiveList')) {
         if (typeof loadAdminArchiveList === 'function') loadAdminArchiveList();
+    }
+    // ========== شروع بررسی خودکار گزارش برهان در پس‌زمینه ==========
+    if (document.querySelector('.menu-item[data-section="reports"]')) {
+        // اجرای اولیه
+        fetch('api/ajax.php?action=load_report_data')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // به‌روزرسانی داده‌ها (اگر کاربر در صفحه گزارش باشد)
+                    const reportsContent = document.getElementById('reportsContent');
+                    if (reportsContent && reportsContent.style.display !== 'none') {
+                        reportData = data.data;
+                        populateReportFilters(reportData);
+                        applyReportFilters();
+                    }
+                    
+                    // نمایش اعلان روی منو
+                    const menuItem = document.querySelector('.menu-item[data-section="reports"]');
+                    if (!menuItem) return;
+                    
+                    const oldDot = menuItem.querySelector('.report-notification');
+                    if (oldDot) oldDot.remove();
+                    
+                    if (data.new_count > 0) {
+                        const dot = document.createElement('span');
+                        dot.className = 'report-notification';
+                        dot.style.cssText = `
+                            display: inline-block;
+                            width: 10px;
+                            height: 10px;
+                            border-radius: 50%;
+                            background: #ef4444;
+                            margin-right: 6px;
+                            animation: pulse-dot 1.5s infinite;
+                        `;
+                        menuItem.prepend(dot);
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+        
+        // اجرای هر ۵ دقیقه
+        setInterval(function() {
+            fetch('api/ajax.php?action=load_report_data')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // به‌روزرسانی داده‌ها (اگر کاربر در صفحه گزارش باشد)
+                        const reportsContent = document.getElementById('reportsContent');
+                        if (reportsContent && reportsContent.style.display !== 'none') {
+                            reportData = data.data;
+                            populateReportFilters(reportData);
+                            applyReportFilters();
+                        }
+                        
+                        // نمایش اعلان روی منو
+                        const menuItem = document.querySelector('.menu-item[data-section="reports"]');
+                        if (!menuItem) return;
+                        
+                        const oldDot = menuItem.querySelector('.report-notification');
+                        if (oldDot) oldDot.remove();
+                        
+                        if (data.new_count > 0) {
+                            const dot = document.createElement('span');
+                            dot.className = 'report-notification';
+                            dot.style.cssText = `
+                                display: inline-block;
+                                width: 10px;
+                                height: 10px;
+                                border-radius: 50%;
+                                background: #ef4444;
+                                margin-right: 6px;
+                                animation: pulse-dot 1.5s infinite;
+                            `;
+                            menuItem.prepend(dot);
+                        }
+                    }
+                })
+                .catch(err => console.error(err));
+        }, 5 * 60 * 1000);
     }
 });
 </script>

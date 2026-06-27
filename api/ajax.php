@@ -330,7 +330,6 @@ if ($action == 'update_document') {
         exit;
     }
     
-    // ✅ اضافه کردن این ۴ خط - بررسی مالکیت سند
     if (!$is_admin && $doc['user_id'] != $user_id) {
         echo json_encode(['success' => false, 'error' => 'شما دسترسی به ویرایش این سند ندارید']);
         exit;
@@ -346,6 +345,7 @@ if ($action == 'update_document') {
         $doc_date = toEnglishNumber($doc_date);
     }
     
+    // ✅ فقط شماره سند و تاریخ سند
     $stmt = $db->prepare("UPDATE documents SET doc_number = ?, doc_date = ? WHERE id = ?");
     $result = $stmt->execute([$doc_number, $doc_date, $doc_id]);
     
@@ -1210,7 +1210,7 @@ if ($action == 'get_archived_delivery_dates_for_user') {
             AND da.user_approved_at IS NOT NULL 
             AND da.admin_approved_at IS NOT NULL 
             ORDER BY da.delivery_date DESC 
-            LIMIT 2";
+            LIMIT 3";
     
     $stmt = $db->prepare($sql);
     $stmt->execute([':user_id' => $target_user_id]);
@@ -1250,6 +1250,181 @@ if ($action == 'get_my_archived_dates') {
     }
     
     echo json_encode(['success' => true, 'dates' => $formatted]);
+    exit;
+}
+
+// تابع کمکی برای اصلاح نام شرکت
+function cleanCompanyName($name) {
+    // حذف "شرکت" یا "شركت" از ابتدا (با هر دو شکل ک/ك)
+    $name = preg_replace('/^شرکت\s+|^شركت\s+/', '', $name);
+    // حذف متن داخل پرانتز
+    $name = preg_replace('/\s*\([^)]*\)\s*$/', '', $name);
+    // حذف فاصله‌های اضافی
+    $name = trim($name);
+    
+    // گرفتن دو کلمه اول
+    $words = explode(' ', $name);
+    if (count($words) >= 2) {
+        return $words[0] . ' ' . $words[1];
+    } elseif (count($words) == 1) {
+        return $words[0];
+    }
+    return $name;
+}
+
+// ========== بارگذاری داده‌های گزارش برهان ==========
+if ($action == 'load_report_data') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    $check_file = __DIR__ . '/../storage/reports/last_check.txt';
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    // خواندن زمان آخرین بررسی از فایل (مقدار پیش‌فرض: خیلی قدیمی)
+    $last_check = '1400/01/01 00:00:00';
+    if (file_exists($check_file)) {
+        $last_check = trim(file_get_contents($check_file));
+    }
+    
+    $data = [];
+    $new_records = [];
+    $last_record_datetime = $last_check; // مقدار پیش‌فرض
+    
+    $handle = fopen($csv_file, 'r');
+    if (!$handle) {
+        echo json_encode(['success' => false, 'error' => 'خطا در باز کردن فایل']);
+        exit;
+    }
+    
+    // نادیده گرفتن هدر اول
+    fgetcsv($handle, 0, ',');
+    // خواندن هدر دوم
+    $header = fgetcsv($handle, 0, ',');
+    
+    // خواندن همه رکوردها
+    while (($row = fgetcsv($handle, 0, ',')) !== false) {
+        if (count($row) > 1 && !empty(trim($row[1]))) {
+            $row[1] = cleanCompanyName($row[1]);
+            
+            // تاریخ/زمان رکورد
+            $record_datetime = $row[4] . ' ' . $row[5];
+            
+            // ذخیره آخرین تاریخ/زمان
+            if ($record_datetime > $last_record_datetime) {
+                $last_record_datetime = $record_datetime;
+            }
+            
+            // بررسی جدید بودن نسبت به last_check
+            $is_new = ($record_datetime > $last_check);
+            $row['is_new'] = $is_new;
+            
+            if ($is_new) {
+                $new_records[] = $row;
+            }
+            
+            $data[] = $row;
+        }
+    }
+    fclose($handle);
+    
+    // ✅ ذخیره آخرین تاریخ/زمان موجود در فایل CSV (نه زمان سیستم)
+    file_put_contents($check_file, $last_record_datetime);
+    
+    $_SESSION['report_new_count'] = count($new_records);
+    $_SESSION['report_new_data'] = $new_records;
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $data,
+        'total' => count($data),
+        'new_count' => count($new_records),
+        'new_records' => $new_records,
+        'last_check' => $last_check,
+        'last_record_datetime' => $last_record_datetime
+    ]);
+    exit;
+}
+
+// ========== دریافت تعداد اعلان‌های گزارش ==========
+if ($action == 'get_report_notification') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $new_count = $_SESSION['report_new_count'] ?? 0;
+    echo json_encode(['success' => true, 'new_count' => $new_count]);
+    exit;
+}
+
+// ========== پاک کردن اعلان گزارش ==========
+if ($action == 'clear_report_notification') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $_SESSION['report_new_count'] = 0;
+    $_SESSION['report_new_data'] = [];
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+// ========== دریافت آمار لحظه‌ای گزارش برهان ==========
+if ($action == 'get_report_stats') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $date = $_GET['date'] ?? jDateTime::date('Y/m/d');
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    $new_count = 0;
+    $edit_count = 0;
+    $delete_count = 0;
+    $total = 0;
+    
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ','); // هدر اول
+        fgetcsv($handle, 0, ','); // هدر دوم
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 1 && !empty(trim($row[1]))) {
+                // ستون 4 = تاریخ
+                if ($row[4] == $date) {
+                    $type = $row[6] ?? '';
+                    if (strpos($type, 'موجوديت جديد') !== false) $new_count++;
+                    elseif (strpos($type, 'ويرايش') !== false) $edit_count++;
+                    elseif (strpos($type, 'حذف') !== false) $delete_count++;
+                    $total++;
+                }
+            }
+        }
+        fclose($handle);
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'new_count' => $new_count,
+        'edit_count' => $edit_count,
+        'delete_count' => $delete_count,
+        'total' => $total,
+        'date' => $date
+    ]);
     exit;
 }
 
