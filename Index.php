@@ -397,11 +397,13 @@ if ($is_admin) {
         #reportTable td:nth-child(3),
         #reportTable td:nth-child(5),
         #reportTable td:nth-child(6),
+        #reportTable td:nth-child(9),
         #reportTable td:nth-child(10),
-        #reportTable td:nth-child(11) { font-size: 0.55rem !important; }
+        #reportTable td:nth-child(11),
+        #reportTable td:nth-child(12) { font-size: 0.55rem !important; }
         #reportTable td:nth-child(4),
         #reportTable td:nth-child(7),
-        #reportTable td:nth-child(12) { font-size: 0.7rem !important; }
+        #reportTable td:nth-child(8) { font-size: 0.7rem !important; }
         
         /* ========== آمار لحظه‌ای ========== */
         .report-stats-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 15px; }
@@ -676,21 +678,21 @@ if ($is_admin) {
                             <div class="stat-card-new stat-new">
                                 <div class="stat-icon"><i class="fas fa-plus-circle"></i></div>
                                 <div class="stat-info">
-                                    <div class="stat-label">موجودیت جدید</div>
+                                    <div class="stat-label">ثبت جدید</div>
                                     <div class="stat-number" id="statNewCount">0</div>
                                 </div>
                             </div>
                             <div class="stat-card-new stat-edit">
                                 <div class="stat-icon"><i class="fas fa-edit"></i></div>
                                 <div class="stat-info">
-                                    <div class="stat-label">ویرایش موجودیت</div>
+                                    <div class="stat-label">ویرایش شده</div>
                                     <div class="stat-number" id="statEditCount">0</div>
                                 </div>
                             </div>
                             <div class="stat-card-new stat-delete">
                                 <div class="stat-icon"><i class="fas fa-trash-alt"></i></div>
                                 <div class="stat-info">
-                                    <div class="stat-label">حذف موجودیت</div>
+                                    <div class="stat-label">حذف شده</div>
                                     <div class="stat-number" id="statDeleteCount">0</div>
                                 </div>
                             </div>
@@ -2466,39 +2468,66 @@ function loadReportFilters() {
         .then(data => {
             if (data.success && data.data) {
                 reportData = data.data;
+                
+                // پیدا کردن آخرین تاریخ موجود
+                const dates = [...new Set(reportData.map(row => row[4]))].sort();
+                const latestDate = dates[dates.length - 1];
+                
+                // تنظیم فیلتر تاریخ روی آخرین تاریخ (هم از و هم تا)
+                const dateFromInput = document.getElementById('report_filter_date_from');
+                const dateToInput = document.getElementById('report_filter_date_to');
+                if (dateFromInput) dateFromInput.value = latestDate;
+                if (dateToInput) dateToInput.value = latestDate;
+                
+                // پر کردن فیلترها (شرکت، سال، کاربر، ...)
                 populateReportFilters(reportData);
+                
+                // اعمال فیلترها (فقط آخرین تاریخ نمایش داده می‌شود)
                 applyReportFilters();
-                document.getElementById('reportEmptyState').style.display = 'none';
+                
+                // مخفی کردن پیام خالی
+                const emptyState = document.getElementById('reportEmptyState');
+                if (emptyState) emptyState.style.display = 'none';
                 
                 // نمایش تعداد رکوردهای جدید
                 const badge = document.getElementById('reportNewBadge');
-                if (data.new_count > 0) {
-                    badge.style.display = 'inline-block';
-                    badge.innerHTML = `🆕 ${data.new_count} رکورد جدید (${data.current_time})`;
-                    badge.style.background = '#ef4444';
-                } else {
-                    badge.style.display = 'none';
+                if (badge) {
+                    if (data.new_count > 0) {
+                        badge.style.display = 'inline-block';
+                        badge.innerHTML = `🆕 ${data.new_count} رکورد جدید (${data.current_time})`;
+                        badge.style.background = '#ef4444';
+                    } else {
+                        badge.style.display = 'none';
+                    }
                 }
                 
                 // بارگذاری آمار لحظه‌ای
-                loadReportStats();
+                if (typeof loadReportStats === 'function') {
+                    loadReportStats();
+                }
                 
             } else {
-                document.getElementById('reportEmptyState').style.display = 'block';
-                document.getElementById('reportEmptyState').innerHTML = `
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; opacity: 0.5; color: #ef4444;"></i>
-                    <p style="margin-top: 10px;">خطا در بارگذاری فایل</p>
-                    <p style="font-size: 0.7rem; color: #94a3b8;">${data.error || 'فایل CSV یافت نشد'}</p>
-                `;
+                const emptyState = document.getElementById('reportEmptyState');
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                    emptyState.innerHTML = `
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; opacity: 0.5; color: #ef4444;"></i>
+                        <p style="margin-top: 10px;">خطا در بارگذاری فایل</p>
+                        <p style="font-size: 0.7rem; color: #94a3b8;">${data.error || 'فایل CSV یافت نشد'}</p>
+                    `;
+                }
             }
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('reportEmptyState').style.display = 'block';
-            document.getElementById('reportEmptyState').innerHTML = `
-                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; opacity: 0.5; color: #ef4444;"></i>
-                <p style="margin-top: 10px;">خطا در ارتباط با سرور</p>
-            `;
+            const emptyState = document.getElementById('reportEmptyState');
+            if (emptyState) {
+                emptyState.style.display = 'block';
+                emptyState.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; opacity: 0.5; color: #ef4444;"></i>
+                    <p style="margin-top: 10px;">خطا در ارتباط با سرور</p>
+                `;
+            }
         });
 }
 
@@ -2540,20 +2569,21 @@ function applyReportFilters() {
     const dateFrom = document.getElementById('report_filter_date_from').value.trim();
     const dateTo = document.getElementById('report_filter_date_to').value.trim();
     
-    // ✅ دریافت مقادیر چک‌باکس‌های نوع سند
     const docTypeCheckboxes = document.querySelectorAll('.doc-type-filter:checked');
     const selectedDocTypes = Array.from(docTypeCheckboxes).map(cb => cb.value);
     
     let filtered = reportData.filter(row => {
+        // فیلترهای معمول
         if (company && row[1] !== company) return false;
         if (year && row[2] !== year) return false;
         if (user && row[3] !== user) return false;
         if (number && !row[9].includes(number)) return false;
         if (type && row[6] !== type) return false;
+        if (selectedDocTypes.length > 0 && !selectedDocTypes.includes(row[8])) return false;
+        
+        // فیلتر بازه تاریخ
         if (dateFrom && row[4] < dateFrom) return false;
         if (dateTo && row[4] > dateTo) return false;
-        // ✅ فیلتر نوع سند با چک‌باکس‌ها
-        if (selectedDocTypes.length > 0 && !selectedDocTypes.includes(row[8])) return false;
         return true;
     });
     
