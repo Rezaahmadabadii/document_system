@@ -1395,6 +1395,8 @@ if ($action == 'get_report_stats') {
     $new_count = 0;
     $edit_count = 0;
     $delete_count = 0;
+    $login_success_count = 0;
+    $login_fail_count = 0;
     $total = 0;
     
     $handle = fopen($csv_file, 'r');
@@ -1403,14 +1405,24 @@ if ($action == 'get_report_stats') {
         fgetcsv($handle, 0, ','); // هدر دوم
         
         while (($row = fgetcsv($handle, 0, ',')) !== false) {
-            if (count($row) > 1 && !empty(trim($row[1]))) {
-                // ستون 4 = تاریخ
+            if (count($row) > 4 && !empty(trim($row[4]))) {
                 if ($row[4] == $date) {
-                    $type = $row[6] ?? '';
-                    if (strpos($type, 'موجوديت جديد') !== false) $new_count++;
-                    elseif (strpos($type, 'ويرايش') !== false) $edit_count++;
-                    elseif (strpos($type, 'حذف') !== false) $delete_count++;
-                    $total++;
+                    $type = trim($row[6] ?? '');
+                    
+                    if (strpos($type, 'موجوديت جديد') !== false) {
+                        $new_count++;
+                        $total++;
+                    } elseif (strpos($type, 'ويرايش') !== false) {
+                        $edit_count++;
+                        $total++;
+                    } elseif (strpos($type, 'حذف') !== false) {
+                        $delete_count++;
+                        $total++;
+                    } elseif (strpos($type, 'ورود موفق') !== false) {
+                        $login_success_count++;
+                    } elseif (strpos($type, 'ناموفق') !== false) {
+                        $login_fail_count++;
+                    }
                 }
             }
         }
@@ -1422,8 +1434,85 @@ if ($action == 'get_report_stats') {
         'new_count' => $new_count,
         'edit_count' => $edit_count,
         'delete_count' => $delete_count,
+        'login_success_count' => $login_success_count,
+        'login_fail_count' => $login_fail_count,
         'total' => $total,
         'date' => $date
+    ]);
+    exit;
+}
+
+// ========== دریافت گزارش ثبت جدید (فقط حسابداری) ==========
+if ($action == 'get_warehouse_report') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $date = $_GET['date'] ?? jDateTime::date('Y/m/d');
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    $user_counts = [];
+    $raw_users = []; // برای دیباگ
+    
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        // نادیده گرفتن هدر اول
+        fgetcsv($handle, 0, ',');
+        // خواندن هدر دوم
+        fgetcsv($handle, 0, ',');
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            // حداقل ستون‌های مورد نیاز را داشته باشد
+            if (count($row) > 8) {
+                $row_date = trim($row[4] ?? '');
+                $system = trim($row[7] ?? '');
+                $doc_type = trim($row[8] ?? '');
+                $type = trim($row[6] ?? '');
+                $user_raw = trim($row[3] ?? '');
+                
+                // شرط: تاریخ مورد نظر + سیستم حسابداری + نوع سند حسابداری + موجودیت جدید
+                if ($row_date == $date && 
+                    $system == 'حسابداري' && 
+                    $doc_type == 'سند حسابداري' &&
+                    strpos($type, 'موجوديت جديد') !== false) {
+                    
+                    // استخراج نام اصلی (حذف اعداد انتهای نام)
+                    $clean_name = preg_replace('/[0-9]+$/', '', $user_raw);
+                    if (empty($clean_name)) $clean_name = $user_raw;
+                    
+                    if (!isset($user_counts[$clean_name])) {
+                        $user_counts[$clean_name] = 0;
+                    }
+                    $user_counts[$clean_name]++;
+                }
+            }
+        }
+        fclose($handle);
+    }
+    
+    // مرتب‌سازی بر اساس تعداد (بیشترین اول)
+    arsort($user_counts);
+    
+    $result = [];
+    foreach ($user_counts as $name => $count) {
+        $result[] = [
+            'user_name' => $name,
+            'count' => $count
+        ];
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'users' => $result,
+        'date' => $date,
+        'total' => array_sum($user_counts),
+        'raw_count' => count($user_counts) // تعداد کاربران
     ]);
     exit;
 }
