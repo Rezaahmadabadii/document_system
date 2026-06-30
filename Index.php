@@ -367,15 +367,78 @@ if ($is_admin) {
         .min-compare .compare-number { background: #fee2e2; color: #b91c1c; }
         .compare-divider { height: 1px; background: #eef2ff; margin: 10px 0; }
         /* ========== گزارش برهان ========== */
-        .reports-filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 5px; }
-        .reports-filters .filter-group { display: flex; flex-direction: column; gap: 4px; }
-        .reports-filters .filter-group label { font-size: 0.6rem; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; }
-        .reports-filters .filter-group label i { font-size: 0.6rem; color: #667eea; }
-        .reports-filters .filter-group select, .reports-filters .filter-group input { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; font-size: 0.7rem; transition: all 0.2s; }
-        .reports-filters .filter-group select:focus, .reports-filters .filter-group input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
-        @media (max-width: 900px) { .reports-filters { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 500px) { .reports-filters { grid-template-columns: 1fr; } }
-        
+        .reports-filters {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 5px;
+            overflow-x: auto;
+        }
+        .reports-filters .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 0 0 auto;
+        }
+        .reports-filters .filter-group label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .reports-filters .filter-group label i {
+            font-size: 0.6rem;
+            color: #667eea;
+        }
+        .reports-filters .filter-group select,
+        .reports-filters .filter-group input {
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+        .reports-filters .filter-group select:focus,
+        .reports-filters .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+        }
+
+        /* ===== اندازه‌های دقیق فیلدها ===== */
+        .reports-filters .filter-group.filter-number input { width: 70px; } /* 6 کاراکتر */
+        .reports-filters .filter-group.filter-user select { width: 90px; }
+        .reports-filters .filter-group.filter-year select { width: 75px; } /* 1405 */
+        .reports-filters .filter-group.filter-company select { width: 120px; }
+        .reports-filters .filter-group.filter-date input { width: 95px; } /* 1404/01/01 */
+        .reports-filters .filter-group.filter-type select { width: 100px; } /* آخر ردیف */
+
+        @media (max-width: 900px) {
+            .reports-filters { flex-wrap: wrap; gap: 4px; padding: 10px 12px; }
+            .reports-filters .filter-group.filter-number input { width: 60px; }
+            .reports-filters .filter-group.filter-user select { width: 75px; }
+            .reports-filters .filter-group.filter-year select { width: 60px; }
+            .reports-filters .filter-group.filter-company select { width: 100px; }
+            .reports-filters .filter-group.filter-date input { width: 85px; }
+            .reports-filters .filter-group.filter-type select { width: 85px; }
+        }
+        @media (max-width: 600px) {
+            .reports-filters { flex-wrap: wrap; gap: 4px; padding: 8px 10px; }
+            .reports-filters .filter-group { flex: 1 1 auto; min-width: 60px; }
+            .reports-filters .filter-group label { font-size: 0.5rem; }
+            .reports-filters .filter-group select,
+            .reports-filters .filter-group input { font-size: 0.6rem; padding: 4px 6px; width: 100%; }
+        }
+
         #reportTable th { position: sticky; top: 0; z-index: 10; }
         #reportTable tbody tr:nth-child(even) { background: #f8fafc; }
         #reportTable tbody tr:hover { background: #eef2ff; }
@@ -385,26 +448,17 @@ if ($is_admin) {
         #reportTable tbody tr.row-edit:hover { background: #fde68a !important; }
         #reportTable tbody tr.row-delete { background: #fee2e2 !important; }
         #reportTable tbody tr.row-delete:hover { background: #fca5a5 !important; }
-        
+
         .badge { padding: 2px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 600; }
         .badge-success { background: #10b981; color: white; }
         .badge-warning { background: #f59e0b; color: white; }
         .badge-danger { background: #ef4444; color: white; }
         .badge-neutral { background: #f1f5f9; color: #475569; }
-        
+
         /* ========== سایز فونت ستون‌ها ========== */
-        #reportTable td:nth-child(2),
-        #reportTable td:nth-child(3),
-        #reportTable td:nth-child(5),
-        #reportTable td:nth-child(6),
-        #reportTable td:nth-child(9),
-        #reportTable td:nth-child(10),
-        #reportTable td:nth-child(11),
-        #reportTable td:nth-child(12) { font-size: 0.55rem !important; }
-        #reportTable td:nth-child(4),
-        #reportTable td:nth-child(7),
-        #reportTable td:nth-child(8) { font-size: 0.7rem !important; }
-        
+        #reportTable td:nth-child(2), #reportTable td:nth-child(3), #reportTable td:nth-child(5), #reportTable td:nth-child(6), #reportTable td:nth-child(9), #reportTable td:nth-child(10), #reportTable td:nth-child(11), #reportTable td:nth-child(12) { font-size: 0.55rem !important; }
+        #reportTable td:nth-child(4), #reportTable td:nth-child(7), #reportTable td:nth-child(8) { font-size: 0.7rem !important; }
+
         /* ========== آمار لحظه‌ای ========== */
         .report-stats-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 15px; }
         .report-stats-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
@@ -441,32 +495,38 @@ if ($is_admin) {
         .stat-login-fail .stat-number { color: #991b1b; }
         @media (max-width: 768px) { .report-stats-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .report-stats-grid { grid-template-columns: 1fr; } }
-        
-        /* ========== گزارش ثبت جدید (حسابداری و خزانه‌داری) ========== */
-        .report-warehouse-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 16px; margin: 15px 0; }
-        .report-warehouse-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-        .report-warehouse-title { font-size: 0.8rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
-        .report-warehouse-title i { color: #3b82f6; font-size: 1rem; }
-        .report-warehouse-date { font-size: 0.6rem; font-weight: 400; color: #94a3b8; background: #f1f5f9; padding: 2px 10px; border-radius: 20px; }
-        .report-warehouse-total { font-size: 0.7rem; font-weight: 600; color: #1e293b; background: #eef2ff; padding: 4px 14px; border-radius: 20px; }
-        .report-warehouse-grid { display: flex; flex-wrap: wrap; gap: 8px; max-height: 350px; overflow-y: auto; padding: 4px 2px; }
+
+        /* ========== گزارش ثبت جدید (حسابداری) ========== */
+        .report-warehouse-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 8px 16px; margin: 10px 0; }
+        .report-warehouse-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+        .report-warehouse-title { font-size: 0.75rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+        .report-warehouse-title i { color: #3b82f6; font-size: 0.9rem; }
+        .report-warehouse-date { font-size: 0.55rem; font-weight: 400; color: #94a3b8; background: #f1f5f9; padding: 1px 8px; border-radius: 20px; }
+        .report-warehouse-total { font-size: 0.65rem; font-weight: 600; color: #1e293b; background: #eef2ff; padding: 2px 12px; border-radius: 20px; }
+        .report-warehouse-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; max-height: 350px; overflow-y: auto; }
+        .report-warehouse-grid:empty { display: none; }
         .report-warehouse-grid::-webkit-scrollbar { width: 4px; }
         .report-warehouse-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .warehouse-user-card { display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 40px; padding: 4px 12px 4px 4px; transition: all 0.2s; cursor: default; min-width: 80px; flex-shrink: 0; }
+        .report-warehouse-grid::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .report-warehouse-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px 0; color: #94a3b8; text-align: center; }
+        .report-warehouse-empty i { font-size: 0.8rem; opacity: 0.4; margin-bottom: 2px; }
+        .report-warehouse-empty p { font-size: 0.6rem; font-weight: 500; margin: 0; }
+        .report-warehouse-empty small { font-size: 0.5rem; opacity: 0.7; }
+        .warehouse-user-card { display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 40px; padding: 3px 10px 3px 3px; transition: all 0.2s; cursor: default; min-width: 70px; flex-shrink: 0; }
         .warehouse-user-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #3b82f6; background: white; }
-        .warehouse-user-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: white; flex-shrink: 0; }
-        .warehouse-user-name { font-size: 0.65rem; font-weight: 600; color: #1e293b; white-space: nowrap; }
-        .warehouse-user-count { font-size: 0.6rem; font-weight: 700; color: #3b82f6; background: #dbeafe; padding: 1px 8px; border-radius: 20px; margin-right: auto; }
-        @media (max-width: 500px) { .report-warehouse-grid { max-height: 250px; } .warehouse-user-card { padding: 3px 8px 3px 3px; min-width: 60px; } .warehouse-user-name { font-size: 0.55rem; } .warehouse-user-count { font-size: 0.5rem; padding: 1px 6px; } }
+        .warehouse-user-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .warehouse-user-name { font-size: 0.6rem; font-weight: 600; color: #1e293b; white-space: nowrap; }
+        .warehouse-user-count { font-size: 0.55rem; font-weight: 700; color: #3b82f6; background: #dbeafe; padding: 1px 6px; border-radius: 20px; margin-right: auto; }
+        @media (max-width: 500px) { .report-warehouse-grid { max-height: 200px; } .warehouse-user-card { padding: 2px 6px 2px 2px; min-width: 50px; } .warehouse-user-name { font-size: 0.5rem; } .warehouse-user-count { font-size: 0.45rem; padding: 0px 4px; } }
         /* ========== پایان گزارش ثبت جدید ========== */
-        
+
         /* ========== انیمیشن دایره اعلان ========== */
         @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
         .report-notification { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; margin-right: 6px; animation: pulse-dot 1.5s infinite; }
         .report-notification.green { background: #10b981; }
         .report-notification.yellow { background: #f59e0b; }
         .report-notification.red { background: #ef4444; }
-        
+
         /* ========== انیمیشن Toast ========== */
         #toast { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 14px; color: white; font-size: 0.85rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; align-items: center; gap: 10px; z-index: 9999; max-width: 400px; direction: rtl; animation-duration: 0.5s; }
         #toast i { font-size: 1.1rem; }
@@ -682,9 +742,9 @@ if ($is_admin) {
                                 <i class="fas fa-chart-bar"></i> آمار لحظه‌ای
                             </div>
                             <div class="report-stats-date">
-                                <button class="date-quick-btn" onclick="setReportDate('today')">امروز</button>
-                                <button class="date-quick-btn" onclick="setReportDate('yesterday')">دیروز</button>
-                                <input type="text" id="report_stats_date" placeholder="1404/01/01" value="<?php echo $today; ?>" onchange="loadReportStats()">
+                                <button class="date-quick-btn" onclick="setReportDate('prev')">تاریخ قبلی</button>
+                                <button class="date-quick-btn" onclick="setReportDate('next')">تاریخ بعدی</button>
+                                <input type="text" id="report_stats_date" placeholder="1404/01/01" value="" onchange="loadReportStats()">
                             </div>
                         </div>
                         <div class="report-stats-grid" id="reportStatsGrid">
@@ -736,16 +796,22 @@ if ($is_admin) {
                     </div>
                     <!-- ========== پایان آمار لحظه‌ای ========== -->
                     
-                    <!-- ========== گزارش ثبت جدید (حسابداری و خزانه‌داری) ========== -->
+                    <!-- ========== گزارش ثبت جدید (حسابداری) ========== -->
                     <div class="report-warehouse-container" id="reportWarehouseContainer" style="display: none;">
                         <div class="report-warehouse-header">
                             <div class="report-warehouse-title">
-                                <i class="fas fa-file-invoice"></i> ثبت جدید (حسابداری و خزانه‌داری)
+                                <i class="fas fa-file-invoice"></i> گزارش ثبت ها
                                 <span class="report-warehouse-date" id="reportWarehouseDate"></span>
                             </div>
                             <div class="report-warehouse-total" id="reportWarehouseTotal">
                                 مجموع: 0 سند
                             </div>
+                        </div>
+                        <!-- پیام خالی -->
+                        <div id="reportWarehouseEmpty" style="display: none; text-align: center; padding: 30px 20px; color: #94a3b8;">
+                            <i class="fas fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                            <p style="font-size: 0.9rem; font-weight: 500;">این تاریخ گزارشی ندارد</p>
+                            <p style="font-size: 0.7rem; margin-top: 5px;">هیچ سند حسابداری با موجودیت جدید یافت نشد</p>
                         </div>
                         <div class="report-warehouse-grid" id="reportWarehouseGrid">
                             <!-- کارت‌ها به صورت داینامیک ساخته می‌شوند -->
@@ -755,35 +821,43 @@ if ($is_admin) {
                     
                     <!-- فیلترها -->
                     <div class="reports-filters">
-                        <div class="filter-group">
+                        <div class="filter-group filter-company">
                             <label><i class="fas fa-building"></i> شرکت</label>
                             <select id="report_filter_company" onchange="applyReportFilters()">
                                 <option value="">همه شرکت‌ها</option>
                             </select>
                         </div>
-                        <div class="filter-group">
+                        <div class="filter-group filter-year">
                             <label><i class="fas fa-calendar-alt"></i> سال مالی</label>
                             <select id="report_filter_year" onchange="applyReportFilters()">
                                 <option value="">همه سال‌ها</option>
                             </select>
                         </div>
-                        <div class="filter-group">
+                        <div class="filter-group filter-user">
                             <label><i class="fas fa-user"></i> کاربر</label>
                             <select id="report_filter_user" onchange="applyReportFilters()">
                                 <option value="">همه کاربران</option>
                             </select>
                         </div>
-                        <div class="filter-group">
+                        <div class="filter-group filter-number">
                             <label><i class="fas fa-hashtag"></i> شماره سند</label>
-                            <input type="text" id="report_filter_number" placeholder="جستجوی شماره..." oninput="applyReportFilters()">
+                            <input type="text" id="report_filter_number" placeholder="1234" oninput="applyReportFilters()">
                         </div>
-                        <div class="filter-group">
+                        <div class="filter-group filter-type">
                             <label><i class="fas fa-tag"></i> نوع ثبت</label>
                             <select id="report_filter_type" onchange="applyReportFilters()">
                                 <option value="">همه</option>
                             </select>
                         </div>
-                        <div class="filter-group">
+                        <div class="filter-group filter-date">
+                            <label><i class="fas fa-calendar-day"></i> از تاریخ</label>
+                            <input type="text" id="report_filter_date_from" placeholder="1404/01/01" oninput="formatDateInput(this); applyReportFilters();">
+                        </div>
+                        <div class="filter-group filter-date">
+                            <label><i class="fas fa-calendar-day"></i> تا تاریخ</label>
+                            <input type="text" id="report_filter_date_to" placeholder="1404/01/01" oninput="formatDateInput(this); applyReportFilters();">
+                        </div>
+                        <div class="filter-group filter-doctype">
                             <label><i class="fas fa-file-alt"></i> نوع سند</label>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
                                 <label style="font-size:0.6rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
@@ -796,14 +870,6 @@ if ($is_admin) {
                                     <input type="checkbox" class="doc-type-filter" value="سند خزانه" checked onchange="applyReportFilters()"> خزانه
                                 </label>
                             </div>
-                        </div>
-                        <div class="filter-group">
-                            <label><i class="fas fa-calendar-day"></i> از تاریخ</label>
-                            <input type="text" id="report_filter_date_from" placeholder="1404/01/01" oninput="formatDateInput(this); applyReportFilters();">
-                        </div>
-                        <div class="filter-group">
-                            <label><i class="fas fa-calendar-day"></i> تا تاریخ</label>
-                            <input type="text" id="report_filter_date_to" placeholder="1404/01/01" oninput="formatDateInput(this); applyReportFilters();">
                         </div>
                     </div>
                     
@@ -1077,16 +1143,16 @@ async function loadUserStats() {
                     <div class="stat-card-new">
                         <div class="stat-header">
                             <span class="stat-icon">📊</span>
-                            <span class="stat-title">پیشرفت نسبت به لیست قبل</span>
+                            <span class="stat-title">پیشرفت</span>
                         </div>
                         <div class="stat-main">
                             <div class="stat-today">
-                                <span class="stat-small-label">لیست آخر : </span>
+                                <span class="stat-small-label">لیست آخر:</span>
                                 <span class="stat-small-value">${data.today_count}</span>
                             </div>
                             <span class="stat-sep">|</span>
                             <div class="stat-yesterday">
-                                <span class="stat-small-label">لیست قبل : </span>
+                                <span class="stat-small-label">لیست قبل:</span>
                                 <span class="stat-small-value">${data.yesterday_count}</span>
                             </div>
                         </div>
@@ -2525,24 +2591,103 @@ function loadReportFilters() {
                 if (dateFromInput) dateFromInput.value = latestDate;
                 if (dateToInput) dateToInput.value = latestDate;
                 
-                populateReportFilters(reportData);
+                // تنظیم فیلد آمار لحظه‌ای روی آخرین تاریخ
+                const statsDateInput = document.getElementById('report_stats_date');
+                if (statsDateInput) statsDateInput.value = latestDate;
+                
+                // ===== پر کردن فیلتر شرکت (حذف برش کوه) =====
+                const companySelect = document.getElementById('report_filter_company');
+                if (companySelect) {
+                    const companies = [...new Set(reportData.map(row => row[1]))].sort();
+                    const currentValue = companySelect.value;
+                    companySelect.innerHTML = '<option value="">همه شرکت‌ها</option>';
+                    
+                    companies.forEach(company => {
+                        // حذف برش کوه (هم اسم کامل و هم اسم کوتاه)
+                        if (company && 
+                            company !== 'شركت برش كوه آريا پارت (سهامي خاص)' && 
+                            company !== 'برش كوه') {
+                            const option = document.createElement('option');
+                            option.value = company;
+                            option.textContent = company;
+                            companySelect.appendChild(option);
+                        }
+                    });
+                    
+                    if ([...companySelect.options].some(opt => opt.value === currentValue)) {
+                        companySelect.value = currentValue;
+                    }
+                }
+                
+                // ===== پر کردن فیلتر کاربر =====
+                const userSelect = document.getElementById('report_filter_user');
+                if (userSelect) {
+                    const users = [...new Set(reportData.map(row => row[3]))].sort();
+                    const currentValue = userSelect.value;
+                    userSelect.innerHTML = '<option value="">همه کاربران</option>';
+                    
+                    users.forEach(user => {
+                        if (user) {
+                            const option = document.createElement('option');
+                            option.value = user;
+                            option.textContent = user;
+                            userSelect.appendChild(option);
+                        }
+                    });
+                    
+                    if ([...userSelect.options].some(opt => opt.value === currentValue)) {
+                        userSelect.value = currentValue;
+                    }
+                }
+                
+                // ===== پر کردن فیلتر سال مالی =====
+                const yearSelect = document.getElementById('report_filter_year');
+                if (yearSelect) {
+                    const years = [...new Set(reportData.map(row => row[2]))].sort();
+                    const currentValue = yearSelect.value;
+                    yearSelect.innerHTML = '<option value="">همه سال‌ها</option>';
+                    
+                    years.forEach(year => {
+                        if (year) {
+                            const option = document.createElement('option');
+                            option.value = year;
+                            option.textContent = year;
+                            yearSelect.appendChild(option);
+                        }
+                    });
+                    
+                    if ([...yearSelect.options].some(opt => opt.value === currentValue)) {
+                        yearSelect.value = currentValue;
+                    }
+                }
+                
+                // ===== پر کردن فیلتر نوع ثبت =====
+                const typeSelect = document.getElementById('report_filter_type');
+                if (typeSelect) {
+                    const types = [...new Set(reportData.map(row => row[6]))].sort();
+                    const currentValue = typeSelect.value;
+                    typeSelect.innerHTML = '<option value="">همه</option>';
+                    
+                    types.forEach(type => {
+                        if (type) {
+                            const option = document.createElement('option');
+                            option.value = type;
+                            option.textContent = type;
+                            typeSelect.appendChild(option);
+                        }
+                    });
+                    
+                    if ([...typeSelect.options].some(opt => opt.value === currentValue)) {
+                        typeSelect.value = currentValue;
+                    }
+                }
+                
                 applyReportFilters();
                 
                 const emptyState = document.getElementById('reportEmptyState');
                 if (emptyState) emptyState.style.display = 'none';
                 
-                const badge = document.getElementById('reportNewBadge');
-                if (badge) {
-                    if (data.new_count > 0) {
-                        badge.style.display = 'inline-block';
-                        badge.innerHTML = `🆕 ${data.new_count} رکورد جدید (${data.last_record_datetime})`;
-                        badge.style.background = '#ef4444';
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                }
-                
-                // ✅ بارگذاری آمار لحظه‌ای
+                // بارگذاری آمار لحظه‌ای
                 loadReportStats();
                 
             } else {
@@ -2612,6 +2757,12 @@ function applyReportFilters() {
     const selectedDocTypes = Array.from(docTypeCheckboxes).map(cb => cb.value);
     
     let filtered = reportData.filter(row => {
+        // ✅ حذف برش کوه از جدول
+        const companyName = row[1] || '';
+        if (companyName === 'برش كوه' || companyName === 'شركت برش كوه آريا پارت (سهامي خاص)') {
+            return false;
+        }
+        
         // فیلترهای معمول
         if (company && row[1] !== company) return false;
         if (year && row[2] !== year) return false;
@@ -2706,12 +2857,13 @@ function loadReportStats() {
     }
 }
 
-// ========== بارگذاری گزارش ثبت جدید (حسابداری و خزانه‌داری) ==========
+// ========== بارگذاری گزارش ثبت جدید (حسابداری) ==========
 function loadWarehouseReport() {
     const container = document.getElementById('reportWarehouseContainer');
     const grid = document.getElementById('reportWarehouseGrid');
     const dateSpan = document.getElementById('reportWarehouseDate');
     const totalSpan = document.getElementById('reportWarehouseTotal');
+    const emptyMsg = document.getElementById('reportWarehouseEmpty');
     
     const dateInput = document.getElementById('report_stats_date');
     const date = dateInput ? dateInput.value : '';
@@ -2724,9 +2876,17 @@ function loadWarehouseReport() {
     fetch(`api/ajax.php?action=get_warehouse_report&date=${encodeURIComponent(date)}`)
         .then(res => res.json())
         .then(data => {
+            // همیشه کانتینر رو نمایش بده
+            if (container) container.style.display = 'block';
+            if (dateSpan) dateSpan.textContent = date;
+            
             if (data.success && data.users && data.users.length > 0) {
-                if (container) container.style.display = 'block';
-                if (dateSpan) dateSpan.textContent = date;
+                // داده وجود دارد: گرید رو نمایش بده، پیام خالی رو مخفی کن
+                if (emptyMsg) emptyMsg.style.display = 'none';
+                if (grid) {
+                    grid.style.display = 'flex';
+                    grid.style.padding = '4px 2px';
+                }
                 
                 let total = 0;
                 let html = '';
@@ -2752,7 +2912,15 @@ function loadWarehouseReport() {
                 if (totalSpan) totalSpan.textContent = `مجموع: ${total} سند`;
                 
             } else {
-                if (container) container.style.display = 'none';
+                // داده وجود ندارد: گرید رو مخفی کن، پیام خالی رو نمایش بده
+                if (grid) {
+                    grid.style.display = 'none';
+                    grid.innerHTML = '';
+                }
+                if (emptyMsg) {
+                    emptyMsg.style.display = 'block';
+                }
+                if (totalSpan) totalSpan.textContent = 'مجموع: ۰ سند';
             }
         })
         .catch(err => {
@@ -2765,28 +2933,48 @@ function setReportDate(type) {
     const input = document.getElementById('report_stats_date');
     if (!input) return;
     
-    // دریافت آخرین تاریخ موجود از داده‌ها
+    // دریافت لیست تاریخ‌های موجود از reportData
     const dates = [...new Set(reportData.map(row => row[4]))].sort();
     if (dates.length === 0) {
         showToast('هیچ تاریخی موجود نیست', true);
         return;
     }
     
-    if (type === 'today') {
-        // آخرین تاریخ موجود
-        input.value = dates[dates.length - 1];
-    } else if (type === 'yesterday') {
-        // تاریخ قبل از آخرین
-        if (dates.length >= 2) {
-            input.value = dates[dates.length - 2];
+    const currentDate = input.value;
+    const currentIndex = dates.indexOf(currentDate);
+    
+    let newDate;
+    if (type === 'prev') {
+        if (currentIndex > 0) {
+            newDate = dates[currentIndex - 1];
         } else {
-            input.value = dates[dates.length - 1];
-            showToast('فقط یک تاریخ موجود است', false);
+            showToast('این اولین تاریخ موجود است', false);
+            return;
+        }
+    } else if (type === 'next') {
+        if (currentIndex < dates.length - 1) {
+            newDate = dates[currentIndex + 1];
+        } else {
+            showToast('این آخرین تاریخ موجود است', false);
+            return;
         }
     }
     
-    // بارگذاری آمار لحظه‌ای
-    loadReportStats();
+    if (newDate) {
+        // ✅ تنظیم هر سه فیلد با تاریخ جدید
+        input.value = newDate;
+        
+        const dateFromInput = document.getElementById('report_filter_date_from');
+        const dateToInput = document.getElementById('report_filter_date_to');
+        if (dateFromInput) dateFromInput.value = newDate;
+        if (dateToInput) dateToInput.value = newDate;
+        
+        // بارگذاری آمار لحظه‌ای
+        loadReportStats();
+        
+        // اعمال فیلترها
+        applyReportFilters();
+    }
 }
 
 function renderReportTable(data) {
