@@ -1316,6 +1316,53 @@ function cleanCompanyName($name) {
     return $name;
 }
 
+// ========== دریافت آخرین تاریخ و زمان بروزرسانی فایل CSV ==========
+if ($action == 'get_file_update_time') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل یافت نشد']);
+        exit;
+    }
+    
+    $max_datetime = '';
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ','); // هدر اول
+        fgetcsv($handle, 0, ','); // هدر دوم
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 8 && !empty(trim($row[4]))) {
+                $date = trim($row[4]);
+                $time = trim($row[5]);
+                if (!empty($date) && !empty($time)) {
+                    $current_datetime = $date . ' ' . $time;
+                    // ✅ مقایسه برای پیدا کردن جدیدترین
+                    if ($current_datetime > $max_datetime) {
+                        $max_datetime = $current_datetime;
+                    }
+                }
+            }
+        }
+        fclose($handle);
+    }
+    
+    if (empty($max_datetime)) {
+        $max_datetime = jDateTime::date('Y/m/d H:i:s');
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'update_time' => $max_datetime
+    ]);
+    exit;
+}
+
 // ========== بارگذاری داده‌های گزارش برهان ==========
 if ($action == 'load_report_data') {
     if (!$is_admin) {
@@ -1503,7 +1550,7 @@ if ($action == 'get_report_stats') {
     exit;
 }
 
-// ========== دریافت گزارش ثبت جدید (حسابداری) ==========
+// ========== دریافت گزارش ثبت/تایید اسناد (حسابداری) ==========
 if ($action == 'get_warehouse_report') {
     if (!$is_admin) {
         echo json_encode(['success' => false, 'error' => 'Access denied']);
@@ -1511,6 +1558,7 @@ if ($action == 'get_warehouse_report') {
     }
     
     $date = $_GET['date'] ?? jDateTime::date('Y/m/d');
+    $type = $_GET['type'] ?? 'register'; // register = ثبت, confirm = تایید
     $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
     
     if (!file_exists($csv_file)) {
@@ -1528,10 +1576,8 @@ if ($action == 'get_warehouse_report') {
         
         while (($row = fgetcsv($handle, 0, ',')) !== false) {
             if (count($row) > 8 && !empty(trim($row[4]))) {
-                // شرط: فقط حسابداری و موجودیت جدید
-                if ($row[4] == $date && 
-                    $row[8] == 'سند حسابداري' && 
-                    strpos($row[6], 'موجوديت جديد') !== false) {
+                // شرط: فقط حسابداری
+                if ($row[4] == $date && $row[8] == 'سند حسابداري') {
                     
                     // حذف شرکت برش کوه
                     $company = trim($row[1] ?? '');
@@ -1539,13 +1585,25 @@ if ($action == 'get_warehouse_report') {
                         continue;
                     }
                     
+                    // ✅ نوع گزارش: ثبت یا تایید
+                    $is_valid = false;
+                    if ($type == 'register') {
+                        // شرط ثبت: موجودیت جدید
+                        $is_valid = (strpos($row[6], 'موجوديت جديد') !== false);
+                    } else {
+                        // شرط تایید: توضیحات شامل "تایید" یا "تاييد" باشد
+                        $desc = trim($row[11] ?? '');
+                        $is_valid = (strpos($desc, 'تایید') !== false || strpos($desc, 'تاييد') !== false);
+                    }
+                    
+                    if (!$is_valid) continue;
+                    
                     $raw_name = trim($row[3]);
                     $clean_name = preg_replace('/[0-9]+$/', '', $raw_name);
                     if (empty($clean_name)) $clean_name = $raw_name;
                     
                     if (!isset($user_counts[$clean_name])) {
                         $user_counts[$clean_name] = 0;
-                        // دریافت واحد کاربر
                         $user_units[$clean_name] = getUserUnit($clean_name);
                     }
                     $user_counts[$clean_name]++;
@@ -1570,7 +1628,8 @@ if ($action == 'get_warehouse_report') {
         'success' => true,
         'users' => $result,
         'date' => $date,
-        'total' => array_sum($user_counts)
+        'total' => array_sum($user_counts),
+        'type' => $type
     ]);
     exit;
 }

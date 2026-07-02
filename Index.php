@@ -468,7 +468,7 @@ if ($is_admin) {
         .report-stats-date .date-quick-btn { padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; color: #475569; }
         .report-stats-date .date-quick-btn:hover { background: #667eea; color: white; border-color: #667eea; }
         .report-stats-date input { padding: 4px 10px; border-radius: 20px; border: 1px solid #e2e8f0; font-size: 0.6rem; width: 100px; text-align: center; }
-        .report-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .report-stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         .stat-card-new { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; transition: all 0.2s; }
         .stat-card-new:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .stat-card-new .stat-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1rem; }
@@ -493,8 +493,10 @@ if ($is_admin) {
         .stat-login-fail { background: #fee2e2; }
         .stat-login-fail .stat-icon { background: #ef444420; color: #dc2626; }
         .stat-login-fail .stat-number { color: #991b1b; }
-        @media (max-width: 768px) { .report-stats-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 500px) { .report-stats-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1200px) { .report-stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 768px) { .report-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 500px) { .report-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 380px) { .report-stats-grid { grid-template-columns: 1fr; } }
 
         /* ========== گزارش ثبت جدید (حسابداری) ========== */
         .report-warehouse-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 8px 16px; margin: 10px 0; }
@@ -518,6 +520,32 @@ if ($is_admin) {
         .warehouse-user-name { font-size: 0.6rem; font-weight: 600; color: #1e293b; white-space: nowrap; }
         .warehouse-user-count { font-size: 0.55rem; font-weight: 700; color: #3b82f6; background: #dbeafe; padding: 1px 6px; border-radius: 20px; margin-right: auto; }
         @media (max-width: 500px) { .report-warehouse-grid { max-height: 200px; } .warehouse-user-card { padding: 2px 6px 2px 2px; min-width: 50px; } .warehouse-user-name { font-size: 0.5rem; } .warehouse-user-count { font-size: 0.45rem; padding: 0px 4px; } }
+
+        /* ===== رنگ پس زمینه هدر هر واحد ===== */
+        .unit-column-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            background: linear-gradient(135deg, #fdf2f8, #fce7f3); 
+            border-bottom: 1px solid #fbcfe8; 
+        }
+        .unit-column[data-unit="تنخواه"] .unit-column-header { background: linear-gradient(135deg, #fdf2f8, #fce7f3); border-bottom-color: #fbcfe8; }
+        .unit-column[data-unit="خزانه"] .unit-column-header { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-bottom-color: #bbf7d0; }
+        .unit-column[data-unit="فاکتور"] .unit-column-header { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-bottom-color: #bfdbfe; }
+        .unit-column[data-unit="پیمانکارن"] .unit-column-header { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-bottom-color: #ddd6fe; }
+        .unit-column[data-unit="درآمد"] .unit-column-header { background: linear-gradient(135deg, #fef2f2, #fee2e2); border-bottom-color: #fecaca; }
+        .unit-column[data-unit="سایر"] .unit-column-header { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-bottom-color: #cbd5e1; }
+
+        .unit-column-icon { flex-shrink: 0; }
+        .unit-column-name { font-weight: 700; color: #1e293b; flex: 1; margin: 0 4px; white-space: nowrap; }
+        .unit-column-total { font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #059669, #10b981); border-radius: 20px; text-align: center; box-shadow: 0 2px 8px rgba(16,185,129,0.3); letter-spacing: 0.5px; flex-shrink: 0; }
+        .unit-column[data-unit="تنخواه"] .unit-column-total { background: linear-gradient(135deg, #d97706, #f59e0b); box-shadow: 0 2px 8px rgba(245,158,11,0.3); }
+        .unit-column[data-unit="خزانه"] .unit-column-total { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+        .unit-column[data-unit="فاکتور"] .unit-column-total { background: linear-gradient(135deg, #2563eb, #3b82f6); box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+        .unit-column[data-unit="پیمانکارن"] .unit-column-total { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
+        .unit-column[data-unit="درآمد"] .unit-column-total { background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+        .unit-column[data-unit="سایر"] .unit-column-total { background: linear-gradient(135deg, #475569, #64748b); box-shadow: 0 2px 8px rgba(100,116,139,0.3); }
+        .unit-column-users { display: flex; flex-direction: column; }
         /* ========== پایان گزارش ثبت جدید ========== */
 
         /* ========== انیمیشن دایره اعلان ========== */
@@ -546,288 +574,60 @@ if ($is_admin) {
         }
 		
         /* ========== چیدمان عمودی واحدها ========== */
-        .unit-column {
-            flex: 1 1 0;
-            min-width: 100px;
-            max-width: none;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #eef2f6;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
-        }
+        .unit-column { flex: 1 1 0; min-width: 100px; max-width: none; background: white; border-radius: 12px; border: 1px solid #eef2f6; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease; }
+        .unit-column.six-columns { flex: 1 1 0; min-width: 100px; }
+        .unit-column.six-columns .unit-column-header { padding: 6px 10px; }
+        .unit-column.six-columns .unit-column-icon { font-size: 0.85rem; }
+        .unit-column.six-columns .unit-column-name { font-size: 0.7rem; }
+        .unit-column.six-columns .unit-column-total { font-size: 0.8rem; padding: 1px 8px; min-width: 24px; }
+        .unit-column.six-columns .user-card-vertical { padding: 3px 7px 3px 3px; border-radius: 18px; gap: 4px; }
+        .unit-column.six-columns .user-avatar-vertical { width: 20px; height: 20px; font-size: 0.45rem; }
+        .unit-column.six-columns .user-name-vertical { font-size: 0.55rem; }
+        .unit-column.six-columns .user-count-vertical { font-size: 0.6rem; padding: 1px 6px; min-width: 20px; }
+        .unit-column.six-columns .unit-column-users { padding: 4px 8px; gap: 4px; }
+        .unit-column:not(.six-columns) { flex: 1 1 0; min-width: 130px; }
+        .unit-column:not(.six-columns) .unit-column-header { padding: 8px 12px; }
+        .unit-column:not(.six-columns) .unit-column-icon { font-size: 0.9rem; }
+        .unit-column:not(.six-columns) .unit-column-name { font-size: 0.8rem; }
+        .unit-column:not(.six-columns) .unit-column-total { font-size: 0.9rem; padding: 1px 10px; min-width: 28px; }
+        .unit-column:not(.six-columns) .user-card-vertical { padding: 4px 10px 4px 4px; border-radius: 24px; gap: 6px; }
+        .unit-column:not(.six-columns) .user-avatar-vertical { width: 26px; height: 26px; font-size: 0.6rem; }
+        .unit-column:not(.six-columns) .user-name-vertical { font-size: 0.65rem; }
+        .unit-column:not(.six-columns) .user-count-vertical { font-size: 0.7rem; padding: 1px 10px; min-width: 26px; }
+        .unit-column:not(.six-columns) .unit-column-users { padding: 6px 10px; gap: 5px; }
+        .unit-column-header { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-bottom: 1px solid #e2e8f0; }
+        .unit-column-icon { flex-shrink: 0; }
+        .unit-column-name { font-weight: 700; color: #1e293b; flex: 1; margin: 0 4px; white-space: nowrap; }
+        .unit-column-total { font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #059669, #10b981); border-radius: 20px; text-align: center; box-shadow: 0 2px 8px rgba(16,185,129,0.3); letter-spacing: 0.5px; flex-shrink: 0; }
+        .unit-column[data-unit="تنخواه"] .unit-column-total { background: linear-gradient(135deg, #d97706, #f59e0b); box-shadow: 0 2px 8px rgba(245,158,11,0.3); }
+        .unit-column[data-unit="خزانه"] .unit-column-total { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+        .unit-column[data-unit="فاکتور"] .unit-column-total { background: linear-gradient(135deg, #2563eb, #3b82f6); box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+        .unit-column[data-unit="پیمانکارن"] .unit-column-total { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
+        .unit-column[data-unit="درآمد"] .unit-column-total { background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+        .unit-column[data-unit="سایر"] .unit-column-total { background: linear-gradient(135deg, #475569, #64748b); box-shadow: 0 2px 8px rgba(100,116,139,0.3); }
+        .unit-column-users { display: flex; flex-direction: column; }
+        .user-card-vertical { display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; transition: all 0.15s; cursor: default; min-width: 0; max-width: 100%; overflow: hidden; }
+        .user-card-vertical:hover { background: white; border-color: #94a3b8; transform: translateX(2px); }
+        .user-avatar-vertical { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; flex-shrink: 0; }
+        .user-name-vertical { font-weight: 500; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
+        .user-count-vertical { font-weight: 700; color: #3b82f6; background: #dbeafe; border-radius: 20px; text-align: center; flex-shrink: 0; }
+        @media (max-width: 1024px) { .unit-column:not(.six-columns) { min-width: 110px; } .unit-column.six-columns { min-width: 90px; } .unit-column.six-columns .user-avatar-vertical { width: 18px; height: 18px; font-size: 0.4rem; } .unit-column.six-columns .user-name-vertical { font-size: 0.5rem; } .unit-column.six-columns .user-count-vertical { font-size: 0.55rem; padding: 0px 5px; min-width: 18px; } .unit-column.six-columns .unit-column-name { font-size: 0.65rem; } .unit-column.six-columns .unit-column-total { font-size: 0.75rem; padding: 0px 7px; min-width: 22px; } }
+        @media (max-width: 768px) { .unit-column, .unit-column.six-columns, .unit-column:not(.six-columns) { flex: 0 0 calc(50% - 6px) !important; min-width: 0 !important; } .unit-column .user-avatar-vertical { width: 20px; height: 20px; font-size: 0.45rem; } .unit-column .user-name-vertical { font-size: 0.55rem; } .unit-column .user-count-vertical { font-size: 0.6rem; padding: 0px 6px; min-width: 20px; } .unit-column .unit-column-name { font-size: 0.65rem; } .unit-column .unit-column-total { font-size: 0.75rem; padding: 0px 7px; min-width: 20px; } .unit-column.six-columns .user-avatar-vertical { width: 18px; height: 18px; font-size: 0.4rem; } .unit-column.six-columns .user-name-vertical { font-size: 0.5rem; } .unit-column.six-columns .user-count-vertical { font-size: 0.5rem; padding: 0px 5px; min-width: 16px; } .unit-column.six-columns .unit-column-name { font-size: 0.6rem; } .unit-column.six-columns .unit-column-total { font-size: 0.7rem; padding: 0px 6px; min-width: 18px; } }
+        /* ===== دکمه تغییر نوع گزارش ===== */
+        .toggle-report-btn { padding: 5px 14px; border-radius: 30px; border: none; font-size: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 2px 10px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 5px; white-space: nowrap; letter-spacing: 0.3px; }
+        .toggle-report-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 4px 18px rgba(16,185,129,0.45); }
+        .toggle-report-btn:active { transform: scale(0.96); }
+        .toggle-report-btn i { font-size: 0.65rem; }
+        .toggle-report-btn.confirm-mode { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 10px rgba(59,130,246,0.3); }
+        .toggle-report-btn.confirm-mode:hover { box-shadow: 0 4px 18px rgba(59,130,246,0.45); }
         
-        /* ===== وقتی ۶ ستون هست ===== */
-        .unit-column.six-columns {
-            flex: 1 1 0;
-            min-width: 100px;
-        }
-        .unit-column.six-columns .unit-column-header {
-            padding: 6px 10px;
-        }
-        .unit-column.six-columns .unit-column-icon {
-            font-size: 0.85rem;
-        }
-        .unit-column.six-columns .unit-column-name {
-            font-size: 0.7rem;
-        }
-        .unit-column.six-columns .unit-column-total {
-            font-size: 0.8rem;
-            padding: 1px 8px;
-            min-width: 24px;
-        }
-        .unit-column.six-columns .user-card-vertical {
-            padding: 3px 7px 3px 3px;
-            border-radius: 18px;
-            gap: 4px;
-        }
-        .unit-column.six-columns .user-avatar-vertical {
-            width: 20px;
-            height: 20px;
-            font-size: 0.45rem;
-        }
-        .unit-column.six-columns .user-name-vertical {
-            font-size: 0.55rem;
-        }
-        .unit-column.six-columns .user-count-vertical {
-            font-size: 0.6rem;
-            padding: 1px 6px;
-            min-width: 20px;
-        }
-        .unit-column.six-columns .unit-column-users {
-            padding: 4px 8px;
-            gap: 4px;
-        }
-        
-        /* ===== سایز معمولی (کمتر از ۶ ستون) ===== */
-        .unit-column:not(.six-columns) {
-            flex: 1 1 0;
-            min-width: 130px;
-        }
-        .unit-column:not(.six-columns) .unit-column-header {
-            padding: 8px 12px;
-        }
-        .unit-column:not(.six-columns) .unit-column-icon {
-            font-size: 0.9rem;
-        }
-        .unit-column:not(.six-columns) .unit-column-name {
-            font-size: 0.8rem;
-        }
-        .unit-column:not(.six-columns) .unit-column-total {
-            font-size: 0.9rem;
-            padding: 1px 10px;
-            min-width: 28px;
-        }
-        .unit-column:not(.six-columns) .user-card-vertical {
-            padding: 4px 10px 4px 4px;
-            border-radius: 24px;
-            gap: 6px;
-        }
-        .unit-column:not(.six-columns) .user-avatar-vertical {
-            width: 26px;
-            height: 26px;
-            font-size: 0.6rem;
-        }
-        .unit-column:not(.six-columns) .user-name-vertical {
-            font-size: 0.65rem;
-        }
-        .unit-column:not(.six-columns) .user-count-vertical {
-            font-size: 0.7rem;
-            padding: 1px 10px;
-            min-width: 26px;
-        }
-        .unit-column:not(.six-columns) .unit-column-users {
-            padding: 6px 10px;
-            gap: 5px;
-        }
-        
-        .unit-column-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .unit-column-icon {
-            flex-shrink: 0;
-        }
-        .unit-column-name {
-            font-weight: 700;
-            color: #1e293b;
-            flex: 1;
-            margin: 0 4px;
-            white-space: nowrap;
-        }
-        .unit-column-total {
-            font-weight: 800;
-            color: #ffffff;
-            background: linear-gradient(135deg, #059669, #10b981);
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
-            letter-spacing: 0.5px;
-            flex-shrink: 0;
-        }
-        /* رنگ‌های مختلف برای هر واحد */
-        .unit-column[data-unit="تنخواه"] .unit-column-total {
-            background: linear-gradient(135deg, #d97706, #f59e0b);
-            box-shadow: 0 2px 8px rgba(245,158,11,0.3);
-        }
-        .unit-column[data-unit="خزانه"] .unit-column-total {
-            background: linear-gradient(135deg, #059669, #10b981);
-            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
-        }
-        .unit-column[data-unit="فاکتور"] .unit-column-total {
-            background: linear-gradient(135deg, #2563eb, #3b82f6);
-            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
-        }
-        .unit-column[data-unit="پیمانکارن"] .unit-column-total {
-            background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-            box-shadow: 0 2px 8px rgba(139,92,246,0.3);
-        }
-        .unit-column[data-unit="درآمد"] .unit-column-total {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            box-shadow: 0 2px 8px rgba(239,68,68,0.3);
-        }
-        .unit-column[data-unit="سایر"] .unit-column-total {
-            background: linear-gradient(135deg, #475569, #64748b);
-            box-shadow: 0 2px 8px rgba(100,116,139,0.3);
-        }
-        
-        .unit-column-users {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* ===== کارت‌های عمودی ===== */
-        .user-card-vertical {
-            display: flex;
-            align-items: center;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            transition: all 0.15s;
-            cursor: default;
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
-        }
-        .user-card-vertical:hover {
-            background: white;
-            border-color: #94a3b8;
-            transform: translateX(2px);
-        }
-        .user-avatar-vertical {
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: white;
-            flex-shrink: 0;
-        }
-        .user-name-vertical {
-            font-weight: 500;
-            color: #1e293b;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1 1 auto;
-            min-width: 0;
-        }
-        .user-count-vertical {
-            font-weight: 700;
-            color: #3b82f6;
-            background: #dbeafe;
-            border-radius: 20px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        /* ===== ریسپانسیو ===== */
-        @media (max-width: 1024px) {
-            .unit-column:not(.six-columns) {
-                min-width: 110px;
-            }
-            .unit-column.six-columns {
-                min-width: 90px;
-            }
-            .unit-column.six-columns .user-avatar-vertical {
-                width: 18px;
-                height: 18px;
-                font-size: 0.4rem;
-            }
-            .unit-column.six-columns .user-name-vertical {
-                font-size: 0.5rem;
-            }
-            .unit-column.six-columns .user-count-vertical {
-                font-size: 0.55rem;
-                padding: 0px 5px;
-                min-width: 18px;
-            }
-            .unit-column.six-columns .unit-column-name {
-                font-size: 0.65rem;
-            }
-            .unit-column.six-columns .unit-column-total {
-                font-size: 0.75rem;
-                padding: 0px 7px;
-                min-width: 22px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .unit-column,
-            .unit-column.six-columns,
-            .unit-column:not(.six-columns) {
-                flex: 0 0 calc(50% - 6px) !important;
-                min-width: 0 !important;
-            }
-            .unit-column .user-avatar-vertical {
-                width: 20px;
-                height: 20px;
-                font-size: 0.45rem;
-            }
-            .unit-column .user-name-vertical {
-                font-size: 0.55rem;
-            }
-            .unit-column .user-count-vertical {
-                font-size: 0.6rem;
-                padding: 0px 6px;
-                min-width: 20px;
-            }
-            .unit-column .unit-column-name {
-                font-size: 0.65rem;
-            }
-            .unit-column .unit-column-total {
-                font-size: 0.75rem;
-                padding: 0px 7px;
-                min-width: 20px;
-            }
-            .unit-column.six-columns .user-avatar-vertical {
-                width: 18px;
-                height: 18px;
-                font-size: 0.4rem;
-            }
-            .unit-column.six-columns .user-name-vertical {
-                font-size: 0.5rem;
-            }
-            .unit-column.six-columns .user-count-vertical {
-                font-size: 0.5rem;
-                padding: 0px 5px;
-                min-width: 16px;
-            }
-            .unit-column.six-columns .unit-column-name {
-                font-size: 0.6rem;
-            }
-            .unit-column.six-columns .unit-column-total {
-                font-size: 0.7rem;
-                padding: 0px 6px;
-                min-width: 18px;
-            }
-        }
-        /* ========== پایان چیدمان عمودی ========== */
-        /* ========== پایان استایل‌ها ========== */
+        /* ===== هدر گزارش ثبت/تایید ===== */
+        .report-warehouse-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+        .report-warehouse-title { font-size: 0.75rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+        .report-warehouse-title i { color: #3b82f6; font-size: 0.9rem; }
+        .report-warehouse-date { font-size: 0.55rem; font-weight: 400; color: #94a3b8; background: #f1f5f9; padding: 1px 8px; border-radius: 20px; }
+        .report-warehouse-total { font-size: 0.65rem; font-weight: 600; color: #1e293b; background: #eef2ff; padding: 2px 12px; border-radius: 20px; flex-shrink: 0; }
+        .report-warehouse-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
     </style>
 </head>
 <body>
@@ -1022,14 +822,21 @@ if ($is_admin) {
                 <!-- ========== گزارش برهان ========== -->
                 <div id="reportsContent" class="left-content" style="display:none;">
                     <div class="left-section-title">
-                        <i class="fas fa-chart-pie"></i> گزارش برهان
-                        <span id="reportNewBadge" style="display:none; font-size:0.6rem; background:#ef4444; color:white; padding:2px 10px; border-radius:20px; margin-right:8px;"></span>
-                        <button class="btn-secondary" onclick="resetReportFilters()" style="margin-right:auto; padding:4px 12px; font-size:0.65rem;">
-                            <i class="fas fa-undo"></i> حذف فیلتر
-                        </button>
-                        <button class="btn-primary" onclick="manualRefreshReport()" style="padding:4px 12px; font-size:0.65rem;">
-                            <i class="fas fa-sync"></i> بروزرسانی
-                        </button>
+                        <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                            <i class="fas fa-chart-pie"></i> گزارش برهان
+                            <span id="reportNewBadge" style="display:none; font-size:0.6rem; background:#ef4444; color:white; padding:2px 10px; border-radius:20px; margin-right:8px;"></span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="reportUpdateTime" style="font-size:0.55rem; color:#94a3b8; background:#f1f5f9; padding:2px 10px; border-radius:20px;">
+                                <i class="fas fa-clock" style="margin-left:4px; color:#667eea;"></i> در حال بارگذاری...
+                            </span>
+                            <button class="btn-secondary" onclick="resetReportFilters()" style="padding:4px 12px; font-size:0.65rem;">
+                                <i class="fas fa-undo"></i> حذف فیلتر
+                            </button>
+                            <button class="btn-primary" onclick="manualRefreshReport()" style="padding:4px 12px; font-size:0.65rem;">
+                                <i class="fas fa-sync"></i> بروزرسانی
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- ========== آمار لحظه‌ای ========== -->
@@ -1093,15 +900,21 @@ if ($is_admin) {
                     </div>
                     <!-- ========== پایان آمار لحظه‌ای ========== -->
                     
-                    <!-- ========== گزارش ثبت جدید (حسابداری) ========== -->
+                    <!-- ========== گزارش ثبت/تایید اسناد (حسابداری) ========== -->
                     <div class="report-warehouse-container" id="reportWarehouseContainer" style="display: none;">
                         <div class="report-warehouse-header">
                             <div class="report-warehouse-title">
-                                <i class="fas fa-file-invoice"></i> گزارش ثبت سند
+                                <i class="fas fa-file-invoice"></i>
+                                <span id="reportWarehouseTitle">گزارش ثبت سند</span>
                                 <span class="report-warehouse-date" id="reportWarehouseDate"></span>
                             </div>
-                            <div class="report-warehouse-total" id="reportWarehouseTotal">
-                                مجموع: 0 سند
+                            <div class="report-warehouse-header-actions">
+                                <button id="toggleReportTypeBtn" class="toggle-report-btn" onclick="toggleReportType()">
+                                    <i class="fas fa-check-circle"></i> گزارش تایید اسناد
+                                </button>
+                                <div class="report-warehouse-total" id="reportWarehouseTotal">
+                                    مجموع: 0 سند
+                                </div>
                             </div>
                         </div>
                         <!-- پیام خالی -->
@@ -1114,7 +927,7 @@ if ($is_admin) {
                             <!-- کارت‌ها به صورت داینامیک ساخته می‌شوند -->
                         </div>
                     </div>
-                    <!-- ========== پایان گزارش ثبت جدید ========== -->
+                    <!-- ========== پایان گزارش ثبت/تایید اسناد ========== -->
                     
                     <!-- فیلترها -->
                     <div class="reports-filters">
@@ -3069,8 +2882,13 @@ function populateSelect(id, options) {
     if (currentValue) select.value = currentValue;
 }
 
+// ===== کش کردن فیلترهای قبلی =====
+let lastFilterState = '';
+
 // اعمال فیلترها (خودکار)
 function applyReportFilters() {
+    if (!reportData || reportData.length === 0) return;
+    
     const company = document.getElementById('report_filter_company').value;
     const year = document.getElementById('report_filter_year').value;
     const user = document.getElementById('report_filter_user').value;
@@ -3082,41 +2900,70 @@ function applyReportFilters() {
     const docTypeCheckboxes = document.querySelectorAll('.doc-type-filter:checked');
     const selectedDocTypes = Array.from(docTypeCheckboxes).map(cb => cb.value);
     
-    let filtered = reportData.filter(row => {
-        // ✅ حذف برش کوه از جدول
+    // ✅ ساخت کلید برای تشخیص تغییر فیلترها
+    const currentState = JSON.stringify({ company, year, user, number, type, dateFrom, dateTo, selectedDocTypes });
+    if (currentState === lastFilterState) {
+        return; // اگر تغییری نکرده، کاری نکن
+    }
+    lastFilterState = currentState;
+    
+    // ✅ فیلتر با حلقه for (سریع‌تر از forEach)
+    const filtered = [];
+    const dataLen = reportData.length;
+    
+    for (let i = 0; i < dataLen; i++) {
+        const row = reportData[i];
         const companyName = row[1] || '';
+        
+        // حذف برش کوه
         if (companyName === 'برش كوه' || companyName === 'شركت برش كوه آريا پارت (سهامي خاص)') {
-            return false;
+            continue;
         }
         
-        // فیلترهای معمول
-        if (company && row[1] !== company) return false;
-        if (year && row[2] !== year) return false;
-        if (user && row[3] !== user) return false;
-        if (number && !row[9].includes(number)) return false;
-        if (type && row[6] !== type) return false;
-        if (selectedDocTypes.length > 0 && !selectedDocTypes.includes(row[8])) return false;
+        // فیلترهای معمول با شرط‌های کوتاه
+        if (company && row[1] !== company) continue;
+        if (year && row[2] !== year) continue;
+        if (user && row[3] !== user) continue;
+        if (number && !row[9].includes(number)) continue;
+        if (type && row[6] !== type) continue;
+        if (selectedDocTypes.length > 0 && !selectedDocTypes.includes(row[8])) continue;
+        if (dateFrom && row[4] < dateFrom) continue;
+        if (dateTo && row[4] > dateTo) continue;
         
-        // فیلتر بازه تاریخ
-        if (dateFrom && row[4] < dateFrom) return false;
-        if (dateTo && row[4] > dateTo) return false;
-        return true;
-    });
+        filtered.push(row);
+    }
     
     renderReportTable(filtered);
 }
 
 // حذف همه فیلترها
 function resetReportFilters() {
+    const btn = document.querySelector('.btn-secondary[onclick="resetReportFilters()"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    
     document.getElementById('report_filter_company').value = '';
     document.getElementById('report_filter_year').value = '';
     document.getElementById('report_filter_user').value = '';
     document.getElementById('report_filter_number').value = '';
     document.getElementById('report_filter_type').value = '';
-    document.getElementById('report_filter_doc_type').value = '';
     document.getElementById('report_filter_date_from').value = '';
     document.getElementById('report_filter_date_to').value = '';
-    applyReportFilters();
+    
+    const docTypeCheckboxes = document.querySelectorAll('.doc-type-filter');
+    docTypeCheckboxes.forEach(cb => {
+        cb.checked = (cb.value === 'سند حسابداري' || cb.value === 'سند خزانه');
+    });
+    
+    // ✅ بازنشانی کش فیلتر
+    lastFilterState = '';
+    
+    requestAnimationFrame(() => {
+        applyReportFilters();
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
 }
 // ========== بروزرسانی دستی گزارش برهان ==========
 function manualRefreshReport() {
@@ -3125,12 +2972,17 @@ function manualRefreshReport() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال بروزرسانی...';
     btn.disabled = true;
     
+    // ✅ بارگذاری مجدد زمان بروزرسانی (قبل از هر چیز)
+    loadFileUpdateTime();
+    
     reportData = [];
     loadReportFilters();
     
     // ✅ بارگذاری آمار لحظه‌ای بعد از بروزرسانی
     setTimeout(() => {
         loadReportStats();
+        // ✅ دوباره زمان رو به‌روز کن
+        loadFileUpdateTime();
     }, 500);
     
     setTimeout(() => {
@@ -3183,13 +3035,17 @@ function loadReportStats() {
     }
 }
 
-// ========== بارگذاری گزارش ثبت جدید (حسابداری) ==========
+// ========== بارگذاری گزارش ثبت/تایید اسناد ==========
+let reportType = 'register'; // register یا confirm
+
 function loadWarehouseReport() {
     const container = document.getElementById('reportWarehouseContainer');
     const grid = document.getElementById('reportWarehouseGrid');
     const dateSpan = document.getElementById('reportWarehouseDate');
     const totalSpan = document.getElementById('reportWarehouseTotal');
     const emptyMsg = document.getElementById('reportWarehouseEmpty');
+    const titleSpan = document.getElementById('reportWarehouseTitle');
+    const toggleBtn = document.getElementById('toggleReportTypeBtn');
     
     const dateInput = document.getElementById('report_stats_date');
     const date = dateInput ? dateInput.value : '';
@@ -3199,7 +3055,18 @@ function loadWarehouseReport() {
         return;
     }
     
-    fetch(`api/ajax.php?action=get_warehouse_report&date=${encodeURIComponent(date)}`)
+    // ✅ به‌روزرسانی عنوان و دکمه
+    if (reportType === 'register') {
+        titleSpan.textContent = 'گزارش ثبت سند';
+        toggleBtn.innerHTML = '<i class="fas fa-check-circle"></i> گزارش تایید اسناد';
+        toggleBtn.classList.remove('confirm-mode');
+    } else {
+        titleSpan.textContent = 'گزارش تایید اسناد';
+        toggleBtn.innerHTML = '<i class="fas fa-plus-circle"></i> گزارش ثبت اسناد';
+        toggleBtn.classList.add('confirm-mode');
+    }
+    
+    fetch(`api/ajax.php?action=get_warehouse_report&date=${encodeURIComponent(date)}&type=${reportType}`)
         .then(res => res.json())
         .then(data => {
             if (container) container.style.display = 'block';
@@ -3233,7 +3100,6 @@ function loadWarehouseReport() {
                     groups[unit].push(user);
                 });
                 
-                // ===== محاسبه تعداد ستون‌ها و تعیین کلاس =====
                 const unitCount = unitOrder.filter(u => groups[u] && groups[u].length > 0).length;
                 const columnClass = (unitCount >= 6) ? 'six-columns' : '';
                 
@@ -3298,6 +3164,23 @@ function loadWarehouseReport() {
             console.error(err);
             if (container) container.style.display = 'none';
         });
+}
+
+// ===== تغییر نوع گزارش =====
+function toggleReportType() {
+    reportType = (reportType === 'register') ? 'confirm' : 'register';
+    
+    const toggleBtn = document.getElementById('toggleReportTypeBtn');
+    
+    if (reportType === 'confirm') {
+        toggleBtn.classList.add('confirm-mode');
+        toggleBtn.innerHTML = '<i class="fas fa-plus-circle"></i> گزارش ثبت اسناد';
+    } else {
+        toggleBtn.classList.remove('confirm-mode');
+        toggleBtn.innerHTML = '<i class="fas fa-check-circle"></i> گزارش تایید اسناد';
+    }
+    
+    loadWarehouseReport();
 }
 
 function setReportDate(type) {
@@ -3367,32 +3250,54 @@ function renderReportTable(data) {
     document.getElementById('reportEmptyState').style.display = 'none';
     container.style.display = 'block';
     
-    let html = '';
-    data.forEach((row, index) => {
+    // ✅ ساخت آرایه از ردیف‌ها برای سرعت بیشتر
+    const rows = [];
+    const rowCount = data.length;
+    const escape = escapeHtml;
+    
+    // ✅ کش کردن badge classes
+    const badgeClasses = {
+        'موجوديت جديد': 'badge-success',
+        'ويرايش': 'badge-warning',
+        'حذف': 'badge-danger'
+    };
+    const defaultBadge = 'badge-neutral';
+    
+    for (let i = 0; i < rowCount; i++) {
+        const row = data[i];
         const type = row[6] || '';
+        
         let rowClass = '';
         if (type.includes('موجوديت جديد')) rowClass = 'row-new';
         else if (type.includes('ويرايش')) rowClass = 'row-edit';
         else if (type.includes('حذف')) rowClass = 'row-delete';
         
-        html += `<tr class="${rowClass}">
-            <td>${index + 1}</td>
-            <td>${escapeHtml(row[1] || '')}</td>
-            <td>${escapeHtml(row[2] || '')}</td>
-            <td>${escapeHtml(row[3] || '')}</td>
-            <td>${escapeHtml(row[4] || '')}</td>
-            <td>${escapeHtml(row[5] || '')}</td>
-            <td><span class="badge ${getTypeBadgeClass(type)}">${escapeHtml(type)}</span></td>
-            <td>${escapeHtml(row[7] || '')}</td>
-            <td>${escapeHtml(row[8] || '')}</td>
-            <td>${escapeHtml(row[9] || '')}</td>
-            <td>${escapeHtml(row[10] || '')}</td>
-            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(row[11] || '')}</td>
-        </tr>`;
-    });
-    tbody.innerHTML = html;
+        let badgeClass = defaultBadge;
+        if (type.includes('موجوديت جديد')) badgeClass = 'badge-success';
+        else if (type.includes('ويرايش')) badgeClass = 'badge-warning';
+        else if (type.includes('حذف')) badgeClass = 'badge-danger';
+        
+        rows.push(`<tr class="${rowClass}">
+            <td>${i + 1}</td>
+            <td>${escape(row[1] || '')}</td>
+            <td>${escape(row[2] || '')}</td>
+            <td>${escape(row[3] || '')}</td>
+            <td>${escape(row[4] || '')}</td>
+            <td>${escape(row[5] || '')}</td>
+            <td><span class="badge ${badgeClass}">${escape(type)}</span></td>
+            <td>${escape(row[7] || '')}</td>
+            <td>${escape(row[8] || '')}</td>
+            <td>${escape(row[9] || '')}</td>
+            <td>${escape(row[10] || '')}</td>
+            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escape(row[11] || '')}</td>
+        </tr>`);
+    }
+    
+    // ✅ یکبار جایگزینی محتوای tbody با join
+    tbody.innerHTML = rows.join('');
+    
     totalCount.textContent = reportData.length;
-    filteredCount.textContent = data.length;
+    filteredCount.textContent = rowCount;
 }
 
 function getTypeBadgeClass(type) {
@@ -3401,6 +3306,26 @@ function getTypeBadgeClass(type) {
     if (type.includes('ويرايش')) return 'badge-warning';
     if (type.includes('حذف')) return 'badge-danger';
     return 'badge-neutral';
+}
+
+// ========== دریافت زمان بروزرسانی فایل ==========
+function loadFileUpdateTime() {
+    const updateSpan = document.getElementById('reportUpdateTime');
+    if (!updateSpan) return;
+    
+    fetch('api/ajax.php?action=get_file_update_time')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                updateSpan.innerHTML = '<i class="fas fa-clock" style="margin-left:4px; color:#10b981;"></i> آخرین خروجی گرفته شده از برهان: <span style="font-weight:600; color:#1e293b; background:#dcfce7; padding:1px 8px; border-radius:12px;">' + data.update_time + '</span>';
+            } else {
+                updateSpan.innerHTML = '<i class="fas fa-clock" style="margin-left:4px; color:#94a3b8;"></i> آخرین خروجی گرفته شده از برهان: <span style="font-weight:600; color:#94a3b8;">نامشخص</span>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            updateSpan.innerHTML = '<i class="fas fa-clock" style="margin-left:4px; color:#ef4444;"></i> آخرین خروجی گرفته شده از برهان: <span style="font-weight:600; color:#ef4444;">خطا</span>';
+        });
 }
 
 function showLeftContent(section) {
@@ -3961,6 +3886,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('adminArchiveList')) {
         if (typeof loadAdminArchiveList === 'function') loadAdminArchiveList();
     }
+    
+    // ========== بارگذاری گزارش برهان ==========
+    if (document.getElementById('reportsContent')) {
+        loadReportFilters();
+        loadFileUpdateTime(); // ✅ اضافه شد
+    }
+    
     // ========== شروع بررسی خودکار گزارش برهان در پس‌زمینه ==========
     if (document.querySelector('.menu-item[data-section="reports"]')) {
         // اجرای اولیه
