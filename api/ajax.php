@@ -2,6 +2,16 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 ini_set('log_errors', 0);
+
+// ========== تنظیم از پرینت (بدون نیاز به لاگین) ==========
+if (isset($_GET['action']) && $_GET['action'] == 'set_from_print') {
+    session_name('doc_system');
+    session_start();
+    $_SESSION['from_print'] = true;
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 session_name('doc_system');
 session_start();
 require_once '../config/database.php';
@@ -18,6 +28,22 @@ function toPersianNumber($str) {
     $english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     return str_replace($english, $persian, $str);
+}
+
+// ✅ ========== دریافت واحد کاربر از فایل JSON ==========
+function getUserUnit($username) {
+    $file = __DIR__ . '/../config/user_units.json';
+    if (file_exists($file)) {
+        $content = file_get_contents($file);
+        $data = json_decode($content, true);
+        if (is_array($data)) {
+            // حذف اعداد انتهایی نام کاربر
+            $clean_name = preg_replace('/[0-9]+$/', '', $username);
+            // ابتدا با نام پاک شده، سپس با نام اصلی
+            return $data[$clean_name] ?? $data[$username] ?? 'سایر';
+        }
+    }
+    return 'سایر';
 }
 // =================================
 
@@ -248,16 +274,34 @@ if ($action == 'save_document') {
             echo json_encode(['success' => false, 'error' => 'تاریخ سند الزامی است']);
             exit;
         }
-        // تبدیل تاریخ به عدد انگلیسی
         $doc_date = toEnglishNumber($doc_date);
     } else {
-        // اگر اختیاری است و خالی بود، خط تیره بگذار
         if (empty($doc_date)) {
             $doc_date = '-';
         } else {
             $doc_date = toEnglishNumber($doc_date);
         }
     }
+    
+    // ========== بررسی تکراری بودن سند ==========
+    // شرط: شماره سند + شرکت + تاریخ تحویل
+    $stmt = $db->prepare("SELECT COUNT(*) FROM documents 
+                          WHERE doc_number = ? 
+                          AND company_id = ? 
+                          AND delivery_date = ? 
+                          AND user_id = ?");
+    $stmt->execute([$doc_number, $company_id, $delivery_date, $user_id]);
+    $count = $stmt->fetchColumn();
+    
+    if ($count > 0) {
+        echo json_encode([
+            'success' => false, 
+            'duplicate' => true,
+            'error' => 'این سند قبلاً برای این شرکت و این تاریخ تحویل ثبت شده است'
+        ]);
+        exit;
+    }
+    // ==========================================
     
     $stmt = $db->prepare("INSERT INTO documents (user_id, company_id, doc_number, doc_date, delivery_date, description) 
                           VALUES (?, ?, ?, ?, ?, ?)");
@@ -1475,6 +1519,7 @@ if ($action == 'get_warehouse_report') {
     }
     
     $user_counts = [];
+    $user_units = [];
     
     $handle = fopen($csv_file, 'r');
     if ($handle) {
@@ -1488,7 +1533,7 @@ if ($action == 'get_warehouse_report') {
                     $row[8] == 'سند حسابداري' && 
                     strpos($row[6], 'موجوديت جديد') !== false) {
                     
-                    // حذف شرکت برش کوه (اسم کامل در فایل CSV)
+                    // حذف شرکت برش کوه
                     $company = trim($row[1] ?? '');
                     if ($company == 'شركت برش كوه آريا پارت (سهامي خاص)') {
                         continue;
@@ -1500,6 +1545,8 @@ if ($action == 'get_warehouse_report') {
                     
                     if (!isset($user_counts[$clean_name])) {
                         $user_counts[$clean_name] = 0;
+                        // دریافت واحد کاربر
+                        $user_units[$clean_name] = getUserUnit($clean_name);
                     }
                     $user_counts[$clean_name]++;
                 }
@@ -1514,7 +1561,8 @@ if ($action == 'get_warehouse_report') {
     foreach ($user_counts as $name => $count) {
         $result[] = [
             'user_name' => $name,
-            'count' => $count
+            'count' => $count,
+            'unit' => $user_units[$name] ?? 'سایر'
         ];
     }
     

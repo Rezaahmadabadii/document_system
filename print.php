@@ -181,7 +181,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     
     <!-- فونت Vazirmatn -->
     <link href="assets/css/vazirmatn.css" rel="stylesheet" type="text/css" />
-	<link rel="icon" type="image/x-icon" href="print.svg">
+    <link rel="icon" type="image/x-icon" href="print.svg">
     <link rel="shortcut icon" href="print.svg">    
     <!-- کتابخانه‌ها -->
     <script src="assets/js/html2canvas.min.js"></script>
@@ -225,11 +225,118 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
         .sign-line { border-top: 1px solid #1a2c3e; width: 80%; margin: 25px auto 8px auto; }
         .sign-label { font-size: 0.65rem; color: #475569; font-weight: 500; }
         .sign-img { max-width: 150px; margin-top: 10px; max-height: 60px; }
-        .sign-btn { display: inline-block; margin-top: 10px; padding: 6px 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-size: 0.65rem; }
+        .sign-btn { display: inline-block; margin-top: 10px; padding: 6px 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-size: 0.65rem; border: none; cursor: pointer; }
+        .sign-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-print, .btn-close { padding: 8px 20px; border-radius: 10px; cursor: pointer; font-size: 0.75rem; margin-bottom: 15px; border: none; font-weight: 600; }
         .btn-print { background: #2c5f8a; color: white; }
         .btn-close { background: #64748b; color: white; margin-right: 10px; }
         .doc-count-badge { background: #fef08a; color: #854d0e; font-weight: bold; font-size: 0.9rem; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+        .pending-text { font-size: 0.65rem; color: #94a3b8; }
+        
+        /* ===== مودال ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 35px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            left: 18px;
+            font-size: 1.2rem;
+            color: #94a3b8;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .modal-icon {
+            font-size: 2.2rem;
+            color: #667eea;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .modal-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .modal-btn {
+            padding: 10px 24px;
+            border-radius: 12px;
+            border: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            min-width: 140px;
+        }
+        .modal-btn:hover { transform: translateY(-2px); }
+        .modal-btn:active { transform: scale(0.97); }
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        }
+        .modal-btn-primary:hover { box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+        .modal-btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .modal-btn-success:hover { box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
         
         @media print {
             .no-print { display: none !important; }
@@ -242,6 +349,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
             .column { flex: 1 !important; }
             .company-stats { display: block !important; }
             .company-stats-items { display: flex !important; flex-wrap: wrap !important; }
+            .modal-overlay { display: none !important; }
         }
         
         @media (max-width: 768px) {
@@ -253,6 +361,26 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     </style>
 </head>
 <body>
+    <!-- ===== مودال ===== -->
+    <div class="modal-overlay" id="signatureModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <span class="modal-icon" id="modalIcon">✍️</span>
+            <div class="modal-title" id="modalTitle">انتخاب روش ثبت امضا</div>
+            <div class="modal-desc" id="modalDesc">
+                آیا مایل به استفاده از امضای قبلی خود هستید<br>یا می‌خواهید امضای جدید رسم کنید؟
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" id="btnNewSignature">
+                    <i class="fas fa-pen"></i> ترسیم امضای جدید
+                </button>
+                <button class="modal-btn modal-btn-success" id="btnExistingSignature">
+                    <i class="fas fa-check"></i> ثبت امضای قبلی
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div style="text-align: center; margin-bottom: 15px;" class="no-print">
         <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> چاپ</button>
         <button class="btn-print" id="downloadImageBtn" style="background:#059669;"><i class="fas fa-image"></i> دانلود عکس</button>
@@ -419,7 +547,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                         <img src="<?php echo $user_signature_file . '?t=' . time(); ?>" style="width: auto; height: auto; max-width: 50%;">
                     <?php else: ?>
                         <?php if(!$is_admin && !$has_user_approval): ?>
-                            <a href="signature_upload.php?delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-user"><i class="fas fa-pen"></i> ثبت امضا</a>
+                            <button class="sign-btn sign-btn-user" onclick="openSignatureModal('user')"><i class="fas fa-pen"></i> ثبت امضا</button>
                         <?php elseif(!$is_admin && $has_user_approval): ?>
                             <span class="pending-text">در انتظار تایید نهایی</span>
                         <?php else: ?>
@@ -435,7 +563,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                         <img src="<?php echo $admin_signature_file . '?t=' . time(); ?>" style="width: auto; height: auto; max-width: 25%;">
                     <?php else: ?>
                         <?php if($is_admin && $has_user_approval && !$has_admin_approval): ?>
-                            <a href="admin_approve.php?user_id=<?php echo $user_id; ?>&delivery_date=<?php echo urlencode($delivery_date); ?>" class="sign-btn sign-btn-admin" onclick="return confirm('آیا از تایید نهایی این اسناد اطمینان دارید؟')"><i class="fas fa-check-circle"></i> تایید نهایی</a>
+                            <button class="sign-btn sign-btn-admin" onclick="openSignatureModal('admin')"><i class="fas fa-check-circle"></i> تایید نهایی</button>
                         <?php elseif($is_admin && !$has_user_approval): ?>
                             <span class="pending-text">در انتظار امضای تحویل‌دهنده</span>
                         <?php else: ?>
@@ -459,123 +587,188 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     function closePrintWindow() {
         window.close();
     }
+    
+    // ========== مودال انتخاب امضا ==========
+    function openSignatureModal(type) {
+        const modal = document.getElementById('signatureModal');
+        if (!modal) return;
         
-// ========== تابع دانلود عکس ==========
-async function downloadAllPagesAsImage() {
-    const btn = document.getElementById('downloadImageBtn');
-    const btnText = document.getElementById('downloadBtnText');
-    
-    if (!btn) {
-        console.error('دکمه دانلود عکس پیدا نشد');
-        return;
-    }
-    
-    const originalText = btnText ? btnText.innerHTML : 'دانلود عکس';
-    const originalBtnHTML = btn.innerHTML;
-    
-    // تغییر دکمه به حالت در حال بارگذاری
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
-    btn.disabled = true;
-    
-    const pages = document.querySelectorAll('.print-container');
-    
-    if (pages.length === 0) {
-        alert('هیچ صفحه‌ای یافت نشد');
-        btn.innerHTML = originalBtnHTML;
-        btn.disabled = false;
-        return;
-    }
-    
-    try {
-        if (pages.length === 1) {
-            const noPrintElements = pages[0].querySelectorAll('.no-print');
-            noPrintElements.forEach(el => el.style.display = 'none');
-            
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال عکاسی...';
-            
-            const canvas = await html2canvas(pages[0], {
-                scale: 2,
-                backgroundColor: '#ffffff',
-                useCORS: true
-            });
-            
-            noPrintElements.forEach(el => el.style.display = '');
-            
-            const link = document.createElement('a');
-            link.download = `document_page_1.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-            alert('✅ تصویر با موفقیت دانلود شد');
+        const icon = document.getElementById('modalIcon');
+        const title = document.getElementById('modalTitle');
+        const desc = document.getElementById('modalDesc');
+        const btnNew = document.getElementById('btnNewSignature');
+        const btnExisting = document.getElementById('btnExistingSignature');
+        const deliveryDate = '<?php echo urlencode($delivery_date); ?>';
+        const userId = '<?php echo $user_id; ?>';
+        
+        if (type === 'user') {
+            icon.textContent = '✍️';
+            title.textContent = 'ثبت امضای تحویل‌دهنده';
+            desc.innerHTML = 'آیا مایل به استفاده از امضای قبلی خود هستید<br>یا می‌خواهید امضای جدید رسم کنید؟';
+            btnNew.innerHTML = '<i class="fas fa-pen"></i> ترسیم امضای جدید';
+            btnExisting.innerHTML = '<i class="fas fa-check"></i> ثبت امضای قبلی';
+            btnNew.onclick = function() {
+                // تنظیم session از طریق AJAX
+                fetch('api/ajax.php?action=set_from_print')
+                    .then(() => {
+                        window.location.href = 'signature_upload.php?delivery_date=' + deliveryDate;
+                    });
+            };
+            btnExisting.onclick = function() {
+                window.location.href = 'signature_upload.php?use_existing=1&delivery_date=' + deliveryDate;
+            };
         } else {
-            if (typeof JSZip === 'undefined') {
-                alert('کتابخانه JSZip لود نشده است');
-                btn.innerHTML = originalBtnHTML;
-                btn.disabled = false;
-                return;
-            }
-            
-            const zip = new JSZip();
-            let successCount = 0;
-            
-            for (let i = 0; i < pages.length; i++) {
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
-                
-                const noPrintElements = pages[i].querySelectorAll('.no-print');
+            icon.textContent = '✅';
+            title.textContent = 'تایید نهایی اسناد';
+            desc.innerHTML = 'آیا مایل به استفاده از امضای قبلی خود هستید<br>یا می‌خواهید امضای جدید رسم کنید؟';
+            btnNew.innerHTML = '<i class="fas fa-pen"></i> ترسیم امضای جدید';
+            btnExisting.innerHTML = '<i class="fas fa-check"></i> ثبت امضای قبلی';
+            btnNew.onclick = function() {
+                fetch('api/ajax.php?action=set_from_print')
+                    .then(() => {
+                        window.location.href = 'admin_approve.php?user_id=' + userId + '&delivery_date=' + deliveryDate;
+                    });
+            };
+            btnExisting.onclick = function() {
+                window.location.href = 'admin_approve.php?use_admin_default=1&user_id=' + userId + '&delivery_date=' + deliveryDate;
+            };
+        }
+        
+        modal.classList.add('active');
+    }
+    
+    function closeModal() {
+        const modal = document.getElementById('signatureModal');
+        if (modal) modal.classList.remove('active');
+    }
+        
+    // ========== تابع دانلود عکس ==========
+    async function downloadAllPagesAsImage() {
+        const btn = document.getElementById('downloadImageBtn');
+        const btnText = document.getElementById('downloadBtnText');
+        
+        if (!btn) {
+            console.error('دکمه دانلود عکس پیدا نشد');
+            return;
+        }
+        
+        const originalText = btnText ? btnText.innerHTML : 'دانلود عکس';
+        const originalBtnHTML = btn.innerHTML;
+        
+        // تغییر دکمه به حالت در حال بارگذاری
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
+        btn.disabled = true;
+        
+        const pages = document.querySelectorAll('.print-container');
+        
+        if (pages.length === 0) {
+            alert('هیچ صفحه‌ای یافت نشد');
+            btn.innerHTML = originalBtnHTML;
+            btn.disabled = false;
+            return;
+        }
+        
+        try {
+            if (pages.length === 1) {
+                const noPrintElements = pages[0].querySelectorAll('.no-print');
                 noPrintElements.forEach(el => el.style.display = 'none');
                 
-                try {
-                    const canvas = await html2canvas(pages[i], {
-                        scale: 2,
-                        backgroundColor: '#ffffff',
-                        useCORS: true
-                    });
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال عکاسی...';
+                
+                const canvas = await html2canvas(pages[0], {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true
+                });
+                
+                noPrintElements.forEach(el => el.style.display = '');
+                
+                const link = document.createElement('a');
+                link.download = `document_page_1.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                alert('✅ تصویر با موفقیت دانلود شد');
+            } else {
+                if (typeof JSZip === 'undefined') {
+                    alert('کتابخانه JSZip لود نشده است');
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
+                    return;
+                }
+                
+                const zip = new JSZip();
+                let successCount = 0;
+                
+                for (let i = 0; i < pages.length; i++) {
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> در حال پردازش صفحه ${i+1} از ${pages.length}...`;
                     
-                    noPrintElements.forEach(el => el.style.display = '');
+                    const noPrintElements = pages[i].querySelectorAll('.no-print');
+                    noPrintElements.forEach(el => el.style.display = 'none');
                     
-                    const imgData = canvas.toDataURL('image/png');
-                    const base64Data = imgData.split(',')[1];
-                    zip.file(`page_${i+1}.png`, base64Data, { base64: true });
-                    successCount++;
-                } catch (err) {
-                    console.error(err);
-                    noPrintElements.forEach(el => el.style.display = '');
+                    try {
+                        const canvas = await html2canvas(pages[i], {
+                            scale: 2,
+                            backgroundColor: '#ffffff',
+                            useCORS: true
+                        });
+                        
+                        noPrintElements.forEach(el => el.style.display = '');
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        const base64Data = imgData.split(',')[1];
+                        zip.file(`page_${i+1}.png`, base64Data, { base64: true });
+                        successCount++;
+                    } catch (err) {
+                        console.error(err);
+                        noPrintElements.forEach(el => el.style.display = '');
+                    }
+                }
+                
+                if (successCount > 0) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ساخت فایل...';
+                    
+                    const content = await zip.generateAsync({ type: 'blob' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(content);
+                    link.href = url;
+                    link.download = `documents_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    alert(`✅ ${successCount} تصویر با موفقیت دانلود شد`);
+                } else {
+                    alert('❌ خطا در ایجاد تصاویر');
                 }
             }
-            
-            if (successCount > 0) {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ساخت فایل...';
-                
-                const content = await zip.generateAsync({ type: 'blob' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(content);
-                link.href = url;
-                link.download = `documents_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                alert(`✅ ${successCount} تصویر با موفقیت دانلود شد`);
-            } else {
-                alert('❌ خطا در ایجاد تصاویر');
-            }
+        } catch (err) {
+            console.error(err);
+            alert('❌ خطا در ایجاد تصویر');
+        } finally {
+            btn.innerHTML = originalBtnHTML;
+            btn.disabled = false;
         }
-    } catch (err) {
-        console.error(err);
-        alert('❌ خطا در ایجاد تصویر');
-    } finally {
-        btn.innerHTML = originalBtnHTML;
-        btn.disabled = false;
     }
-}
 
-// اتصال رویداد (بعد از لود صفحه)
-document.addEventListener('DOMContentLoaded', function() {
-    const imageBtn = document.getElementById('downloadImageBtn');
-    if (imageBtn) {
-        imageBtn.addEventListener('click', downloadAllPagesAsImage);
-    }
-});
+    // ========== اتصال رویدادها (بعد از لود صفحه) ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        // دکمه دانلود عکس
+        const imageBtn = document.getElementById('downloadImageBtn');
+        if (imageBtn) {
+            imageBtn.addEventListener('click', downloadAllPagesAsImage);
+        }
+        
+        // کلیک خارج از مودال برای بستن
+        const modal = document.getElementById('signatureModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        }
+    });
     </script>
 </body>
 </html>

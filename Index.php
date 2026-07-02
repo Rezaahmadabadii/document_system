@@ -530,6 +530,303 @@ if ($is_admin) {
         /* ========== انیمیشن Toast ========== */
         #toast { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 14px; color: white; font-size: 0.85rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; align-items: center; gap: 10px; z-index: 9999; max-width: 400px; direction: rtl; animation-duration: 0.5s; }
         #toast i { font-size: 1.1rem; }
+        
+        /* ===== چشمک زدن دکمه ثبت (سند تکراری) ===== */
+        @keyframes blink-error {
+            0% { background: #ef4444; transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+            25% { background: #f59e0b; transform: scale(1.05); box-shadow: 0 0 20px 5px rgba(239,68,68,0.3); }
+            50% { background: #ef4444; transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+            75% { background: #f59e0b; transform: scale(1.05); box-shadow: 0 0 20px 5px rgba(239,68,68,0.3); }
+            100% { background: #ef4444; transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+        }
+        .blink-btn {
+            animation: blink-error 0.5s ease 4 !important;
+            color: white !important;
+            font-weight: 700 !important;
+        }
+		
+        /* ========== چیدمان عمودی واحدها ========== */
+        .unit-column {
+            flex: 1 1 0;
+            min-width: 100px;
+            max-width: none;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #eef2f6;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+        
+        /* ===== وقتی ۶ ستون هست ===== */
+        .unit-column.six-columns {
+            flex: 1 1 0;
+            min-width: 100px;
+        }
+        .unit-column.six-columns .unit-column-header {
+            padding: 6px 10px;
+        }
+        .unit-column.six-columns .unit-column-icon {
+            font-size: 0.85rem;
+        }
+        .unit-column.six-columns .unit-column-name {
+            font-size: 0.7rem;
+        }
+        .unit-column.six-columns .unit-column-total {
+            font-size: 0.8rem;
+            padding: 1px 8px;
+            min-width: 24px;
+        }
+        .unit-column.six-columns .user-card-vertical {
+            padding: 3px 7px 3px 3px;
+            border-radius: 18px;
+            gap: 4px;
+        }
+        .unit-column.six-columns .user-avatar-vertical {
+            width: 20px;
+            height: 20px;
+            font-size: 0.45rem;
+        }
+        .unit-column.six-columns .user-name-vertical {
+            font-size: 0.55rem;
+        }
+        .unit-column.six-columns .user-count-vertical {
+            font-size: 0.6rem;
+            padding: 1px 6px;
+            min-width: 20px;
+        }
+        .unit-column.six-columns .unit-column-users {
+            padding: 4px 8px;
+            gap: 4px;
+        }
+        
+        /* ===== سایز معمولی (کمتر از ۶ ستون) ===== */
+        .unit-column:not(.six-columns) {
+            flex: 1 1 0;
+            min-width: 130px;
+        }
+        .unit-column:not(.six-columns) .unit-column-header {
+            padding: 8px 12px;
+        }
+        .unit-column:not(.six-columns) .unit-column-icon {
+            font-size: 0.9rem;
+        }
+        .unit-column:not(.six-columns) .unit-column-name {
+            font-size: 0.8rem;
+        }
+        .unit-column:not(.six-columns) .unit-column-total {
+            font-size: 0.9rem;
+            padding: 1px 10px;
+            min-width: 28px;
+        }
+        .unit-column:not(.six-columns) .user-card-vertical {
+            padding: 4px 10px 4px 4px;
+            border-radius: 24px;
+            gap: 6px;
+        }
+        .unit-column:not(.six-columns) .user-avatar-vertical {
+            width: 26px;
+            height: 26px;
+            font-size: 0.6rem;
+        }
+        .unit-column:not(.six-columns) .user-name-vertical {
+            font-size: 0.65rem;
+        }
+        .unit-column:not(.six-columns) .user-count-vertical {
+            font-size: 0.7rem;
+            padding: 1px 10px;
+            min-width: 26px;
+        }
+        .unit-column:not(.six-columns) .unit-column-users {
+            padding: 6px 10px;
+            gap: 5px;
+        }
+        
+        .unit-column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .unit-column-icon {
+            flex-shrink: 0;
+        }
+        .unit-column-name {
+            font-weight: 700;
+            color: #1e293b;
+            flex: 1;
+            margin: 0 4px;
+            white-space: nowrap;
+        }
+        .unit-column-total {
+            font-weight: 800;
+            color: #ffffff;
+            background: linear-gradient(135deg, #059669, #10b981);
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        /* رنگ‌های مختلف برای هر واحد */
+        .unit-column[data-unit="تنخواه"] .unit-column-total {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+        }
+        .unit-column[data-unit="خزانه"] .unit-column-total {
+            background: linear-gradient(135deg, #059669, #10b981);
+            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+        }
+        .unit-column[data-unit="فاکتور"] .unit-column-total {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+        .unit-column[data-unit="پیمانکارن"] .unit-column-total {
+            background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+            box-shadow: 0 2px 8px rgba(139,92,246,0.3);
+        }
+        .unit-column[data-unit="درآمد"] .unit-column-total {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+        }
+        .unit-column[data-unit="سایر"] .unit-column-total {
+            background: linear-gradient(135deg, #475569, #64748b);
+            box-shadow: 0 2px 8px rgba(100,116,139,0.3);
+        }
+        
+        .unit-column-users {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* ===== کارت‌های عمودی ===== */
+        .user-card-vertical {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            transition: all 0.15s;
+            cursor: default;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .user-card-vertical:hover {
+            background: white;
+            border-color: #94a3b8;
+            transform: translateX(2px);
+        }
+        .user-avatar-vertical {
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+        .user-name-vertical {
+            font-weight: 500;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .user-count-vertical {
+            font-weight: 700;
+            color: #3b82f6;
+            background: #dbeafe;
+            border-radius: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        /* ===== ریسپانسیو ===== */
+        @media (max-width: 1024px) {
+            .unit-column:not(.six-columns) {
+                min-width: 110px;
+            }
+            .unit-column.six-columns {
+                min-width: 90px;
+            }
+            .unit-column.six-columns .user-avatar-vertical {
+                width: 18px;
+                height: 18px;
+                font-size: 0.4rem;
+            }
+            .unit-column.six-columns .user-name-vertical {
+                font-size: 0.5rem;
+            }
+            .unit-column.six-columns .user-count-vertical {
+                font-size: 0.55rem;
+                padding: 0px 5px;
+                min-width: 18px;
+            }
+            .unit-column.six-columns .unit-column-name {
+                font-size: 0.65rem;
+            }
+            .unit-column.six-columns .unit-column-total {
+                font-size: 0.75rem;
+                padding: 0px 7px;
+                min-width: 22px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .unit-column,
+            .unit-column.six-columns,
+            .unit-column:not(.six-columns) {
+                flex: 0 0 calc(50% - 6px) !important;
+                min-width: 0 !important;
+            }
+            .unit-column .user-avatar-vertical {
+                width: 20px;
+                height: 20px;
+                font-size: 0.45rem;
+            }
+            .unit-column .user-name-vertical {
+                font-size: 0.55rem;
+            }
+            .unit-column .user-count-vertical {
+                font-size: 0.6rem;
+                padding: 0px 6px;
+                min-width: 20px;
+            }
+            .unit-column .unit-column-name {
+                font-size: 0.65rem;
+            }
+            .unit-column .unit-column-total {
+                font-size: 0.75rem;
+                padding: 0px 7px;
+                min-width: 20px;
+            }
+            .unit-column.six-columns .user-avatar-vertical {
+                width: 18px;
+                height: 18px;
+                font-size: 0.4rem;
+            }
+            .unit-column.six-columns .user-name-vertical {
+                font-size: 0.5rem;
+            }
+            .unit-column.six-columns .user-count-vertical {
+                font-size: 0.5rem;
+                padding: 0px 5px;
+                min-width: 16px;
+            }
+            .unit-column.six-columns .unit-column-name {
+                font-size: 0.6rem;
+            }
+            .unit-column.six-columns .unit-column-total {
+                font-size: 0.7rem;
+                padding: 0px 6px;
+                min-width: 18px;
+            }
+        }
+        /* ========== پایان چیدمان عمودی ========== */
         /* ========== پایان استایل‌ها ========== */
     </style>
 </head>
@@ -800,7 +1097,7 @@ if ($is_admin) {
                     <div class="report-warehouse-container" id="reportWarehouseContainer" style="display: none;">
                         <div class="report-warehouse-header">
                             <div class="report-warehouse-title">
-                                <i class="fas fa-file-invoice"></i> گزارش ثبت ها
+                                <i class="fas fa-file-invoice"></i> گزارش ثبت سند
                                 <span class="report-warehouse-date" id="reportWarehouseDate"></span>
                             </div>
                             <div class="report-warehouse-total" id="reportWarehouseTotal">
@@ -1228,6 +1525,7 @@ function saveDocument() {
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn.disabled) return;
     
+    // جلوگیری از ارسال مکرر
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ثبت...';
     
@@ -1280,7 +1578,6 @@ function saveDocument() {
                 companyNumberInput.value = '';
             }
             
-            // ✅ تغییر: فوکوس روی شماره سند
             document.getElementById('doc_number').focus();
             
             const currentDate = document.getElementById('delivery_date').value;
@@ -1289,19 +1586,48 @@ function saveDocument() {
             if (typeof loadUserStats === 'function') {
                 loadUserStats();
             }
+            
+            // ✅ دکمه رو به حالت عادی برگردون
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '✓ ثبت سند';
+            
+        } else if (data.duplicate) {
+            // سند تکراری - چشمک زدن
+            submitBtn.classList.add('blink-btn');
+            submitBtn.innerHTML = '⚠️ سند تکراری!';
+            showToast(data.error || 'این سند قبلاً ثبت شده است', true);
+            
+            setTimeout(() => {
+                submitBtn.classList.remove('blink-btn');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '✓ ثبت سند';
+            }, 3000);
         } else {
             showToast(data.error || 'خطا در ثبت سند', true);
+            // ✅ دکمه رو به حالت عادی برگردون
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '✓ ثبت سند';
         }
     })
     .catch(err => {
         console.error('خطا در ثبت سند:', err);
         showToast('خطا در ارتباط با سرور', true);
-    })
-    .finally(() => {
+        // ✅ دکمه رو به حالت عادی برگردون
         submitBtn.disabled = false;
         submitBtn.innerHTML = '✓ ثبت سند';
     });
 }
+
+// ✅ جلوگیری از ارسال فرم با Shift+Enter
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn && !submitBtn.disabled) {
+            saveDocument();
+        }
+    }
+});
 
 function addDescriptionToDocument() {
     const description = document.getElementById('doc_description')?.value.trim();
@@ -2876,43 +3202,88 @@ function loadWarehouseReport() {
     fetch(`api/ajax.php?action=get_warehouse_report&date=${encodeURIComponent(date)}`)
         .then(res => res.json())
         .then(data => {
-            // همیشه کانتینر رو نمایش بده
             if (container) container.style.display = 'block';
             if (dateSpan) dateSpan.textContent = date;
             
             if (data.success && data.users && data.users.length > 0) {
-                // داده وجود دارد: گرید رو نمایش بده، پیام خالی رو مخفی کن
                 if (emptyMsg) emptyMsg.style.display = 'none';
                 if (grid) {
                     grid.style.display = 'flex';
-                    grid.style.padding = '4px 2px';
+                    grid.style.flexDirection = 'row';
+                    grid.style.flexWrap = 'wrap';
+                    grid.style.alignItems = 'flex-start';
+                    grid.style.gap = '12px';
                 }
+                
+                // ===== گروه‌بندی بر اساس واحد =====
+                const groups = {};
+                const unitOrder = ['تنخواه', 'خزانه', 'فاکتور', 'پیمانکارن', 'درآمد', 'سایر'];
+                const unitIcons = {
+                    'تنخواه': '💰',
+                    'خزانه': '🏛️',
+                    'فاکتور': '📄',
+                    'پیمانکارن': '🔧',
+                    'درآمد': '📈',
+                    'سایر': '📁'
+                };
+                
+                data.users.forEach(user => {
+                    const unit = user.unit || 'سایر';
+                    if (!groups[unit]) groups[unit] = [];
+                    groups[unit].push(user);
+                });
+                
+                // ===== محاسبه تعداد ستون‌ها و تعیین کلاس =====
+                const unitCount = unitOrder.filter(u => groups[u] && groups[u].length > 0).length;
+                const columnClass = (unitCount >= 6) ? 'six-columns' : '';
                 
                 let total = 0;
                 let html = '';
-                
                 const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4', '#84cc16'];
                 
-                data.users.forEach((user, index) => {
-                    const color = colors[index % colors.length];
-                    const firstChar = user.user_name.charAt(0);
-                    html += `
-                        <div class="warehouse-user-card">
-                            <div class="warehouse-user-avatar" style="background: ${color}">
-                                ${firstChar}
+                unitOrder.forEach(unit => {
+                    if (groups[unit] && groups[unit].length > 0) {
+                        const unitTotal = groups[unit].reduce((sum, u) => sum + u.count, 0);
+                        const sortedUsers = [...groups[unit]].sort((a, b) => b.count - a.count);
+                        
+                        html += `
+                            <div class="unit-column ${columnClass}" data-unit="${unit}">
+                                <div class="unit-column-header">
+                                    <span class="unit-column-icon">${unitIcons[unit] || '📁'}</span>
+                                    <span class="unit-column-name">${unit}</span>
+                                    <span class="unit-column-total">${unitTotal}</span>
+                                </div>
+                                <div class="unit-column-users">
+                        `;
+                        
+                        sortedUsers.forEach((user, index) => {
+                            const color = colors[index % colors.length];
+                            const firstChar = user.user_name.charAt(0);
+                            const userName = user.user_name;
+                            
+                            html += `
+                                <div class="user-card-vertical">
+                                    <div class="user-avatar-vertical" style="background: ${color}">
+                                        ${firstChar}
+                                    </div>
+                                    <span class="user-name-vertical" title="${escapeHtml(userName)}">${escapeHtml(userName)}</span>
+                                    <span class="user-count-vertical">${user.count}</span>
+                                </div>
+                            `;
+                            total += user.count;
+                        });
+                        
+                        html += `
+                                </div>
                             </div>
-                            <span class="warehouse-user-name">${escapeHtml(user.user_name)}</span>
-                            <span class="warehouse-user-count">${user.count}</span>
-                        </div>
-                    `;
-                    total += user.count;
+                        `;
+                    }
                 });
                 
                 if (grid) grid.innerHTML = html;
                 if (totalSpan) totalSpan.textContent = `مجموع: ${total} سند`;
                 
             } else {
-                // داده وجود ندارد: گرید رو مخفی کن، پیام خالی رو نمایش بده
                 if (grid) {
                     grid.style.display = 'none';
                     grid.innerHTML = '';
