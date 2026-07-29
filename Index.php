@@ -111,12 +111,22 @@ if ($is_admin) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سیستم بایگانی اسناد تایید شده</title>
-	<link rel="icon" type="image/x-icon" href="favicon.svg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.svg">
     <link rel="shortcut icon" href="favicon.svg">
+    
+    <!-- Font Awesome -->
     <script defer src="assets/js/all.min.js"></script>
+    
+    <!-- فونت و استایل‌های اصلی -->
     <link rel="stylesheet" href="assets/css/vazirmatn.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    
+    <!-- استایل‌های مدیریت دیتابیس -->
+    <link rel="stylesheet" href="assets/css/db_manager.css">
+    
+	<style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, 'Tahoma', sans-serif !important; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; font-size: 14px; }
         .main-header { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e2e8f0; }
@@ -135,12 +145,153 @@ if ($is_admin) {
         .header-actions { margin-right: auto; display: flex; gap: 8px; }
         .icon-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
         .icon-btn:hover { background: rgba(255,255,255,0.3); }
-        .admin-menu { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px 12px; }
-        .menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 4px 0; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 0.75rem; font-weight: 500; color: #475569; }
-        .menu-item i { width: 24px; font-size: 0.9rem; color: #667eea; }
-        .menu-item:hover { background: #eef2ff; color: #667eea; }
-        .menu-item.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
-        .menu-item.active i { color: white; }
+        
+        /* ===== منوی ادمین با استایل جدید ===== */
+        .admin-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .menu-item-wrapper {
+            overflow: hidden;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #475569;
+            position: relative;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+        
+        /* ===== افکت فلش ===== */
+        .menu-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            opacity: 0;
+            transform: translateX(-16px);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #667eea;
+            font-size: 0.6rem;
+            flex-shrink: 0;
+        }
+        
+        .menu-item:hover .menu-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .menu-item.active .menu-arrow {
+            opacity: 1;
+            transform: translateX(0);
+            color: #fff;
+        }
+        
+        /* ===== آیکون ===== */
+        .menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            font-size: 0.8rem;
+            color: #667eea;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            background: #eef2ff;
+            border-radius: 8px;
+        }
+        
+        .menu-item:hover .menu-icon {
+            background: #667eea;
+            color: #fff;
+            transform: scale(1.05);
+        }
+        
+        .menu-item.active .menu-icon {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        
+        /* ===== لیبل ===== */
+        .menu-label {
+            flex: 1;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #475569;
+            font-size: 0.75rem;
+        }
+        
+        .menu-item:hover .menu-label {
+            color: #1e293b;
+            transform: translateX(4px);
+        }
+        
+        .menu-item.active .menu-label {
+            color: #ffffff;
+        }
+        
+        /* ===== حالت Active ===== */
+        .menu-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .menu-item.active .menu-label {
+            color: #ffffff;
+        }
+        
+        .menu-item.active .menu-icon {
+            background: rgba(255,255,255,0.2);
+            color: #ffffff;
+        }
+        
+        /* ===== هاور ===== */
+        .menu-item:not(.active):hover {
+            background: #eef2ff;
+            transform: translateX(4px);
+        }
+        
+        /* ===== ریسپانسیو منو ===== */
+        @media (max-width: 768px) {
+            .admin-menu {
+                padding: 6px 8px;
+                gap: 3px;
+            }
+            .menu-item {
+                padding: 8px 10px;
+                font-size: 0.65rem;
+                gap: 8px;
+            }
+            .menu-arrow {
+                width: 18px;
+                height: 18px;
+                font-size: 0.5rem;
+            }
+            .menu-icon {
+                width: 22px;
+                height: 22px;
+                font-size: 0.65rem;
+            }
+            .menu-label {
+                font-size: 0.65rem;
+            }
+        }
+        
         .left-content { padding: 16px; }
         .left-section-title { font-size: 0.85rem; font-weight: 700; color: #1a2c3e; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #667eea; display: flex; align-items: center; gap: 8px; }
         
@@ -180,6 +331,129 @@ if ($is_admin) {
         .avg-change-down .avg-value { color: #991b1b; }
         .avg-change-neutral .avg-value { color: #b45309; }
         .avg-label { font-size: 0.55rem; color: #64748b; }
+        
+        /* ===== دو ستون کنار هم ===== */
+        .stats-grid-new.two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        
+        /* ===== تاریخ و زمان در یک خط ===== */
+        #confirmStatsDate { display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; font-size: 0.65rem; font-weight: 600; color: #1e293b; }
+        
+        /* ===== دکمه‌های ناوبری ===== */
+        .date-nav-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #475569; font-size: 0.7rem; flex-shrink: 0; }
+        .date-nav-btn:hover { background: #667eea; color: white; border-color: #667eea; transform: scale(1.05); }
+        .date-nav-btn:active { transform: scale(0.95); }
+        .date-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        
+        /* ===== آمار کاربران واحد ===== */
+        .unit-users-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; max-height: 250px; overflow-y: auto; }
+        .unit-users-grid::-webkit-scrollbar { width: 4px; }
+        .unit-users-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .unit-users-grid::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .unit-user-card { display: flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 30px; padding: 3px 10px 3px 3px; transition: all 0.15s; cursor: default; flex-shrink: 0; }
+        .unit-user-card:hover { background: white; border-color: #94a3b8; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .unit-user-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .unit-user-name { font-size: 0.55rem; font-weight: 500; color: #1e293b; white-space: nowrap; }
+        .unit-user-count { font-size: 0.5rem; font-weight: 700; color: #3b82f6; background: #dbeafe; padding: 0px 5px; border-radius: 20px; min-width: 18px; text-align: center; }
+        
+        /* ===== دکمه گزارش با رنگ قابل توجه ===== */
+        .btn-report-toggle {
+            position: relative;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            overflow: hidden;
+            z-index: 1;
+            font-family: inherit;
+            white-space: nowrap;
+            margin-right: auto;
+        }
+        
+        /* دکمه گزارش ثبت - صورتی جذاب */
+        .btn-report-toggle.register-mode {
+            background: linear-gradient(135deg, #ec4899, #f472b6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+        }
+        
+        .btn-report-toggle.register-mode:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 25px rgba(236, 72, 153, 0.5);
+        }
+        
+        .btn-report-toggle.register-mode:active {
+            transform: scale(0.96);
+        }
+        
+        /* دکمه گزارش تایید - بنفش/آبی */
+        .btn-report-toggle.confirm-mode {
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-report-toggle.confirm-mode:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5);
+        }
+        
+        .btn-report-toggle.confirm-mode:active {
+            transform: scale(0.96);
+        }
+        
+        /* دکمه غیرفعال */
+        .btn-report-toggle:not(.register-mode):not(.confirm-mode) {
+            background: linear-gradient(135deg, #94a3b8, #cbd5e1);
+            color: #475569;
+            box-shadow: 0 2px 10px rgba(148, 163, 184, 0.2);
+        }
+        
+        .btn-report-toggle:not(.register-mode):not(.confirm-mode):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);
+        }
+        
+        /* افکت درخشش */
+        .btn-report-toggle::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+        
+        .btn-report-toggle:hover::before {
+            opacity: 1;
+        }
+        
+        /* نبض زدن */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(236, 72, 153, 0.1); }
+        }
+        
+        .btn-report-toggle.register-mode {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        .btn-report-toggle.confirm-mode {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @media (max-width: 500px) { .unit-user-avatar { width: 20px; height: 20px; font-size: 0.4rem; } .unit-user-name { font-size: 0.45rem; } .unit-user-count { font-size: 0.4rem; padding: 0px 3px; min-width: 14px; } .unit-user-card { padding: 2px 6px 2px 2px; } .btn-report-toggle { font-size: 0.5rem; padding: 4px 10px; } }
+        
+        @media (max-width: 768px) { .stats-grid-new.two-cols { grid-template-columns: 1fr; } }
         @media (max-width: 640px) { .stats-grid-new { grid-template-columns: 1fr; gap: 10px; } .avg-stats-new { flex-wrap: wrap; } .avg-item-new { flex: auto; } }
         
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
@@ -203,6 +477,12 @@ if ($is_admin) {
         .form-group input:disabled, .form-group textarea:disabled { background: #eef2f5; color: #94a3b8; cursor: not-allowed; }
         .btn-submit, .btn-green { width: 100%; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 9px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
         .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* دکمه بارگذاری اسناد تایید */
+        .btn-load { width: 100%; background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: white; border: none; padding: 9px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-load:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-load i { font-size: 0.9rem; }
+		
         .btn-green { background: linear-gradient(135deg, #10b981, #059669); margin-top: 0; }
         .btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
         .admin-filter-box { padding: 14px 16px; background: #f8fafc; border-bottom: 1px solid #eef2f5; display: none; }
@@ -347,6 +627,25 @@ if ($is_admin) {
         .total-stats-card .stat-comparison { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
         .comparison-item { font-size: 0.65rem; background: #f8fafc; padding: 6px 10px; border-radius: 20px; text-align: center; border: 1px solid #eef2ff; }
         .comparison-item i { margin-left: 5px; color: #667eea; }
+		
+        /* ===== نمایش توضیحات اسناد با طراحی کارت جذاب ===== */
+        .descriptions-section { margin-top: 15px; padding: 16px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 16px; border: 1px solid #e2e8f0; }
+        .desc-title { font-size: 0.75rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .desc-title i { color: #667eea; }
+        .desc-grid { display: grid; gap: 10px; }
+        .desc-item { padding: 10px 14px; border-radius: 12px; font-size: 0.65rem; color: #1e293b; border: 1px solid #e2e8f0; transition: all 0.2s ease; display: flex; align-items: flex-start; gap: 8px; word-break: break-word; line-height: 1.5; }
+        .desc-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .desc-item .desc-number { font-weight: 700; color: #667eea; background: #eef2ff; padding: 1px 10px; border-radius: 20px; white-space: nowrap; font-size: 0.6rem; flex-shrink: 0; }
+        .desc-item .desc-text { flex: 1; color: #475569; }
+        .desc-item .desc-text small { color: #94a3b8; font-size: 0.55rem; }
+        .desc-item:nth-child(1) { background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-color: #6ee7b7; }
+        .desc-item:nth-child(2) { background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-color: #93c5fd; }
+        .desc-item:nth-child(3) { background: linear-gradient(135deg, #fef3c7, #fde68a); border-color: #fcd34d; }
+        .desc-item:nth-child(4) { background: linear-gradient(135deg, #fce7f3, #fbcfe8); border-color: #f9a8d4; }
+        .desc-item:nth-child(5) { background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-color: #c4b5fd; }
+        .desc-item:nth-child(6) { background: linear-gradient(135deg, #fef2f2, #fecaca); border-color: #fca5a5; }
+        .desc-item:nth-child(7) { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-color: #6ee7b7; }
+        .desc-item:nth-child(8) { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #93c5fd; }
         
         /* ========== استایل باکس مقایسه بیشترین و کمترین ========== */
         .compare-stats-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
@@ -499,7 +798,15 @@ if ($is_admin) {
         @media (max-width: 380px) { .report-stats-grid { grid-template-columns: 1fr; } }
 
         /* ========== گزارش ثبت جدید (حسابداری) ========== */
-        .report-warehouse-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 8px 16px; margin: 10px 0; }
+        .report-warehouse-container { 
+            border-radius: 16px; 
+            padding: 0 !important; 
+            margin: 10px 0; 
+            overflow: hidden; 
+            border: 2px solid rgba(255, 255, 255, 0.8) !important;
+            box-shadow: 20px 20px 60px rgba(190, 190, 190, 0.3), -20px -20px 60px rgba(255, 255, 255, 0.5);
+        }
+        .report-warehouse-container .card-content { padding: 12px 16px; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 14px; border: none !important; }
         .report-warehouse-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
         .report-warehouse-title { font-size: 0.75rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
         .report-warehouse-title i { color: #3b82f6; font-size: 0.9rem; }
@@ -514,12 +821,31 @@ if ($is_admin) {
         .report-warehouse-empty i { font-size: 0.8rem; opacity: 0.4; margin-bottom: 2px; }
         .report-warehouse-empty p { font-size: 0.6rem; font-weight: 500; margin: 0; }
         .report-warehouse-empty small { font-size: 0.5rem; opacity: 0.7; }
-        .warehouse-user-card { display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 40px; padding: 3px 10px 3px 3px; transition: all 0.2s; cursor: default; min-width: 70px; flex-shrink: 0; }
-        .warehouse-user-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #3b82f6; background: white; }
-        .warehouse-user-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; color: white; flex-shrink: 0; }
-        .warehouse-user-name { font-size: 0.6rem; font-weight: 600; color: #1e293b; white-space: nowrap; }
-        .warehouse-user-count { font-size: 0.55rem; font-weight: 700; color: #3b82f6; background: #dbeafe; padding: 1px 6px; border-radius: 20px; margin-right: auto; }
-        @media (max-width: 500px) { .report-warehouse-grid { max-height: 200px; } .warehouse-user-card { padding: 2px 6px 2px 2px; min-width: 50px; } .warehouse-user-name { font-size: 0.5rem; } .warehouse-user-count { font-size: 0.45rem; padding: 0px 4px; } }
+        .warehouse-user-card { display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f8afc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 40px; padding: 3px 10px 3px 3px; transition: all .2s; cursor: default; min-width: 70px; flex-shrink: 0; }
+        .warehouse-user-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: #3b82f6; background: #fff; }
+        .warehouse-user-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .5rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+        .warehouse-user-name { font-size: .6rem; font-weight: 600; color: #1e293b; white-space: nowrap; }
+        .warehouse-user-count { font-size: .55rem; font-weight: 700; color: #3b82f6; background: #dbeafe; padding: 1px 6px; border-radius: 20px; margin-right: auto; }
+        .toggle-report-btn { position: relative; padding: 6px 16px; border: none; border-radius: 30px; font-size: .6rem; font-weight: 600; cursor: pointer; transition: all .3s cubic-bezier(.34,1.56,.64,1); display: inline-flex; align-items: center; gap: 6px; overflow: hidden; z-index: 1; font-family: inherit; white-space: nowrap; }
+        .toggle-report-btn.register-mode { background: linear-gradient(135deg,#ec4899,#f472b6); color: #fff; box-shadow: 0 4px 15px rgba(236,72,153,.4); }
+        .toggle-report-btn.register-mode:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 25px rgba(236,72,153,.5); }
+        .toggle-report-btn.register-mode:active { transform: scale(.96); }
+        .toggle-report-btn.confirm-mode { background: linear-gradient(135deg,#8b5cf6,#a78bfa); color: #fff; box-shadow: 0 4px 15px rgba(139,92,246,.4); }
+        .toggle-report-btn.confirm-mode:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 25px rgba(139,92,246,.5); }
+        .toggle-report-btn.confirm-mode:active { transform: scale(.96); }
+        .toggle-report-btn::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 60%); opacity: 0; transition: opacity .4s ease; z-index: -1; }
+        .toggle-report-btn:hover::before { opacity: 1; }
+        @keyframes pulse-glow-report { 0%,100% { box-shadow: 0 0 0 0 rgba(236,72,153,.4); } 50% { box-shadow: 0 0 20px 10px rgba(236,72,153,.1); } }
+        .toggle-report-btn.register-mode { animation: pulse-glow-report 2s infinite; }
+        .toggle-report-btn.confirm-mode { animation: pulse-glow-report 2s infinite; }
+        .warehouse-card-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; }
+        .bounce-loader { display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .bounce-dot { width: 16px; height: 16px; background: linear-gradient(135deg,#667eea,#764ba2); border-radius: 50%; animation: bounceDot 1.4s ease-in-out infinite both; box-shadow: 0 2px 8px rgba(102,126,234,.3); }
+        .bounce-dot:nth-child(1) { animation-delay: -.32s; }
+        .bounce-dot:nth-child(2) { animation-delay: -.16s; }
+        .bounce-dot:nth-child(3) { animation-delay: 0s; }
+        @keyframes bounceDot { 0%,80%,100% { transform: scale(.6); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+        @media (max-width:500px) { .report-warehouse-grid { max-height: 200px; } .warehouse-user-card { padding: 2px 6px 2px 2px; min-width: 50px; } .warehouse-user-name { font-size: .5rem; } .warehouse-user-count { font-size: .45rem; padding: 0 4px; } .toggle-report-btn { font-size: .5rem; padding: 4px 10px; } }
 
         /* ===== رنگ پس زمینه هدر هر واحد ===== */
         .unit-column-header { 
@@ -532,7 +858,7 @@ if ($is_admin) {
         .unit-column[data-unit="تنخواه"] .unit-column-header { background: linear-gradient(135deg, #fdf2f8, #fce7f3); border-bottom-color: #fbcfe8; }
         .unit-column[data-unit="خزانه"] .unit-column-header { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-bottom-color: #bbf7d0; }
         .unit-column[data-unit="فاکتور"] .unit-column-header { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-bottom-color: #bfdbfe; }
-        .unit-column[data-unit="پیمانکارن"] .unit-column-header { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-bottom-color: #ddd6fe; }
+        .unit-column[data-unit="پیمانکاران"] .unit-column-header { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-bottom-color: #ddd6fe; }
         .unit-column[data-unit="درآمد"] .unit-column-header { background: linear-gradient(135deg, #fef2f2, #fee2e2); border-bottom-color: #fecaca; }
         .unit-column[data-unit="سایر"] .unit-column-header { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-bottom-color: #cbd5e1; }
 
@@ -542,7 +868,7 @@ if ($is_admin) {
         .unit-column[data-unit="تنخواه"] .unit-column-total { background: linear-gradient(135deg, #d97706, #f59e0b); box-shadow: 0 2px 8px rgba(245,158,11,0.3); }
         .unit-column[data-unit="خزانه"] .unit-column-total { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
         .unit-column[data-unit="فاکتور"] .unit-column-total { background: linear-gradient(135deg, #2563eb, #3b82f6); box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
-        .unit-column[data-unit="پیمانکارن"] .unit-column-total { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
+        .unit-column[data-unit="پیمانکاران"] .unit-column-total { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
         .unit-column[data-unit="درآمد"] .unit-column-total { background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
         .unit-column[data-unit="سایر"] .unit-column-total { background: linear-gradient(135deg, #475569, #64748b); box-shadow: 0 2px 8px rgba(100,116,139,0.3); }
         .unit-column-users { display: flex; flex-direction: column; }
@@ -602,7 +928,7 @@ if ($is_admin) {
         .unit-column[data-unit="تنخواه"] .unit-column-total { background: linear-gradient(135deg, #d97706, #f59e0b); box-shadow: 0 2px 8px rgba(245,158,11,0.3); }
         .unit-column[data-unit="خزانه"] .unit-column-total { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
         .unit-column[data-unit="فاکتور"] .unit-column-total { background: linear-gradient(135deg, #2563eb, #3b82f6); box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
-        .unit-column[data-unit="پیمانکارن"] .unit-column-total { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
+        .unit-column[data-unit="پیمانکاران"] .unit-column-total { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
         .unit-column[data-unit="درآمد"] .unit-column-total { background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
         .unit-column[data-unit="سایر"] .unit-column-total { background: linear-gradient(135deg, #475569, #64748b); box-shadow: 0 2px 8px rgba(100,116,139,0.3); }
         .unit-column-users { display: flex; flex-direction: column; }
@@ -628,6 +954,373 @@ if ($is_admin) {
         .report-warehouse-date { font-size: 0.55rem; font-weight: 400; color: #94a3b8; background: #f1f5f9; padding: 1px 8px; border-radius: 20px; }
         .report-warehouse-total { font-size: 0.65rem; font-weight: 600; color: #1e293b; background: #eef2ff; padding: 2px 12px; border-radius: 20px; flex-shrink: 0; }
         .report-warehouse-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        /* ===== انیمیشن لودینگ جدید ===== */
+        .report-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+            min-height: 300px;
+            animation: fadeInLoading 0.5s ease;
+        }
+        @keyframes fadeInLoading {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* متن Loading با نقطه */
+        .loading-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            direction: ltr;
+        }
+        .loading-text .dot {
+            display: inline-block;
+            animation: blink 1.5s infinite;
+            font-weight: 700;
+            color: #667eea;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        /* کانتینر نوار پیشرفت */
+        .loading-bar-container {
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 5px;
+            width: 220px;
+            height: 32px;
+            background: #212121;
+            box-shadow: inset -2px 2px 4px #0c0c0c;
+            border-radius: 15px;
+            direction: ltr;
+        }
+        
+        /* نوار پیشرفت */
+        .loading-bar {
+            position: relative;
+            display: flex;
+            justify-content: flex-start;
+            flex-direction: column;
+            width: 0%;
+            height: 22px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: linear-gradient(to right, #de4a0f, #f9c74f);
+            transition: width 0.3s ease;
+        }
+        
+        /* نوارهای سفید متحرک داخل بار */
+        .loading-bar-shine {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            width: 100%;
+            height: 100%;
+            animation: shineMove 1.5s linear infinite;
+        }
+        .loading-bar-shine::before,
+        .loading-bar-shine::after {
+            content: '';
+            display: block;
+            width: 10px;
+            height: 45px;
+            opacity: 0.3;
+            transform: rotate(45deg);
+            background: linear-gradient(to top right, white, transparent);
+        }
+        .loading-bar-shine::before {
+            margin-left: 10px;
+        }
+        .loading-bar-shine::after {
+            margin-left: auto;
+            margin-right: 10px;
+        }
+        
+        /* حرکت نوارهای سفید */
+        @keyframes shineMove {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* ===== درصد و مراحل ===== */
+        .loading-percent {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 12px;
+            direction: ltr;
+        }
+        .loading-steps {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            direction: rtl;
+        }
+        .loading-steps .step {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            transition: all 0.5s ease;
+        }
+        .loading-steps .step.active {
+            color: #667eea;
+            background: #eef2ff;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102,126,234,0.2);
+        }
+        .loading-steps .step.done {
+            color: #10b981;
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+        .loading-steps .step.done::before {
+            content: '✅ ';
+        }
+        
+        /* ===== لودینگ ضربان‌دار (Bouncing Loader) ===== */
+        .warehouse-card-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; min-height: 150px; animation: fadeInLoading 0.3s ease; }
+        .bounce-loader { display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .bounce-dot { width: 16px; height: 16px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; animation: bounceDot 1.4s ease-in-out infinite both; box-shadow: 0 2px 8px rgba(102,126,234,0.3); }
+        .bounce-dot:nth-child(1) { animation-delay: -0.32s; }
+        .bounce-dot:nth-child(2) { animation-delay: -0.16s; }
+        .bounce-dot:nth-child(3) { animation-delay: 0s; }
+        @keyframes bounceDot { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        /* ===== پایان لودینگ ضربان‌دار ===== */
+        /* ===== دکمه راهنما ===== */
+        .help-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #667eea;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 50%;
+        }
+        .help-btn:hover {
+            color: #764ba2;
+            transform: scale(1.1);
+            background: #eef2ff;
+        }
+        .help-btn:active {
+            transform: scale(0.95);
+        }
+		/* ===== دکمه‌های ناوبری تاریخ ===== */
+        .date-nav-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: #475569;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .date-nav-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+        .date-nav-btn:active {
+            transform: scale(0.95);
+        }
+        .date-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+		
+		/* ===== مودال مدیریت دیتابیس ===== */
+        #dbManagerModal {
+            z-index: 2000;
+        }
+        
+        #dbManagerModal .modal-content {
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            padding: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+        }
+        
+        #dbManagerModal .modal-header {
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        
+        #dbManagerModal .modal-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #dbManagerModal .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #dbManagerModal .modal-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+        
+        #dbManagerModal .modal-body {
+            padding: 20px 24px 24px;
+            max-height: calc(90vh - 80px);
+            overflow-y: auto;
+        }
+        
+        #dbManagerModal .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #dbManagerModal .modal-body::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        #dbManagerModal .modal-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        #dbManagerModal .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        @media (max-width: 768px) {
+            #dbManagerModal .modal-content {
+                max-width: 98%;
+                max-height: 95vh;
+            }
+            
+            #dbManagerModal .modal-body {
+                padding: 16px;
+                max-height: calc(95vh - 70px);
+            }
+            
+            #dbManagerModal .modal-header {
+                padding: 14px 18px;
+            }
+            
+            #dbManagerModal .modal-header h3 {
+                font-size: 0.95rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #dbManagerModal .modal-header {
+                padding: 12px 14px;
+            }
+            
+            #dbManagerModal .modal-header h3 {
+                font-size: 0.85rem;
+            }
+            
+            #dbManagerModal .modal-body {
+                padding: 12px;
+            }
+        }
+		
+        /* ===== هایلایت قرمز (کوچک‌ترین سال در ۳ سال یا بیشتر) ===== */
+        .year-highlight.year-pink {
+            padding: 0px 2px !important;
+            font-weight: 500 !important;
+            display: inline !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            border: none !important;
+            outline: none !important;
+            background-image: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.9) 10%, rgba(239, 68, 68, 0.6) 40%, rgba(239, 68, 68, 0.2) 80%, rgba(239, 68, 68, 0.05) 100%) !important;
+            background-size: 100% 100% !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 10%, black 40%, transparent 80%, transparent 100%) !important;
+            mask-image: radial-gradient(ellipse at center, black 10%, black 40%, transparent 80%, transparent 100%) !important;
+            transition: all 0.3s ease;
+            color: inherit !important;
+            background-color: transparent !important;
+        }
+        
+        /* ===== هایلایت فسفری (سال دوم یا کوچک‌ترین در ۲ سال) ===== */
+        .year-highlight.year-green {
+            padding: 0px 2px !important;
+            font-weight: 500 !important;
+            display: inline !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            border: none !important;
+            outline: none !important;
+            background-image: radial-gradient(ellipse at center, rgba(0, 255, 136, 0.9) 10%, rgba(0, 255, 136, 0.6) 40%, rgba(0, 255, 136, 0.2) 80%, rgba(0, 255, 136, 0.05) 100%) !important;
+            background-size: 100% 100% !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 10%, black 40%, transparent 80%, transparent 100%) !important;
+            mask-image: radial-gradient(ellipse at center, black 10%, black 40%, transparent 80%, transparent 100%) !important;
+            transition: all 0.3s ease;
+            color: inherit !important;
+            background-color: transparent !important;
+        }
+        
+        /* ===== برای پرینت ===== */
+        @media print {
+            .year-highlight.year-pink {
+                background-image: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.6) 10%, rgba(239, 68, 68, 0.3) 40%, rgba(239, 68, 68, 0.1) 80%, rgba(239, 68, 68, 0) 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: inherit !important;
+            }
+            
+            .year-highlight.year-green {
+                background-image: radial-gradient(ellipse at center, rgba(0, 255, 136, 0.5) 10%, rgba(0, 255, 136, 0.3) 40%, rgba(0, 255, 136, 0.1) 80%, rgba(0, 255, 136, 0) 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: inherit !important;
+            }
+        }
+		
     </style>
 </head>
 <body>
@@ -659,35 +1352,74 @@ if ($is_admin) {
                 
                 <?php if($is_admin): ?>
                 <div class="admin-menu">
-                    <div class="menu-item" data-section="reports" onclick="showLeftContent('reports')">
-                        <i class="fas fa-chart-pie"></i> گزارش برهان
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" data-section="reports" onclick="showLeftContent('reports')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-chart-pie"></i></span>
+                            <span class="menu-label">گزارش برهان</span>
+                        </div>
                     </div>
-                    <div class="menu-item active" data-section="stats" onclick="showLeftContent('stats')">
-                        <i class="fas fa-chart-line"></i> آمار کاربران
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item active" data-section="stats" onclick="showLeftContent('stats')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-chart-line"></i></span>
+                            <span class="menu-label">آمار کاربران تایید</span>
+                        </div>
                     </div>
-                    <div class="menu-item" data-section="users" onclick="showLeftContent('users')">
-                        <i class="fas fa-users"></i> مدیریت کاربران
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" data-section="users" onclick="showLeftContent('users')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-users"></i></span>
+                            <span class="menu-label">مدیریت کاربران</span>
+                        </div>
                     </div>
-                    <div class="menu-item" data-section="companies" onclick="showLeftContent('companies')">
-                        <i class="fas fa-building"></i> مدیریت شرکت‌ها
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" data-section="companies" onclick="showLeftContent('companies')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-building"></i></span>
+                            <span class="menu-label">مدیریت شرکت‌ها</span>
+                        </div>
                     </div>
-                    <div class="menu-item" data-section="filters" onclick="showLeftContent('filters')">
-                        <i class="fas fa-filter"></i> جستجوی اسناد
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" data-section="filters" onclick="showLeftContent('filters')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-filter"></i></span>
+                            <span class="menu-label">جستجوی اسناد</span>
+                        </div>
                     </div>
-                    <div class="menu-item" data-section="approvals" onclick="showLeftContent('approvals')">
-                        <i class="fas fa-check-double"></i> تاییدات نهایی
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" data-section="approvals" onclick="showLeftContent('approvals')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-check-double"></i></span>
+                            <span class="menu-label">تاییدات نهایی</span>
+                        </div>
                     </div>
-                    <div class="menu-item" data-section="archive" onclick="showLeftContent('archive')">
-                        <i class="fas fa-archive"></i> بایگانی
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" data-section="archive" onclick="showLeftContent('archive')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-archive"></i></span>
+                            <span class="menu-label">بایگانی</span>
+                        </div>
                     </div>
-                    <div class="menu-item" onclick="window.open('export_excel.php', '_blank')">
-                        <i class="fas fa-file-excel"></i> خروجی اکسل
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" onclick="window.open('export_excel.php', '_blank')">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-file-excel"></i></span>
+                            <span class="menu-label">خروجی اکسل</span>
+                        </div>
+                    </div>
+                    <div class="menu-item-wrapper">
+                        <div class="menu-item" onclick="showDbManagerModal()">
+                            <span class="menu-arrow"><i class="fas fa-chevron-left"></i></span>
+                            <span class="menu-icon"><i class="fas fa-database"></i></span>
+                            <span class="menu-label">مدیریت دیتابیس</span>
+                        </div>
                     </div>
                 </div>
                                 
                 <div id="adminFiltersPanel" class="admin-filter-box">
                     <div class="admin-filter-group"><label><i class="fas fa-user"></i> انتخاب کاربر</label><select id="admin_user_select"><option value="">همه کاربران</option><?php foreach($users_list as $u): ?><option value="<?php echo $u['id']; ?>"><?php echo htmlspecialchars($u['fullname'] . ' (' . $u['unit_name'] . ')'); ?></option><?php endforeach; ?></select></div>
-                    <div class="admin-filter-group"><label><i class="fas fa-hashtag"></i> شماره سند</label><input type="text" id="admin_filter_number" placeholder="جستجو..."></div>
+                    <div class="admin-filter-group"><label><i class="fas fa-hashtag"></i> شماره سند ثابت</label><input type="text" id="admin_filter_number" placeholder="جستجو..."></div>
                     <div class="admin-filter-group"><label><i class="fas fa-calendar"></i> تاریخ سند</label><input type="text" id="admin_filter_date" placeholder="1404/01/01"></div>
                     <div class="admin-filter-group"><label><i class="fas fa-building"></i> شرکت</label><select id="admin_filter_company"><option value="">همه شرکت‌ها</option><?php $companies_list = $db->query("SELECT id, name FROM companies WHERE is_active = 1 ORDER BY id ASC")->fetchAll(); foreach($companies_list as $c): ?><option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option><?php endforeach; ?></select></div>
                     <div class="admin-filter-group"><label><i class="fas fa-calendar-check"></i> تاریخ تحویل</label><input type="text" id="admin_filter_delivery" placeholder="1404/01/01"></div>
@@ -706,9 +1438,14 @@ if ($is_admin) {
                     <div class="form-section">
                         <div class="form-group"><label>تاریخ تحویل</label><div style="display: flex; align-items: center; gap: 8px;"><button type="button" id="dateMinus" class="date-spinner" style="width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer; font-size: 1.3rem; font-weight: bold;">−</button><input type="text" id="delivery_date" readonly style="flex: 1; text-align: center; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 8px 12px; font-size: 0.9rem; font-weight: 600;"><button type="button" id="datePlus" class="date-spinner" style="width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer; font-size: 1.3rem; font-weight: bold;">+</button></div></div>
                         <div class="form-group"><div style="display: flex; gap: 8px; align-items: center;"><input type="number" id="company_number" min="1" max="<?php echo count($companies); ?>" style="width: 70px; text-align: center; padding: 8px; border: 1.5px solid #e2e8f0; border-radius: 12px;" placeholder="#"><select id="company_id" style="flex: 1;"><?php foreach($companies as $c): ?><option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option><?php endforeach; ?></select></div></div>
-                        <div class="form-group"><label>شماره سند</label><input type="text" id="doc_number" placeholder="INV-12345"></div>
+                        <div class="form-group"><label>شماره ثابت</label><input type="text" id="doc_number" placeholder="INV-12345"></div>
                         <div class="form-group" id="date_group" <?php echo $require_doc_date ? '' : 'style="display:none;"'; ?>><label>تاریخ سند</label><input type="text" id="doc_date" placeholder="1405/02/30"></div>
-                        <button class="btn-submit" id="submitBtn" onclick="saveDocument()">✓ ثبت سند</button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button class="btn-submit" id="submitBtn" onclick="saveDocument()" style="flex: 1; margin-top: 0;">✓ ثبت سند</button>
+                            <button class="btn-load" id="loadDocsBtn" onclick="openLoadDocumentsModal()" style="flex: 1; margin-top: 0;">
+                                <i class="fas fa-file-import"></i> بارگذاری اسناد تایید
+                            </button>
+                        </div>
                     </div>
                     <div class="form-section" style="border-top: 1px solid #eef2f5; margin-top: 0;">
                         <div class="form-group"><label>گزارش / یادداشت</label><textarea id="doc_description" rows="3" placeholder="هرگونه توضیح یا گزارش اضافی..."></textarea></div>
@@ -719,7 +1456,7 @@ if ($is_admin) {
                     <div class="form-section" style="border-top: 1px solid #eef2f5; margin-top: 12px;">
                         <div style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 12px; padding-right: 4px;"><i class="fas fa-search"></i> جستجوی اسناد</div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div class="form-group" style="margin-bottom: 0;"><label>شماره سند</label><input type="text" id="filter_number" placeholder="شماره سند..." oninput="autoSearchDocuments()"></div>
+                            <div class="form-group" style="margin-bottom: 0;"><label>شماره سند ثابت</label><input type="text" id="filter_number" placeholder="شماره سند ثابت..." oninput="autoSearchDocuments()"></div>
                             <div class="form-group" style="margin-bottom: 0;"><label>تاریخ سند</label><input type="text" id="filter_date" placeholder="1404/01/01" oninput="autoSearchDocuments()"></div>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -816,28 +1553,51 @@ if ($is_admin) {
                 <div id="usersContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-users"></i> مدیریت کاربران<button class="btn-primary" style="padding:4px 12px; font-size:0.65rem; margin-right:auto;" onclick="showAddUserModal()">+ افزودن کاربر</button></div><div class="scrollable-list" id="usersList"><div class="empty-state">در حال بارگذاری...</div></div></div>
                 <div id="companiesContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-building"></i> مدیریت شرکت‌ها<button class="btn-primary" style="padding:4px 12px; font-size:0.65rem; margin-right:auto;" onclick="showAddCompanyModal()">+ افزودن شرکت</button></div><div class="companies-grid" id="companiesList"><?php foreach($companies as $c): ?><div class="company-card"><span class="company-name"><?php echo htmlspecialchars($c['name']); ?></span><div><button class="action-btn edit-btn" onclick="editCompany(<?php echo $c['id']; ?>, '<?php echo htmlspecialchars($c['name']); ?>')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="toggleCompany(<?php echo $c['id']; ?>, 0)"><i class="fas fa-trash-alt"></i></button></div></div><?php endforeach; ?></div></div>
                 <div id="filtersContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-list-ul"></i> نتیجه جستجو</div><div id="adminDocumentsList" class="docs-list"><div class="empty-state">برای جستجو از فیلدهای سمت راست استفاده کنید</div></div></div>
-                <div id="approvalsContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-check-double"></i> تایید نهایی اسناد</div><div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;"><button class="tab-btn active" onclick="showApprovalsTab('pending')" style="background:none; border:none; padding:8px 16px; cursor:pointer; font-weight:500; color:#667eea; border-bottom:2px solid #667eea;">⏳ در انتظار تایید</button><button class="tab-btn" onclick="showApprovalsTab('revert')" style="background:none; border:none; padding:8px 16px; cursor:pointer; font-weight:500; color:#475569;">🔄 درخواست بازیابی</button><button class="tab-btn" onclick="showApprovalsTab('approved')" style="background:none; border:none; padding:8px 16px; cursor:pointer; font-weight:500; color:#475569;">✅ تایید شده‌ها</button></div><div id="pendingApprovalsTab"><div id="usersPendingList"><div class="empty-state">در حال بارگذاری...</div></div><div id="userDatesContainer" style="display:none; margin-top: 20px;"><div class="left-section-title"><i class="fas fa-calendar"></i> تاریخ‌های تحویل<button class="btn-secondary" onclick="backToUsersList()" style="margin-right:auto; padding:4px 12px;">← بازگشت</button></div><div id="userDatesList"></div></div></div><div id="revertRequestsTab" style="display:none;"><div id="revertRequestsList"><div class="empty-state">در حال بارگذاری...</div></div></div><div id="approvedApprovalsTab" style="display:none;"><div id="approvedApprovalsList"><div class="empty-state">در حال بارگذاری...</div></div></div></div>
-                <div id="archiveContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-archive"></i> بایگانی اسناد تایید شده</div><div id="archiveList"><div class="empty-state">در حال بارگذاری...</div></div></div>
+                <div id="approvalsContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-check-double"></i> تایید نهایی اسناد</div><div id="pendingApprovalsTab"><div id="usersPendingList"><div class="empty-state">در حال بارگذاری...</div></div><div id="userDatesContainer" style="display:none; margin-top: 20px;"><div class="left-section-title"><i class="fas fa-calendar"></i> تاریخ‌های تحویل<button class="btn-secondary" onclick="backToUsersList()" style="margin-right:auto; padding:4px 12px;">← بازگشت</button></div><div id="userDatesList"></div></div></div></div>                <div id="archiveContent" class="left-content" style="display:none;"><div class="left-section-title"><i class="fas fa-archive"></i> بایگانی اسناد تایید شده</div><div id="archiveList"><div class="empty-state">در حال بارگذاری...</div></div></div>
                 
                 <!-- ========== گزارش برهان ========== -->
                 <div id="reportsContent" class="left-content" style="display:none;">
-                    <div class="left-section-title">
-                        <div style="display:flex; align-items:center; gap:8px; flex:1;">
-                            <i class="fas fa-chart-pie"></i> گزارش برهان
-                            <span id="reportNewBadge" style="display:none; font-size:0.6rem; background:#ef4444; color:white; padding:2px 10px; border-radius:20px; margin-right:8px;"></span>
+                    <!-- ===== انیمیشن لودینگ جدید ===== -->
+                    <div id="reportLoading" class="report-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px 20px;">
+                        <div class="loading-text">
+                            در حال بارگذاری گزارش
+                            <span class="dot">.</span>
+                            <span class="dot" style="animation-delay: 0.3s;">.</span>
+                            <span class="dot" style="animation-delay: 0.6s;">.</span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span id="reportUpdateTime" style="font-size:0.55rem; color:#94a3b8; background:#f1f5f9; padding:2px 10px; border-radius:20px;">
-                                <i class="fas fa-clock" style="margin-left:4px; color:#667eea;"></i> در حال بارگذاری...
-                            </span>
-                            <button class="btn-secondary" onclick="resetReportFilters()" style="padding:4px 12px; font-size:0.65rem;">
-                                <i class="fas fa-undo"></i> حذف فیلتر
-                            </button>
-                            <button class="btn-primary" onclick="manualRefreshReport()" style="padding:4px 12px; font-size:0.65rem;">
-                                <i class="fas fa-sync"></i> بروزرسانی
-                            </button>
+                        <div class="loading-bar-container">
+                            <div class="loading-bar" id="loadingBar">
+                                <div class="loading-bar-shine"></div>
+                            </div>
+                        </div>
+                        <div class="loading-percent" id="loadingPercent">۰%</div>
+                        <div class="loading-steps" id="loadingSteps">
+                            <span class="step active" data-step="1">📁 خواندن فایل</span>
+                            <span class="step" data-step="2">📊 پردازش داده</span>
+                            <span class="step" data-step="3">📋 ایجاد گزارش</span>
                         </div>
                     </div>
+                    <!-- ===== پایان انیمیشن لودینگ ===== -->
+                    
+                    <!-- ===== محتوای گزارش ===== -->
+                    <div id="reportContentWrapper" style="display: none;">
+                        <div class="left-section-title">
+                            <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                                <i class="fas fa-chart-pie"></i> گزارش برهان
+                                <span id="reportNewBadge" style="display:none; font-size:0.6rem; background:#ef4444; color:white; padding:2px 10px; border-radius:20px; margin-right:8px;"></span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span id="reportUpdateTime" style="font-size:0.55rem; color:#94a3b8; background:#f1f5f9; padding:2px 10px; border-radius:20px;">
+                                    <i class="fas fa-clock" style="margin-left:4px; color:#667eea;"></i> در حال بارگذاری...
+                                </span>
+                                <button class="btn-secondary" onclick="resetReportFilters()" style="padding:4px 12px; font-size:0.65rem;">
+                                    <i class="fas fa-undo"></i> حذف فیلتر
+                                </button>
+                                <button class="btn-primary" onclick="manualRefreshReport()" style="padding:4px 12px; font-size:0.65rem;">
+                                    <i class="fas fa-sync"></i> بروزرسانی
+                                </button>
+                            </div>
+                        </div>
                     
                     <!-- ========== آمار لحظه‌ای ========== -->
                     <div class="report-stats-container">
@@ -846,6 +1606,7 @@ if ($is_admin) {
                                 <i class="fas fa-chart-bar"></i> آمار لحظه‌ای
                             </div>
                             <div class="report-stats-date">
+                                <span id="reportDateRangeInfo" style="font-size:0.55rem; color:#94a3b8; background:#f1f5f9; padding:3px 10px; border-radius:20px; white-space:nowrap;"></span>
                                 <button class="date-quick-btn" onclick="setReportDate('prev')">تاریخ قبلی</button>
                                 <button class="date-quick-btn" onclick="setReportDate('next')">تاریخ بعدی</button>
                                 <input type="text" id="report_stats_date" placeholder="1404/01/01" value="" onchange="loadReportStats()">
@@ -901,30 +1662,48 @@ if ($is_admin) {
                     <!-- ========== پایان آمار لحظه‌ای ========== -->
                     
                     <!-- ========== گزارش ثبت/تایید اسناد (حسابداری) ========== -->
-                    <div class="report-warehouse-container" id="reportWarehouseContainer" style="display: none;">
-                        <div class="report-warehouse-header">
-                            <div class="report-warehouse-title">
-                                <i class="fas fa-file-invoice"></i>
-                                <span id="reportWarehouseTitle">گزارش ثبت سند</span>
-                                <span class="report-warehouse-date" id="reportWarehouseDate"></span>
-                            </div>
-                            <div class="report-warehouse-header-actions">
-                                <button id="toggleReportTypeBtn" class="toggle-report-btn" onclick="toggleReportType()">
-                                    <i class="fas fa-check-circle"></i> گزارش تایید اسناد
-                                </button>
-                                <div class="report-warehouse-total" id="reportWarehouseTotal">
-                                    مجموع: 0 سند
+                    <div class="report-warehouse-container gradient-blob-card" id="reportWarehouseContainer" style="display: none;">
+                        <div class="blob-bg pink"></div>
+                        <div class="card-content" style="padding:12px 16px;">
+                            <div class="report-warehouse-header">
+                                <div class="report-warehouse-title">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <span id="reportWarehouseTitle">گزارش ثبت سند</span>
+                                    <span class="report-warehouse-date" id="reportWarehouseDate"></span>
+                                </div>
+                                <div class="report-warehouse-header-actions" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                    <button id="toggleReportTypeBtn" class="toggle-report-btn register-mode" onclick="toggleReportType()">
+                                        <i class="fas fa-check-circle"></i> 
+                                        <span id="reportToggleBtnText">گزارش تایید اسناد</span>
+                                    </button>
+                                    <div class="report-warehouse-total" id="reportWarehouseTotal">
+                                        مجموع: 0 سند
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- پیام خالی -->
-                        <div id="reportWarehouseEmpty" style="display: none; text-align: center; padding: 30px 20px; color: #94a3b8;">
-                            <i class="fas fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
-                            <p style="font-size: 0.9rem; font-weight: 500;">این تاریخ گزارشی ندارد</p>
-                            <p style="font-size: 0.7rem; margin-top: 5px;">هیچ سند حسابداری با موجودیت جدید یافت نشد</p>
-                        </div>
-                        <div class="report-warehouse-grid" id="reportWarehouseGrid">
-                            <!-- کارت‌ها به صورت داینامیک ساخته می‌شوند -->
+                            
+                            <!-- ===== لودینگ ضربان‌دار برای کارت‌ها ===== -->
+                            <div id="warehouseCardLoading" class="warehouse-card-loading" style="display: none; text-align: center; padding: 30px 20px;">
+                                <div class="bounce-loader">
+                                    <div class="bounce-dot"></div>
+                                    <div class="bounce-dot"></div>
+                                    <div class="bounce-dot"></div>
+                                </div>
+                                <p style="margin-top: 15px; font-size: 0.75rem; color: #94a3b8; font-weight: 500;">
+                                    <span id="warehouseLoadingText">در حال بارگذاری گزارش ثبت اسناد...</span>
+                                </p>
+                            </div>
+                            <!-- ===== پایان لودینگ ضربان‌دار ===== -->
+                            
+                            <!-- پیام خالی -->
+                            <div id="reportWarehouseEmpty" style="display: none; text-align: center; padding: 30px 20px; color: #94a3b8;">
+                                <i class="fas fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                                <p style="font-size: 0.9rem; font-weight: 500;">این تاریخ گزارشی ندارد</p>
+                                <p style="font-size: 0.7rem; margin-top: 5px;">هیچ سند حسابداری با موجودیت جدید یافت نشد</p>
+                            </div>
+                            <div class="report-warehouse-grid" id="reportWarehouseGrid">
+                                <!-- کارت‌ها به صورت داینامیک ساخته می‌شوند -->
+                            </div>
                         </div>
                     </div>
                     <!-- ========== پایان گزارش ثبت/تایید اسناد ========== -->
@@ -950,7 +1729,7 @@ if ($is_admin) {
                             </select>
                         </div>
                         <div class="filter-group filter-number">
-                            <label><i class="fas fa-hashtag"></i> شماره سند</label>
+                            <label><i class="fas fa-hashtag"></i> شماره سند ثابت</label>
                             <input type="text" id="report_filter_number" placeholder="1234" oninput="applyReportFilters()">
                         </div>
                         <div class="filter-group filter-type">
@@ -975,9 +1754,6 @@ if ($is_admin) {
                                 </label>
                                 <label style="font-size:0.6rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
                                     <input type="checkbox" class="doc-type-filter" value="سند انبار" onchange="applyReportFilters()"> انبار
-                                </label>
-                                <label style="font-size:0.6rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
-                                    <input type="checkbox" class="doc-type-filter" value="سند خزانه" checked onchange="applyReportFilters()"> خزانه
                                 </label>
                             </div>
                         </div>
@@ -1053,9 +1829,117 @@ if ($is_admin) {
 
 <!-- مودال‌ها -->
 <div id="passwordModal" class="modal"><div class="modal-content"><h3>تغییر رمز عبور</h3><div class="form-group"><input type="password" id="old_password" placeholder="رمز فعلی" style="width:100%;"></div><div class="form-group"><input type="password" id="new_password" placeholder="رمز جدید" style="width:100%;"></div><div class="form-group"><input type="password" id="confirm_password" placeholder="تکرار رمز جدید" style="width:100%;"></div><div class="modal-buttons"><button class="btn-primary" onclick="changePassword()">تغییر رمز</button><button class="btn-secondary" onclick="closePasswordModal()">انصراف</button></div></div></div>
-<div id="editModal" class="modal"><div class="modal-content"><h3>ویرایش سند</h3><input type="hidden" id="edit_id"><div class="form-group"><label>شرکت</label><select id="edit_company_id" style="width:100%;"><?php foreach($companies as $c): ?><option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option><?php endforeach; ?></select></div><div class="form-group"><label>شماره سند</label><input type="text" id="edit_number" style="width:100%;"></div><div class="form-group" id="edit_date_group" <?php echo $require_doc_date ? '' : 'style="display:none;"'; ?>><label>تاریخ سند</label><input type="text" id="edit_date" style="width:100%;" placeholder="1405/02/30"></div><div class="modal-buttons"><button class="btn-primary" onclick="saveEdit()">ذخیره</button><button class="btn-secondary" onclick="closeEditModal()">انصراف</button></div></div></div>
-<div id="userModal" class="modal"><div class="modal-content"><h3 id="userModalTitle">افزودن کاربر جدید</h3><input type="hidden" id="edit_user_id"><div class="form-group"><label>نام کاربری</label><input type="text" id="user_username" style="width:100%;"></div><div class="form-group"><label>نام کامل</label><input type="text" id="user_fullname" style="width:100%;"></div><div class="form-group"><label>واحد</label><input type="text" id="user_unit" style="width:100%;"></div><div class="form-group"><label>رمز عبور</label><input type="password" id="user_password" placeholder="برای ویرایش خالی بگذارید" style="width:100%;"></div><div class="form-group"><label><input type="checkbox" id="user_require_date" checked> تاریخ سند اجباری باشد</label></div><div class="modal-buttons"><button class="btn-primary" onclick="saveUser()">ذخیره</button><button class="btn-secondary" onclick="closeUserModal()">انصراف</button></div></div></div>
+<div id="editModal" class="modal"><div class="modal-content"><h3>ویرایش سند</h3><input type="hidden" id="edit_id"><div class="form-group"><label>شرکت</label><select id="edit_company_id" style="width:100%;"><?php foreach($companies as $c): ?><option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option><?php endforeach; ?></select></div><div class="form-group"><label>شماره سند ثابت</label><input type="text" id="edit_number" style="width:100%;"></div><div class="form-group" id="edit_date_group" <?php echo $require_doc_date ? '' : 'style="display:none;"'; ?>><label>تاریخ سند</label><input type="text" id="edit_date" style="width:100%;" placeholder="1405/02/30"></div><div class="modal-buttons"><button class="btn-primary" onclick="saveEdit()">ذخیره</button><button class="btn-secondary" onclick="closeEditModal()">انصراف</button></div></div></div>
+<div id="userModal" class="modal"><div class="modal-content"><h3 id="userModalTitle">افزودن کاربر جدید</h3><input type="hidden" id="edit_user_id"><div class="form-group"><label>نام کاربری</label><input type="text" id="user_username" style="width:100%;"></div><div class="form-group"><label>نام کامل</label><input type="text" id="user_fullname" style="width:100%;"></div><div class="form-group"><label>واحد</label><input type="text" id="user_unit" style="width:100%;"></div><div class="form-group"><label>رمز عبور</label><input type="password" id="user_password" placeholder="برای ویرایش خالی بگذارید" style="width:100%;"></div><div class="form-group"><label><input type="checkbox" id="user_require_date" checked> تاریخ سند اجباری باشد</label></div>
+<div class="form-group"><label><input type="checkbox" id="user_can_view_unit_stats"> دسترسی به آمار کاربران واحد خود</label><small style="font-size:0.55rem; color:#94a3b8; display:block; margin-top:4px;">با فعال‌سازی این گزینه، کاربر می‌تواند آمار کاربران هم‌واحد خود را مشاهده کند.</small></div>
+<div class="modal-buttons"><button class="btn-primary" onclick="saveUser()">ذخیره</button><button class="btn-secondary" onclick="closeUserModal()">انصراف</button></div></div></div>
 <div id="companyModal" class="modal"><div class="modal-content"><h3 id="companyModalTitle">افزودن شرکت جدید</h3><input type="hidden" id="edit_company_id"><div class="form-group"><label>نام شرکت</label><input type="text" id="company_name" style="width:100%;"></div><div class="modal-buttons"><button class="btn-primary" onclick="saveCompany()">ذخیره</button><button class="btn-secondary" onclick="closeCompanyModal()">انصراف</button></div></div></div>
+
+<!-- مودال بارگذاری اسناد تایید -->
+<div id="loadDocsModal" class="modal">
+    <div class="modal-content">
+        <h3>
+            <i class="fas fa-file-import"></i> بارگذاری اسناد تایید شده
+            <button class="help-btn" onclick="toggleHelp()" title="راهنما" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #667eea; margin-right: 10px;">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </h3>
+        
+        <!-- ===== بخش راهنما ===== -->
+        <div id="helpContent" style="display: none; background: #f0f4ff; padding: 12px 16px; border-radius: 10px; margin-bottom: 15px; border-right: 3px solid #667eea;">
+            <p style="font-size: 0.75rem; color: #1e293b; line-height: 1.8; margin: 0;">
+                شما میتوانید اسناد تایید شده خود را به‌صورت یکجا از برهان بارگذاری کنید
+                <br><br>
+                ✅ <strong>نکات مهم:</strong>
+                <br>
+                • فیزیک اسناد باید به ترتیب لیست اسناد تایید شده شما مرتب باشد.
+                <br>
+                • در صورت نیاز، می‌توانید هر سند را پس از کلیک دکمه "تایید و ذخیره" از لیست حذف کنید.
+            </p>
+        </div>
+        <!-- ===== پایان راهنما ===== -->
+        
+        <div class="form-group">
+            <label>نام کاربر (می‌توانید چند کاربر انتخاب کنید)</label>
+            <select id="load_user_name" multiple style="width:100%; height: 120px; padding: 8px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white;">
+                <!-- گزینه‌ها با JavaScript پر می‌شوند -->
+            </select>
+            <small style="font-size: 0.6rem; color: #94a3b8; display: block; margin-top: 4px;">
+                <i class="fas fa-info-circle"></i> برای انتخاب چند کاربر، کلید Ctrl  را نگه دارید و کلیک کنید.
+            </small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>از تاریخ</label>
+                <input type="text" id="load_date_from" placeholder="1404/01/01" style="width:100%;">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>تا تاریخ</label>
+                <input type="text" id="load_date_to" placeholder="1404/01/01" style="width:100%;">
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-primary" id="loadDocsSubmitBtn" onclick="loadConfirmedDocuments()">
+                <i class="fas fa-file-import"></i> بارگذاری
+            </button>
+            <button class="btn-secondary" onclick="closeLoadDocsModal()">انصراف</button>
+        </div>
+        <div id="loadDocsStatus" style="margin-top: 10px; font-size: 0.7rem; color: #64748b; text-align: center; display: none;"></div>
+    </div>
+</div>
+
+<!-- ===== مودال مدیریت دیتابیس ===== -->
+<div id="dbManagerModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-database"></i> مدیریت دیتابیس</h3>
+            <button class="modal-close" onclick="closeDbManagerModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <?php include 'assets/partials/db_manager_content.php'; ?>
+        </div>
+    </div>
+</div>
+
+<!-- ===== مودال رمز مدیریت دیتابیس ===== -->
+<div id="dbPasswordModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width:400px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color:white; padding:15px 20px; border-radius: 16px 16px 0 0; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:1rem;"><i class="fas fa-lock"></i> ورود به مدیریت دیتابیس</h3>
+            <button onclick="closeDbPasswordModal()" style="background:rgba(255,255,255,0.2); border:none; color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:1.2rem;">&times;</button>
+        </div>
+        <div style="padding:20px;">
+            <p style="font-size:0.8rem; color:#64748b; margin-bottom:15px;">برای دسترسی به مدیریت دیتابیس، رمز عبور را وارد کنید:</p>
+            <div class="form-group">
+                <input type="password" id="dbPasswordInput" placeholder="رمز عبور را وارد کنید" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:0.85rem;" onkeypress="if(event.key==='Enter') confirmDbPassword();">
+            </div>
+            <div id="dbPasswordError" style="font-size:0.7rem; min-height:20px; margin-bottom:10px;"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" id="dbPasswordBtn" onclick="confirmDbPassword()" style="flex:1; padding:10px; border:none; border-radius:10px; background:linear-gradient(135deg, #667eea, #764ba2); color:white; font-weight:600; cursor:pointer; font-size:0.8rem;">
+                    <i class="fas fa-unlock"></i> ورود
+                </button>
+                <button class="btn-secondary" onclick="closeDbPasswordModal()" style="flex:0.5; padding:10px; border:none; border-radius:10px; background:#e2e8f0; color:#475569; font-weight:600; cursor:pointer; font-size:0.8rem;">
+                    انصراف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== مودال نمایش اسناد کاربر ===== -->
+<div id="userDocsModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width:700px;">
+        <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:15px 20px; border-radius:16px 16px 0 0; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:1rem;"><i class="fas fa-file-alt"></i> <span id="userDocsModalTitle">اسناد کاربر</span></h3>
+            <button onclick="closeUserDocsModal()" style="background:rgba(255,255,255,0.2); border:none; color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:1.2rem;">&times;</button>
+        </div>
+        <div style="padding:20px;">
+            <div id="userDocsContent" style="max-height:400px; overflow-y:auto;">
+                <div class="empty-state">در حال بارگذاری...</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -1066,6 +1950,56 @@ const apiUrl = 'api/ajax.php';
 let searchTimeout;
 let currentDeliveryDate = '';
 let currentPanel = 'form';
+let reportData = [];
+
+// ===== پایش خودکار بروزرسانی فایل CSV گزارش برهان (بدون نیاز به رفرش دستی کاربر) =====
+let reportKnownSignature = null;   // آخرین امضای شناخته‌شده فایل (mtime_filesize)
+let reportWatcherInterval = null;  // شناسه‌ی setInterval پایشگر
+const REPORT_WATCH_INTERVAL_MS = 15000; // هر ۱۵ ثانیه یک درخواست بسیار سبک (فقط filemtime)
+let reportType = 'register';
+let currentSelectedUserId = null;
+
+// ===== متغیرهای لودینگ =====
+let loadingProgress = 0;
+let loadingInterval = null;
+
+// ✅ === متغیرهای آمار تایید ===
+let confirmStatsDates = [];
+let confirmStatsIndex = 0;
+let confirmStatsData = {};
+let confirmStatsLastTimes = {};
+// ===== متغیرهای آمار کاربران واحد =====
+let unitStatsType = 'register';
+let unitStatsDates = [];
+let unitStatsIndex = 0;
+let unitStatsLastTimes = {};
+
+// ===== تبدیل حروف عربی به فارسی =====
+function toPersianChars(text) {
+    if (!text) return text;
+    const map = {
+        'ي': 'ی',
+        'ك': 'ک',
+        'ة': 'ه',
+        'ء': ''
+    };
+    return text.replace(/[يكةء]/g, function(m) {
+        return map[m] || m;
+    });
+}
+
+// ===== تبدیل حروف فارسی به عربی =====
+function toArabicChars(text) {
+    if (!text) return text;
+    const map = {
+        'ی': 'ي',
+        'ک': 'ك',
+        'ه': 'ه',  // ✅ اصلاح شد
+    };
+    return text.replace(/[یک]/g, function(m) {
+        return map[m] || m;
+    });
+}
 
 // ========== تابع checkLockStatus در ابتدا ==========
 async function checkLockStatus(deliveryDate) {
@@ -1177,7 +2111,358 @@ function toggleUserPanel(panel) {
     }
 }
 
+// ========== مودال بارگذاری اسناد تایید ==========
+function openLoadDocumentsModal() {
+    const modal = document.getElementById('loadDocsModal');
+    if (!modal) return;
+    
+    const btn = document.getElementById('loadDocsBtn');
+    const originalText = btn.innerHTML;
+    
+    // ✅ تغییر حالت دکمه به لودینگ
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    
+    // ✅ اگر reportData خالی است، بارگذاری کن
+    if (!reportData || reportData.length === 0) {
+        fetch('api/ajax.php?action=load_report_data')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    reportData = data.data;
+                    fillLoadModal();
+                } else {
+                    showToast('خطا در بارگذاری داده‌ها', true);
+                }
+                // ✅ برگرداندن دکمه به حالت عادی
+                resetLoadButton(btn, originalText);
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('خطا در ارتباط با سرور', true);
+                resetLoadButton(btn, originalText);
+            });
+    } else {
+        fillLoadModal();
+        resetLoadButton(btn, originalText);
+    }
+}
+
+// ✅ تابع کمکی برای برگرداندن دکمه به حالت عادی
+function resetLoadButton(btn, originalText) {
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }, 300);
+}
+
+function closeLoadDocsModal() {
+    const modal = document.getElementById('loadDocsModal');
+    if (modal) modal.classList.remove('active');
+    
+    const status = document.getElementById('loadDocsStatus');
+    if (status) {
+        status.style.display = 'none';
+        status.innerHTML = '';
+    }
+}
+
+// ===== نمایش/مخفی راهنما =====
+function toggleHelp() {
+    const help = document.getElementById('helpContent');
+    if (help) {
+        if (help.style.display === 'none' || help.style.display === '') {
+            help.style.display = 'block';
+        } else {
+            help.style.display = 'none';
+        }
+    }
+}
+
+function fillLoadModal() {
+    const userSelect = document.getElementById('load_user_name');
+    if (userSelect && reportData && reportData.length > 0) {
+        const users = [...new Set(
+            reportData
+                .filter(row => {
+                    const desc = row[11] || '';
+                    const isAccounting = row[8] === 'سند حسابداري';
+                    return isAccounting && (desc.includes('تایید') || desc.includes('تاييد'));
+                })
+                .map(row => {
+                    const rawName = row[3] || '';
+                    return rawName.replace(/[0-9]+$/, '').trim();
+                })
+        )].sort();
+        
+        // حفظ انتخاب‌های قبلی
+        const selectedValues = Array.from(userSelect.selectedOptions).map(opt => opt.value);
+        
+        userSelect.innerHTML = '';
+        users.forEach(user => {
+            if (user) {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                if (selectedValues.includes(user)) {
+                    option.selected = true;
+                }
+                userSelect.appendChild(option);
+            }
+        });
+    }
+    
+    // تنظیم تاریخ‌ها بر اساس اولین کاربر انتخاب شده
+    const selectedUsers = Array.from(document.getElementById('load_user_name').selectedOptions).map(opt => opt.value);
+    if (selectedUsers.length > 0 && reportData && reportData.length > 0) {
+        const userDates = reportData
+            .filter(row => {
+                const cleanName = row[3].replace(/[0-9]+$/, '').trim();
+                const desc = row[11] || '';
+                const isAccounting = row[8] === 'سند حسابداري';
+                const hasConfirm = desc.includes('تایید') || desc.includes('تاييد');
+                return selectedUsers.includes(cleanName) && isAccounting && hasConfirm;
+            })
+            .map(row => row[4])
+            .sort();
+        
+        const uniqueDates = [...new Set(userDates)];
+        const latestDate = uniqueDates[uniqueDates.length - 1] || '';
+        document.getElementById('load_date_from').value = latestDate;
+        document.getElementById('load_date_to').value = latestDate;
+    } else {
+        const dates = [...new Set(reportData.map(row => row[4]))].sort();
+        const latestDate = dates[dates.length - 1] || '';
+        document.getElementById('load_date_from').value = latestDate;
+        document.getElementById('load_date_to').value = latestDate;
+    }
+    
+    document.getElementById('loadDocsModal').classList.add('active');
+}
+
+// ========== بارگذاری اسناد تایید شده از فایل اکسل ==========
+function loadConfirmedDocuments() {
+    const btn = document.getElementById('loadDocsSubmitBtn');
+    const status = document.getElementById('loadDocsStatus');
+    
+    // ✅ دریافت لیست کاربران انتخاب شده
+    const userSelect = document.getElementById('load_user_name');
+    const selectedUsers = Array.from(userSelect.selectedOptions).map(opt => opt.value);
+    
+    const dateFrom = document.getElementById('load_date_from').value;
+    const dateTo = document.getElementById('load_date_to').value;
+    const deliveryDate = document.getElementById('delivery_date').value;
+    
+    if (selectedUsers.length === 0) {
+        showToast('لطفاً حداقل یک کاربر را انتخاب کنید', true);
+        return;
+    }
+    
+    if (!dateFrom || !dateTo) {
+        showToast('لطفاً بازه تاریخ را مشخص کنید', true);
+        return;
+    }
+    
+    if (!deliveryDate) {
+        showToast('تاریخ تحویل مشخص نیست', true);
+        return;
+    }
+    
+    // ✅ تبدیل نام‌ها به عربی
+    const searchNames = selectedUsers.map(name => toArabicChars(name));
+    
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال بارگذاری...';
+    btn.disabled = true;
+    
+    status.style.display = 'block';
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال خواندن فایل اکسل...';
+    
+    fetch('api/ajax.php?action=load_confirmed_documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_names: searchNames,
+            date_from: dateFrom,
+            date_to: dateTo,
+            delivery_date: deliveryDate
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.documents && data.documents.length > 0) {
+            status.innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> ${data.documents.length} سند تایید شده یافت شد`;
+            renderLoadedDocuments(data.documents);
+            setTimeout(() => {
+                closeLoadDocsModal();
+                showToast(`${data.documents.length} سند با موفقیت بارگذاری شد`, false);
+            }, 1000);
+        } else {
+            status.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> هیچ سند تایید شده‌ای یافت نشد';
+            showToast('هیچ سند تایید شده‌ای برای این کاربران و بازه تاریخ یافت نشد', true);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        status.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> خطا در ارتباط با سرور';
+        showToast('خطا در ارتباط با سرور', true);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// ========== رندر اسناد بارگذاری شده ==========
+function renderLoadedDocuments(documents) {
+    const container = document.getElementById('userDocumentsList');
+    if (!container) return;
+    
+    if (!documents || documents.length === 0) {
+        container.innerHTML = '<div class="empty-state">هیچ سندی یافت نشد</div>';
+        return;
+    }
+    
+    // ✅ بارگذاری نگاشت شرکت‌ها از فایل JSON
+    let companyMap = {};
+    fetch('config/company_map.json')
+        .then(res => res.json())
+        .then(data => {
+            companyMap = data;
+            renderWithMap(documents, companyMap);
+        })
+        .catch(() => {
+            renderWithMap(documents, {});
+        });
+}
+
+function renderWithMap(documents, companyMap) {
+    const container = document.getElementById('userDocumentsList');
+    if (!container) return;
+    
+    const mappedDocs = documents.map(doc => ({
+        ...doc,
+        display_company: companyMap[doc.company_name] || doc.company_name || doc.company_full || 'نامشخص'
+    }));
+    
+    window.tempLoadedDocs = mappedDocs;
+    
+    let html = `
+        <div class="doc-group" style="border-color: #38bdf8; border-width: 2px;">
+            <div class="group-title" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border-bottom-color: #38bdf8; flex-wrap: wrap; gap: 10px;">
+                <div class="group-date">
+                    <i class="fas fa-file-import" style="color: #0ea5e9;"></i> 
+                    اسناد تایید شده بارگذاری شده
+                    <span style="background: #dbeafe; padding: 2px 8px; border-radius: 20px; margin-right: 8px; color: #1e40af;">${mappedDocs.length} سند</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-success" id="confirmLoadBtn" onclick="confirmLoadedDocuments()" style="background: #10b981; color: white; border: none; padding: 5px 16px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-check-circle"></i> تایید و ذخیره
+                    </button>
+                    <button class="btn-danger" onclick="cancelLoadedDocuments()" style="background: #ef4444; color: white; border: none; padding: 5px 16px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-times-circle"></i> انصراف
+                    </button>
+                </div>
+            </div>
+            <div style="overflow-x:auto; max-height: 400px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead><tr><th>#</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>شرکت</th><th>تاریخ تحویل</th></tr></thead>
+                    <tbody>`;
+    
+    mappedDocs.forEach((doc, index) => {
+        html += `<tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(doc.doc_number)}</td>
+            <td>${doc.doc_date || '—'}</td>
+            <td>${escapeHtml(doc.display_company)}</td>
+            <td>${escapeHtml(doc.delivery_date)}</td>
+        </tr>`;
+    });
+    
+    html += `</tbody></table></div></div>`;
+    container.innerHTML = html;
+}
+
+// ========== تایید و ذخیره اسناد بارگذاری شده ==========
+function confirmLoadedDocuments() {
+    const docs = window.tempLoadedDocs;
+    if (!docs || docs.length === 0) {
+        showToast('هیچ سندی برای ذخیره وجود ندارد', true);
+        return;
+    }
+    
+    const btn = document.getElementById('confirmLoadBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...';
+    btn.disabled = true;
+    
+    const docsToSave = docs.map(doc => ({
+        ...doc,
+        company_name: doc.display_company
+    }));
+    
+    fetch('api/ajax.php?action=save_loaded_documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            documents: docsToSave
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${data.saved_count} سند با موفقیت ذخیره شد`, false);
+            window.tempLoadedDocs = null;
+            const deliveryDate = docs[0]?.delivery_date || '';
+            if (deliveryDate && typeof loadDocumentsForDeliveryDate === 'function') {
+                // ✅ حتماً true ارسال شود
+                loadDocumentsForDeliveryDate(deliveryDate, true);
+            }
+            if (typeof loadUserStats === 'function') {
+                loadUserStats();
+            }
+        } else {
+            showToast(data.error || 'خطا در ذخیره اسناد', true);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showToast('خطا در ارتباط با سرور', true);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// ========== انصراف از بارگذاری ==========
+function cancelLoadedDocuments() {
+    if (!confirm('آیا از انصراف اطمینان دارید؟ اسناد بارگذاری شده حذف خواهند شد.')) return;
+    
+    window.tempLoadedDocs = null;
+    
+    // بازگشت به حالت عادی
+    const container = document.getElementById('userDocumentsList');
+    if (container) {
+        const currentDate = document.getElementById('delivery_date')?.value || '';
+        if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+            loadDocumentsForDeliveryDate(currentDate);
+        } else {
+            container.innerHTML = '<div class="empty-state">هیچ سندی یافت نشد</div>';
+        }
+    }
+    
+    showToast('عملیات بارگذاری لغو شد', false);
+}
+
 // ========== جستجوی آنی برای کاربر عادی ==========
+// ⚠️ هشدار: این تعریف از autoSearchDocuments توسط تعریف دومِ آن (پایین‌تر در فایل،
+// همان که include_unit=true می‌فرستد) بازنویسی می‌شود و هرگز اجرا نمی‌شود (dead code).
+// هر تغییری اینجا اعمال شود، در عمل بی‌اثر خواهد بود. منطق واقعی و فعال را
+// در تعریف دوم autoSearchDocuments (نزدیک انتهای فایل) ویرایش کنید، یا این
+// نسخه‌ی تکراری را کاملاً حذف کنید تا از سردرگمی جلوگیری شود.
 function autoSearchDocuments() {
     const doc_number = document.getElementById('filter_number')?.value || '';
     const doc_date = document.getElementById('filter_date')?.value || '';
@@ -1189,25 +2474,89 @@ function autoSearchDocuments() {
         .then(data => {
             if (data.success) {
                 const container = document.getElementById('userDocumentsList');
-                if (container && data.groups && data.groups.length > 0) {
+                if (!container) return;
+                if (data.groups && data.groups.length > 0) {
                     let html = '';
                     data.groups.forEach(group => {
-                        html += `<div class="doc-group" style="margin-bottom:15px; border:1px solid #ddd; border-radius:8px; overflow:hidden;">
-                            <div class="group-title" style="background:#f5f5f5; padding:10px; display:flex; justify-content:space-between;">
-                                <span><i class="fas fa-calendar"></i> ${group.delivery_date}</span>
-                                <span>${group.count} سند</span>
-                                <button class="print-btn" onclick="viewArchiveDocument('${group.delivery_date}')" style="background:#667eea; color:white; border:none; padding:5px 10px; border-radius:5px;">👁 مشاهده</button>
-                            </div>
-                            <table class="data-table" style="width:100%; border-collapse:collapse;">
-                                <thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th></tr></thead>
-                                <tbody>`;
-                        group.documents.forEach((doc, idx) => {
-                            html += `<tr><td>${idx+1}</td><td>${escapeHtml(doc.doc_number)}</td><td>${doc.doc_date}</td><td>${escapeHtml(doc.company_name)}</td></tr>`;
+                        // ===== تشخیص سال‌ها برای هایلایت =====
+                        const yearCounts = {};
+                        group.documents.forEach(doc => {
+                            const docDate = doc.doc_date;
+                            if (docDate && docDate !== '-' && docDate !== '') {
+                                const year = docDate.substring(0, 4);
+                                if (!yearCounts[year]) {
+                                    yearCounts[year] = 0;
+                                }
+                                yearCounts[year]++;
+                            }
                         });
-                        html += `</tbody></table></div>`;
+                        
+                        const years = Object.keys(yearCounts);
+                        const hasMultipleYears = years.length > 1;
+                        let minYear = null;
+                        let secondMinYear = null;
+                        
+                        if (years.length >= 3) {
+                            const sorted = years.slice().sort((a, b) => {
+                                const countA = yearCounts[a];
+                                const countB = yearCounts[b];
+                                if (countA !== countB) return countA - countB;
+                                return parseInt(a) - parseInt(b);
+                            });
+                            minYear = sorted[0];
+                            secondMinYear = sorted[1] || null;
+                        } else if (years.length === 2) {
+                            const countA = yearCounts[years[0]];
+                            const countB = yearCounts[years[1]];
+                            if (countA < countB) minYear = years[0];
+                            else if (countA > countB) minYear = years[1];
+                            else minYear = Math.min(parseInt(years[0]), parseInt(years[1])).toString();
+                            secondMinYear = null;
+                        } else if (years.length === 1) {
+                            minYear = null;
+                            secondMinYear = null;
+                        }
+                        // ===== پایان تشخیص سال =====
+                        
+                        html += `<div class="doc-group">
+                            <div class="group-title">
+                                <span>${group.delivery_date}</span>
+                                <span>${group.count} سند</span>
+                                <button class="print-btn" onclick="viewArchiveDocument('${group.delivery_date}')">مشاهده</button>
+                            </div>
+                            <table class="data-table">
+                                <thead><tr><th>#</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>شرکت</th></tr></thead>
+                                <tbody>`;
+                        
+                        group.documents.forEach((doc, idx) => {
+                            let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
+                            let docYear = doc.doc_date && doc.doc_date !== '-' ? doc.doc_date.substring(0, 4) : '';
+                            
+                            // ===== هایلایت عدد سال =====
+                            let dateCellContent = docDate;
+                            if (hasMultipleYears && minYear !== null && docYear === minYear) {
+                                if (secondMinYear !== null) {
+                                    dateCellContent = docDate.replace(docYear, `<span class="year-highlight year-pink">${docYear}</span>`);
+                                } else {
+                                    dateCellContent = docDate.replace(docYear, `<span class="year-highlight year-green">${docYear}</span>`);
+                                }
+                            } else if (hasMultipleYears && secondMinYear !== null && docYear === secondMinYear) {
+                                dateCellContent = docDate.replace(docYear, `<span class="year-highlight year-green">${docYear}</span>`);
+                            }
+                            // ===== پایان هایلایت =====
+                            
+                            html += `<tr>
+                                <td>${idx+1}</td>
+                                <td>${escapeHtml(doc.doc_number)}</td>
+                                <td>${dateCellContent}</td>
+                                <td>${escapeHtml(doc.company_name)}</td>
+                            </tr>`;
+                        });
+                        html += `</tbody></table>`;
+                        html += `</div>`;
                     });
                     container.innerHTML = html;
-                } else if (container) {
+                } else {
                     container.innerHTML = '<div class="empty-state">هیچ سندی یافت نشد</div>';
                 }
             }
@@ -1302,35 +2651,517 @@ async function loadUserStats() {
                     </div>
                 </div>
                 
-                <div class="stat-card-new-primary">
+                <!-- ===== باکس آمار کاربران واحد ===== -->
+                <div id="unitUsersStatsContainer" class="stat-card-new" style="display: none; grid-column: span 1;">
                     <div class="stat-header">
-                        <span class="stat-icon">⭐</span>
-                        <span class="stat-title">پیشرفت اسناد تایید شده</span>
+                        <span class="stat-icon">👥</span>
+                        <span class="stat-title" id="unitUsersTitle">آمار کاربران واحد</span>
+                        <button onclick="toggleUnitStatsType()" id="unitStatsToggleBtn" class="btn-report-toggle register-mode">
+                            <i class="fas fa-exchange-alt"></i> 
+                            <span id="unitStatsBtnText">گزارش تایید</span>
+                        </button>
                     </div>
-                    <div class="avg-stats-new">
-                        <div class="avg-item-new ${data.week_change_class}">
-                            <span class="avg-icon">📅</span>
-                            <span class="avg-value">${data.week_change}</span>
-                            <span class="avg-label">هفته</span>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                        <button class="date-nav-btn" id="unitStatsPrevBtn" onclick="changeUnitStatsDate(-1)" title="روز قبل" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #475569; font-size: 0.7rem; flex-shrink: 0; padding: 0; visibility: visible;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <div style="text-align: center; flex: 0 1 auto; min-width: 120px;">
+                            <div style="font-size: 0.65rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;" id="unitStatsDateTime">--</div>
                         </div>
-                        <div class="avg-item-new ${data.month_change_class}">
-                            <span class="avg-icon">📆</span>
-                            <span class="avg-value">${data.month_change}</span>
-                            <span class="avg-label">ماه</span>
+                        <button class="date-nav-btn" id="unitStatsNextBtn" onclick="changeUnitStatsDate(1)" title="روز بعد" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #475569; font-size: 0.7rem; flex-shrink: 0; padding: 0; visibility: visible;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- ===== لودینگ ===== -->
+                    <div id="unitUsersLoading" class="unit-users-loading" style="display: none; text-align: center; padding: 20px;">
+                        <div class="bounce-loader" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <div class="bounce-dot" style="width: 12px; height: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; animation: bounceDot 1.4s ease-in-out infinite both; box-shadow: 0 2px 6px rgba(102,126,234,0.3);"></div>
+                            <div class="bounce-dot" style="width: 12px; height: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; animation: bounceDot 1.4s ease-in-out infinite both; animation-delay: -0.16s; box-shadow: 0 2px 6px rgba(102,126,234,0.3);"></div>
+                            <div class="bounce-dot" style="width: 12px; height: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; animation: bounceDot 1.4s ease-in-out infinite both; animation-delay: 0s; box-shadow: 0 2px 6px rgba(102,126,234,0.3);"></div>
                         </div>
-                        <div class="avg-item-new ${data.year_change_class}">
-                            <span class="avg-icon">📅</span>
-                            <span class="avg-value">${data.year_change}</span>
-                            <span class="avg-label">سال</span>
+                        <div style="margin-top: 10px; font-size: 0.65rem; color: #94a3b8;">در حال بارگذاری...</div>
+                    </div>
+                    <!-- ===== پایان لودینگ ===== -->
+                    
+                    <div id="unitUsersGrid" class="unit-users-grid" style="display: none;">
+                        <div class="empty-state">در حال بارگذاری...</div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.6rem; color: #94a3b8; text-align: center; display: none;" id="unitUsersTotal">
+                        مجموع: ۰ سند
+                    </div>
+                </div>
+                
+                <!-- ===== دو باکس کنار هم ===== -->
+                <div class="stats-grid-new two-cols">
+                    <!-- باکس: پیشرفت اسناد تایید شده -->
+                    <div class="stat-card-new-primary">
+                        <div class="stat-header">
+                            <span class="stat-icon">⭐</span>
+                            <span class="stat-title">پیشرفت اسناد تایید شده</span>
+                        </div>
+                        <div class="avg-stats-new">
+                            <div class="avg-item-new ${data.week_change_class}">
+                                <span class="avg-icon">📅</span>
+                                <span class="avg-value">${data.week_change}</span>
+                                <span class="avg-label">هفته</span>
+                            </div>
+                            <div class="avg-item-new ${data.month_change_class}">
+                                <span class="avg-icon">📆</span>
+                                <span class="avg-value">${data.month_change}</span>
+                                <span class="avg-label">ماه</span>
+                            </div>
+                            <div class="avg-item-new ${data.year_change_class}">
+                                <span class="avg-icon">📅</span>
+                                <span class="avg-value">${data.year_change}</span>
+                                <span class="avg-label">سال</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- باکس: آمار اسناد تایید شما -->
+                    <div class="stat-card-new">
+                        <div class="stat-header">
+                            <span class="stat-icon">✅</span>
+                            <span class="stat-title">تعداد آخرین اسناد تایید شده شما در برهان</span>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+                            <button class="date-nav-btn" id="confirmStatsPrevBtn" onclick="changeConfirmDate(-1)" title="روز قبل" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #475569; font-size: 0.7rem; flex-shrink: 0; padding: 0; visibility: visible;">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="font-size: 0.65rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;" id="confirmStatsDate">--</div>
+                                <div style="font-size: 1.1rem; font-weight: 800; color: #10b981;" id="confirmStatsCount">0</div>
+                                <div style="font-size: 0.5rem; color: #94a3b8;">سند تایید شده</div>
+                            </div>
+                            <button class="date-nav-btn" id="confirmStatsNextBtn" onclick="changeConfirmDate(1)" title="روز بعد" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #475569; font-size: 0.7rem; flex-shrink: 0; padding: 0; visibility: visible;">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
             `;
             document.getElementById('userStatsContainer').innerHTML = html;
+            
+            // ✅ بارگذاری آمار تایید
+            loadConfirmStats();
+            
+            // ✅ بارگذاری آمار کاربران واحد
+            loadUnitUsersStats();
         }
     } catch(e) {
         console.error(e);
         document.getElementById('userStatsContainer').innerHTML = '<div class="empty-state">خطا در دریافت آمار</div>';
+    }
+}
+
+
+// ========== دریافت آمار تایید ==========
+function loadConfirmStats(date) {
+    const dateInput = document.getElementById('delivery_date');
+    const currentDate = date || (dateInput ? dateInput.value : '');
+    
+    if (!currentDate) return;
+    
+    fetch(`api/ajax.php?action=get_confirm_stats&date=${encodeURIComponent(currentDate)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                confirmStatsDates = data.dates || [];
+                confirmStatsData = data.stats || {};
+                confirmStatsLastTimes = data.last_times || {};
+                confirmStatsIndex = confirmStatsDates.indexOf(currentDate);
+                if (confirmStatsIndex === -1 && confirmStatsDates.length > 0) {
+                    confirmStatsIndex = confirmStatsDates.length - 1;
+                }
+                updateConfirmStatsDisplay();
+                updateConfirmStatsButtons();
+            }
+        })
+        .catch(err => console.error(err));
+}
+
+// ========== به‌روزرسانی وضعیت فلش‌های باکس تایید ==========
+function updateConfirmStatsButtons() {
+    const prevBtn = document.getElementById('confirmStatsPrevBtn');
+    const nextBtn = document.getElementById('confirmStatsNextBtn');
+    
+    if (!prevBtn || !nextBtn) return;
+    
+    if (!confirmStatsDates || confirmStatsDates.length === 0) {
+        prevBtn.style.visibility = 'hidden';
+        nextBtn.style.visibility = 'hidden';
+        return;
+    }
+    
+    if (confirmStatsDates.length === 1) {
+        prevBtn.style.visibility = 'hidden';
+        nextBtn.style.visibility = 'hidden';
+        return;
+    }
+    
+    if (confirmStatsIndex <= 0) {
+        prevBtn.style.visibility = 'hidden';
+    } else {
+        prevBtn.style.visibility = 'visible';
+    }
+    
+    if (confirmStatsIndex >= confirmStatsDates.length - 1) {
+        nextBtn.style.visibility = 'hidden';
+    } else {
+        nextBtn.style.visibility = 'visible';
+    }
+}
+
+// ========== به‌روزرسانی نمایش آمار تایید ==========
+function updateConfirmStatsDisplay() {
+    const dateSpan = document.getElementById('confirmStatsDate');
+    const countSpan = document.getElementById('confirmStatsCount');
+    
+    if (confirmStatsIndex >= 0 && confirmStatsIndex < confirmStatsDates.length) {
+        const date = confirmStatsDates[confirmStatsIndex];
+        const count = confirmStatsData[date] || 0;
+        
+        let time = '';
+        if (confirmStatsLastTimes && confirmStatsLastTimes[date]) {
+            const parts = confirmStatsLastTimes[date].split(' ');
+            if (parts.length >= 2) {
+                time = ' | ' + parts.slice(1).join(' ');
+            }
+        }
+        
+        if (dateSpan) dateSpan.textContent = date + time;
+        if (countSpan) countSpan.textContent = count;
+    } else {
+        if (dateSpan) dateSpan.textContent = '--';
+        if (countSpan) countSpan.textContent = '0';
+    }
+}
+
+// ========== تغییر تاریخ آمار تایید ==========
+function changeConfirmDate(direction) {
+    if (!confirmStatsDates || confirmStatsDates.length === 0) {
+        return;
+    }
+    
+    const newIndex = confirmStatsIndex + direction;
+    if (newIndex >= 0 && newIndex < confirmStatsDates.length) {
+        confirmStatsIndex = newIndex;
+        const date = confirmStatsDates[confirmStatsIndex];
+        // ✅ ارسال تاریخ جدید به تابع
+        loadConfirmStats(date);
+        // ✅ به‌روزرسانی نمایش
+        updateConfirmStatsDisplay();
+        updateConfirmStatsButtons();
+    }
+}
+
+// ========== دریافت آمار کاربران واحد ==========
+function loadUnitUsersStats() {
+    const container = document.getElementById('unitUsersStatsContainer');
+    if (!container) return;
+    
+    fetch('api/ajax.php?action=check_unit_stats_permission')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.can_view) {
+                container.style.display = 'block';
+                const dateInput = document.getElementById('delivery_date');
+                const date = dateInput ? dateInput.value : '';
+                // ✅ ارسال تاریخ به fetchUnitUsersStats
+                fetchUnitUsersStats(date);
+            } else {
+                container.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.style.display = 'none';
+        });
+}
+
+// ========== دریافت آمار کاربران واحد از سرور ==========
+function fetchUnitUsersStats(date) {
+    const container = document.getElementById('unitUsersStatsContainer');
+    const grid = document.getElementById('unitUsersGrid');
+    const loading = document.getElementById('unitUsersLoading');
+    const totalSpan = document.getElementById('unitUsersTotal');
+    
+    if (!container || !grid || !loading) return;
+    
+    container.style.display = 'block';
+    
+    // ✅ نمایش لودینگ، مخفی کردن گرید
+    loading.style.display = 'block';
+    grid.style.display = 'none';
+    if (totalSpan) totalSpan.style.display = 'none';
+    
+    if (!date) {
+        const dateInput = document.getElementById('delivery_date');
+        date = dateInput ? dateInput.value : '';
+    }
+    
+    if (!date) {
+        loading.innerHTML = '<div style="font-size: 0.7rem; color: #94a3b8;">تاریخ تحویل مشخص نیست</div>';
+        return;
+    }
+    
+    fetch(`api/ajax.php?action=get_unit_users_stats&type=${unitStatsType}&date=${encodeURIComponent(date)}`)
+        .then(res => res.json())
+        .then(data => {
+            // ✅ مخفی کردن لودینگ
+            loading.style.display = 'none';
+            
+            if (data.success) {
+                // به‌روزرسانی تاریخ‌ها
+                if (data.dates && data.dates.length > 0) {
+                    unitStatsDates = data.dates;
+                    unitStatsLastTimes = data.last_times || {};
+                    unitStatsIndex = unitStatsDates.indexOf(date);
+                    if (unitStatsIndex === -1) {
+                        unitStatsIndex = unitStatsDates.length - 1;
+                    }
+                    updateUnitStatsDisplay(unitStatsDates[unitStatsIndex]);
+                }
+                
+                const title = document.getElementById('unitUsersTitle');
+                const toggleBtn = document.getElementById('unitStatsToggleBtn');
+                
+                if (title) {
+                    const label = unitStatsType === 'register' ? 'ثبت' : 'تایید';
+                    title.textContent = `آمار ${label} کاربران ${data.unit}`;
+                }
+                if (toggleBtn) {
+                    const nextLabel = unitStatsType === 'register' ? 'تایید' : 'ثبت';
+                    toggleBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> گزارش ${nextLabel}`;
+                }
+                
+                if (data.users && data.users.length > 0) {
+                    // ✅ نمایش گرید
+                    grid.style.display = 'flex';
+                    if (totalSpan) totalSpan.style.display = 'block';
+                    
+                    let total = 0;
+                    let html = '';
+                    const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4', '#84cc16'];
+                    
+                    data.users.forEach((user, index) => {
+                        const color = colors[index % colors.length];
+                        const firstChar = user.user_name.charAt(0);
+                        total += user.count;
+                        
+                        html += `
+                            <div class="unit-user-card" onclick="showUserDocuments(${user.user_id}, '${escapeHtml(user.user_name)}')" style="cursor:pointer;">
+                                <div class="unit-user-avatar" style="background: ${color}">
+                                    ${firstChar}
+                                </div>
+                                <span class="unit-user-name">${escapeHtml(user.user_name)}</span>
+                                <span class="unit-user-count">${user.count}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    grid.innerHTML = html;
+                    if (totalSpan) totalSpan.textContent = `مجموع: ${total} سند`;
+                } else {
+                    // ✅ نمایش پیام خالی
+                    grid.style.display = 'flex';
+                    if (totalSpan) totalSpan.style.display = 'block';
+                    grid.innerHTML = `
+                        <div class="empty-state" style="padding: 20px; width: 100%;">
+                            <i class="fas fa-users" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                            <p style="margin-top: 10px;">هیچ کاربری در واحد شما یافت نشد</p>
+                        </div>
+                    `;
+                    if (totalSpan) totalSpan.textContent = 'مجموع: ۰ سند';
+                }
+                
+                updateUnitStatsButtons();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            loading.style.display = 'none';
+            grid.style.display = 'flex';
+            grid.innerHTML = '<div class="empty-state" style="padding: 20px; width: 100%;">خطا در دریافت اطلاعات</div>';
+        });
+}
+
+// ========== به‌روزرسانی نمایش تاریخ و ساعت ==========
+function updateUnitStatsDisplay(date) {
+    const display = document.getElementById('unitStatsDateTime');
+    if (!display) return;
+    
+    if (date) {
+        let time = '';
+        if (unitStatsLastTimes && unitStatsLastTimes[date]) {
+            const parts = unitStatsLastTimes[date].split(' ');
+            if (parts.length >= 2) {
+                time = ' | ' + parts.slice(1).join(' ');
+            }
+        }
+        display.textContent = date + time;
+    } else {
+        display.textContent = '--';
+    }
+    
+    // ✅ به‌روزرسانی وضعیت فلش‌ها
+    updateUnitStatsButtons();
+}
+
+// ========== نمایش آمار کاربران واحد ==========
+function displayUnitUsersStats(data) {
+    const grid = document.getElementById('unitUsersGrid');
+    const totalSpan = document.getElementById('unitUsersTotal');
+    const title = document.getElementById('unitUsersTitle');
+    const toggleBtn = document.getElementById('unitStatsToggleBtn');
+    
+    if (!grid) return;
+    
+    if (title) {
+        const label = unitStatsType === 'register' ? 'ثبت' : 'تایید';
+        title.textContent = `آمار ${label} کاربران ${data.unit}`;
+    }
+    if (toggleBtn) {
+        const nextLabel = unitStatsType === 'register' ? 'تایید' : 'ثبت';
+        toggleBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> گزارش ${nextLabel}`;
+    }
+    
+    if (data.users && data.users.length > 0) {
+        let total = 0;
+        let html = '';
+        const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4', '#84cc16'];
+        
+        data.users.forEach((user, index) => {
+            const color = colors[index % colors.length];
+            const firstChar = user.user_name.charAt(0);
+            total += user.count;
+            
+            html += `
+                <div class="unit-user-card">
+                    <div class="unit-user-avatar" style="background: ${color}">
+                        ${firstChar}
+                    </div>
+                    <span class="unit-user-name">${escapeHtml(user.user_name)}</span>
+                    <span class="unit-user-count">${user.count}</span>
+                </div>
+            `;
+        });
+        
+        grid.innerHTML = html;
+        if (totalSpan) totalSpan.textContent = `مجموع: ${total} سند`;
+    } else {
+        grid.innerHTML = `
+            <div class="empty-state" style="padding: 20px;">
+                <i class="fas fa-users" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                <p style="margin-top: 10px;">هیچ کاربری در واحد شما یافت نشد</p>
+            </div>
+        `;
+        if (totalSpan) totalSpan.textContent = 'مجموع: ۰ سند';
+    }
+}
+
+// ========== به‌روزرسانی وضعیت فلش‌ها ==========
+function updateUnitStatsButtons() {
+    const prevBtn = document.getElementById('unitStatsPrevBtn');
+    const nextBtn = document.getElementById('unitStatsNextBtn');
+    
+    if (!prevBtn || !nextBtn) return;
+    
+    // اگر لیست تاریخ‌ها خالی است، هر دو فلش را مخفی کن
+    if (!unitStatsDates || unitStatsDates.length === 0) {
+        prevBtn.style.visibility = 'hidden';
+        nextBtn.style.visibility = 'hidden';
+        return;
+    }
+    
+    // اگر فقط یک تاریخ وجود دارد، هر دو فلش را مخفی کن
+    if (unitStatsDates.length === 1) {
+        prevBtn.style.visibility = 'hidden';
+        nextBtn.style.visibility = 'hidden';
+        return;
+    }
+    
+    // اولین تاریخ
+    if (unitStatsIndex <= 0) {
+        prevBtn.style.visibility = 'hidden';
+    } else {
+        prevBtn.style.visibility = 'visible';
+    }
+    
+    // آخرین تاریخ
+    if (unitStatsIndex >= unitStatsDates.length - 1) {
+        nextBtn.style.visibility = 'hidden';
+    } else {
+        nextBtn.style.visibility = 'visible';
+    }
+}
+
+// ========== تغییر تاریخ آمار کاربران واحد ==========
+function changeUnitStatsDate(direction) {
+    if (!unitStatsDates || unitStatsDates.length === 0) {
+        return;
+    }
+    
+    const newIndex = unitStatsIndex + direction;
+    if (newIndex >= 0 && newIndex < unitStatsDates.length) {
+        unitStatsIndex = newIndex;
+        const date = unitStatsDates[unitStatsIndex];
+        updateUnitStatsDisplay(date);
+        fetchUnitUsersStats(date);
+        // ✅ به‌روزرسانی وضعیت فلش‌ها
+        updateUnitStatsButtons();
+    }
+}
+
+// ========== تغییر نوع گزارش (ثبت/تایید) ==========
+function toggleUnitStatsType() {
+    // تغییر نوع گزارش
+    unitStatsType = (unitStatsType === 'register') ? 'confirm' : 'register';
+    
+    // دریافت دکمه و متن آن با بررسی وجود
+    const btn = document.getElementById('unitStatsToggleBtn');
+    const btnText = document.getElementById('unitStatsBtnText');
+    
+    // اگر دکمه وجود نداشت، خارج شو
+    if (!btn) {
+        console.error('دکمه unitStatsToggleBtn یافت نشد');
+        return;
+    }
+    
+    // تغییر کلاس و متن دکمه
+    if (unitStatsType === 'register') {
+        btn.className = 'btn-report-toggle register-mode';
+        if (btnText) btnText.textContent = 'گزارش تایید';
+    } else {
+        btn.className = 'btn-report-toggle confirm-mode';
+        if (btnText) btnText.textContent = 'گزارش ثبت';
+    }
+    
+    // بارگذاری مجدد آمار
+    const dateInput = document.getElementById('delivery_date');
+    const date = dateInput ? dateInput.value : '';
+    
+    if (typeof fetchUnitUsersStats === 'function') {
+        if (date) {
+            fetchUnitUsersStats(date);
+        } else {
+            fetchUnitUsersStats();
+        }
+    }
+}
+
+// ========== به‌روزرسانی آمار کاربران واحد هنگام تغییر تاریخ ==========
+function refreshUnitUsersStats() {
+    const container = document.getElementById('unitUsersStatsContainer');
+    if (container && container.style.display !== 'none') {
+        const dateInput = document.getElementById('delivery_date');
+        const date = dateInput ? dateInput.value : '';
+        if (date) {
+            fetchUnitUsersStats(date);
+        } else {
+            fetchUnitUsersStats();
+        }
     }
 }
 
@@ -1394,13 +3225,14 @@ function saveDocument() {
             document.getElementById('doc_number').focus();
             
             const currentDate = document.getElementById('delivery_date').value;
-            loadDocumentsForDeliveryDate(currentDate);
+            
+            // ✅ اصلاح: ارسال true برای اسکرول به آخرین سند
+            loadDocumentsForDeliveryDate(currentDate, false, true);
             
             if (typeof loadUserStats === 'function') {
                 loadUserStats();
             }
             
-            // ✅ دکمه رو به حالت عادی برگردون
             submitBtn.disabled = false;
             submitBtn.innerHTML = '✓ ثبت سند';
             
@@ -1417,7 +3249,6 @@ function saveDocument() {
             }, 3000);
         } else {
             showToast(data.error || 'خطا در ثبت سند', true);
-            // ✅ دکمه رو به حالت عادی برگردون
             submitBtn.disabled = false;
             submitBtn.innerHTML = '✓ ثبت سند';
         }
@@ -1425,7 +3256,6 @@ function saveDocument() {
     .catch(err => {
         console.error('خطا در ثبت سند:', err);
         showToast('خطا در ارتباط با سرور', true);
-        // ✅ دکمه رو به حالت عادی برگردون
         submitBtn.disabled = false;
         submitBtn.innerHTML = '✓ ثبت سند';
     });
@@ -1504,14 +3334,12 @@ function openEditModal(id, number, date, description) {
     .then(data => {
         if (data.success) {
             showToast('سند با موفقیت ویرایش شد');
-            // به‌روزرسانی آنی لیست بر اساس تاریخ تحویل فعلی
             const currentDate = document.getElementById('delivery_date')?.value || '';
             if (currentDate) {
-                loadDocumentsForDeliveryDate(currentDate);
+                loadDocumentsForDeliveryDate(currentDate, false);
             } else {
                 autoSearchDocuments();
             }
-            // به‌روزرسانی آمار کاربر
             if (typeof loadUserStats === 'function') {
                 loadUserStats();
             }
@@ -1533,14 +3361,12 @@ function deleteDocument(id) {
     .then(data => {
         if (data.success) {
             showToast('سند با موفقیت حذف شد');
-            // به‌روزرسانی آنی لیست بر اساس تاریخ تحویل فعلی
             const currentDate = document.getElementById('delivery_date')?.value || '';
             if (currentDate) {
-                loadDocumentsForDeliveryDate(currentDate);
+                loadDocumentsForDeliveryDate(currentDate, false); // ✅ اینجا false است
             } else {
                 autoSearchDocuments();
             }
-            // به‌روزرسانی آمار کاربر
             if (typeof loadUserStats === 'function') {
                 loadUserStats();
             }
@@ -1596,21 +3422,19 @@ function changeDeliveryDate(delta) {
     
     // بارگذاری اسناد برای تاریخ جدید
     loadDocumentsForDeliveryDate(newDate);
+    
+    // ✅ به‌روزرسانی آمار کاربران واحد
+    refreshUnitUsersStats();
 }
 
-function loadDocumentsForDeliveryDate(deliveryDate) {
-    console.log('بارگذاری اسناد برای تاریخ:', deliveryDate);
+function loadDocumentsForDeliveryDate(deliveryDate, isLoaded = false, scrollToLast = false) {
     
     const container = document.getElementById('userDocumentsList');
-    console.log('آیا container پیدا شد؟', container);
-    
     if (!container) {
-        console.error('container userDocumentsList یافت نشد');
         return;
     }
     
     if (!deliveryDate || deliveryDate === '') {
-        console.error('تاریخ تحویل خالی است');
         container.innerHTML = '<div class="empty-state">تاریخ تحویل مشخص نشده است</div>';
         return;
     }
@@ -1618,9 +3442,72 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
     fetch(`api/ajax.php?action=get_documents_for_display&delivery_date=${encodeURIComponent(deliveryDate)}`)
         .then(res => res.json())
         .then(data => {
-            console.log('داده دریافتی:', data);
-            
             if (data.success && data.documents && data.documents.length > 0) {
+                // ===== تشخیص سال‌ها برای هایلایت =====
+                const yearCounts = {};
+                data.documents.forEach(doc => {
+                    const docDate = doc.doc_date;
+                    if (docDate && docDate !== '-' && docDate !== '') {
+                        const year = docDate.substring(0, 4);
+                        if (!yearCounts[year]) {
+                            yearCounts[year] = 0;
+                        }
+                        yearCounts[year]++;
+                    }
+                });
+                
+                const years = Object.keys(yearCounts);
+                const hasMultipleYears = years.length > 1;
+                let pinkYear = null;
+                let greenYear = null;
+                
+                // مرتب‌سازی سال‌ها بر اساس عدد
+                const sortedYears = years.slice().sort((a, b) => parseInt(a) - parseInt(b));
+                
+                // ===== تعیین قرمز (کوچک‌ترین عددی در ۳ سال یا بیشتر) =====
+                if (years.length >= 3) {
+                    pinkYear = sortedYears[0];
+                }
+                
+                // ===== تعیین فسفری (کمترین تعداد) =====
+                if (years.length >= 2) {
+                    let minCount = Infinity;
+                    let minCountYear = null;
+                    for (const [year, count] of Object.entries(yearCounts)) {
+                        if (count < minCount) {
+                            minCount = count;
+                            minCountYear = year;
+                        } else if (count === minCount) {
+                            if (parseInt(year) < parseInt(minCountYear)) {
+                                minCountYear = year;
+                            }
+                        }
+                    }
+                    greenYear = minCountYear;
+                    
+                    // اگر greenYear با pinkYear یکی بود، سال بعدی را انتخاب کن
+                    if (greenYear === pinkYear) {
+                        const remainingYears = years.filter(y => y !== pinkYear);
+                        if (remainingYears.length > 0) {
+                            let minCountRemaining = Infinity;
+                            let minCountYearRemaining = null;
+                            for (const year of remainingYears) {
+                                const count = yearCounts[year];
+                                if (count < minCountRemaining) {
+                                    minCountRemaining = count;
+                                    minCountYearRemaining = year;
+                                } else if (count === minCountRemaining) {
+                                    if (parseInt(year) < parseInt(minCountYearRemaining)) {
+                                        minCountYearRemaining = year;
+                                    }
+                                }
+                            }
+                            greenYear = minCountYearRemaining;
+                        }
+                    }
+                }
+                // ===== پایان تشخیص سال =====
+                
                 let html = `<div class="doc-group">
                             <div class="group-title">
                                 <div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(deliveryDate)} <span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${data.documents.length} سند</span></div>
@@ -1628,56 +3515,119 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                                     <a href="print.php?delivery_date=${encodeURIComponent(deliveryDate)}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a>
                                 </div>
                             </div>
-                            <div style="overflow-x:auto; max-height: 400px; overflow-y: auto;">
+                            <div style="overflow-x:auto; max-height: 400px; overflow-y: auto;" id="documentsTableWrapper">
                                 <table class="data-table">
-                                    <thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead>
+                                    <thead><tr><th>#</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead>
                                     <tbody>`;
                 
                 for (let i = 0; i < data.documents.length; i++) {
                     let doc = data.documents[i];
                     let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
+                    let docYear = doc.doc_date && doc.doc_date !== '-' ? doc.doc_date.substring(0, 4) : '';
+                    
+                    // ===== هایلایت عدد سال =====
+                    let dateCellContent = docDate;
+                    if (pinkYear !== null && docYear === pinkYear) {
+                        dateCellContent = docDate.replace(docYear, `<span class="year-highlight year-pink">${docYear}</span>`);
+                    } else if (greenYear !== null && docYear === greenYear && docYear !== pinkYear) {
+                        dateCellContent = docDate.replace(docYear, `<span class="year-highlight year-green">${docYear}</span>`);
+                    }
+                    // ===== پایان هایلایت =====
+                    
                     let actions = '';
-                    // شرط: فقط تا زمانی که ادمین تایید نکرده باشد، دکمه‌ها نمایش داده شوند
                     if (doc.can_edit && !data.has_admin_approval) {
                         actions = `<button class="action-btn edit-btn" onclick="openEditModal(${doc.id}, '${escapeHtml(doc.doc_number)}', '${escapeHtml(doc.doc_date)}', '${escapeHtml(doc.description || '')}')"><i class="fas fa-edit"></i></button>
                                    <button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash-alt"></i></button>`;
                     }
                     html += `<tr>
-                        <td style="padding: 8px 6px;">${i+1}</td>
-                        <td style="padding: 8px 6px;">${escapeHtml(doc.doc_number)}</td>
-                        <td style="padding: 8px 6px;">${docDate}</td>
-                        <td style="padding: 8px 6px;">${escapeHtml(doc.company_name)}</td>
-                        <td style="padding: 8px 6px;">${actions}</td>
+                        <td>${i+1}</td>
+                        <td>${escapeHtml(doc.doc_number)}</td>
+                        <td>${dateCellContent}</td>
+                        <td>${escapeHtml(doc.company_name)}</td>
+                        <td>${actions}</td>
                     </tr>`;
                 }
-                html += `</tbody>
-                </table>
-            </div>`;
+                html += `</tbody></table></div>`;
                 
-                let descriptions = data.documents.filter(d => d.description && d.description.trim() !== '');
-                if (descriptions.length > 0) {
-                    html += `<div class="descriptions-section">
-                        <div class="desc-title"><i class="fas fa-comment-dots"></i> توضیحات اسناد</div>`;
-                    for (let desc of descriptions) {
-                        html += `<div class="desc-item"><strong>${escapeHtml(desc.doc_number)}:</strong> ${escapeHtml(desc.description.substring(0, 100))}${desc.description.length > 100 ? '...' : ''}</div>`;
+                // ===== باکس توضیحی هایلایت =====
+                if ((pinkYear !== null || greenYear !== null) && hasMultipleYears) {
+                    let highlightText = '';
+                    if (pinkYear !== null && greenYear !== null) {
+                        highlightText = `سال <strong>${pinkYear}</strong> (قرمز) کوچک‌ترین سال عددی است و سال <strong>${greenYear}</strong> (فسفری) کمترین تعداد سند را دارد.`;
+                    } else if (greenYear !== null) {
+                        highlightText = `سال <strong>${greenYear}</strong> کمترین تعداد سند را دارد و به رنگ فسفری مشخص شده است.`;
                     }
-                    html += `</div>`;
+                    html += `
+                        <div class="year-info-box" style="background: #fef3c7; padding: 8px 14px; border-radius: 8px; margin-top: 10px; border-right: 4px solid #f59e0b; display:flex; align-items:center; gap:10px;">
+                            <i class="fas fa-info-circle" style="color: #f59e0b; font-size:0.9rem;"></i>
+                            <span style="font-size: 0.7rem; font-weight: 500; color: #92400e;">
+                                ${highlightText}
+                            </span>
+                        </div>
+                    `;
                 }
+                
+                // بخش توضیحات اسناد (بدون تغییر)
+                if (!isLoaded) {
+                    let descriptions = data.documents.filter(d => d.description && d.description.trim() !== '');
+                    if (descriptions.length > 0) {
+                        let cols = 4;
+                        let maxLength = 0;
+                        for (let desc of descriptions) {
+                            if (desc.description.length > maxLength) {
+                                maxLength = desc.description.length;
+                            }
+                        }
+                        if (maxLength > 80) cols = 2;
+                        else if (maxLength > 50) cols = 3;
+                        
+                        html += `
+                            <div class="descriptions-section">
+                                <div class="desc-title">
+                                    <i class="fas fa-comment-dots"></i> توضیحات اسناد
+                                    <span style="font-size:0.55rem; font-weight:400; color:#94a3b8; margin-right:auto;">${descriptions.length} توضیح</span>
+                                </div>
+                                <div class="desc-grid" style="grid-template-columns: repeat(${cols}, 1fr);">
+                        `;
+                        for (let desc of descriptions) {
+                            const descText = escapeHtml(desc.description);
+                            html += `
+                                <div class="desc-item">
+                                    <span class="desc-number">${escapeHtml(desc.doc_number)}</span>
+                                    <span class="desc-text">
+                                        ${descText}
+                                    </span>
+                                </div>
+                            `;
+                        }
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
                 html += `</div>`;
                 container.innerHTML = html;
-                console.log('لیست به‌روز شد، تعداد سند:', data.documents.length);
                 
-                // اسکرول به انتهای لیست برای نمایش آخرین سند ثبت شده
-                setTimeout(() => {
-                    const tableContainer = container.querySelector('div[style*="overflow-x:auto"]');
-                    if (tableContainer) {
-                        tableContainer.scrollTop = tableContainer.scrollHeight;
+                // ===== اسکرول به آخرین ردیف (با تاخیر برای رندر کامل) =====
+                if (scrollToLast && data.documents.length > 0) {
+                    const wrapper = document.getElementById('documentsTableWrapper');
+                    if (wrapper) {
+                        setTimeout(() => {
+                            wrapper.scrollTop = wrapper.scrollHeight;
+                            const lastRow = wrapper.querySelector('tbody tr:last-child');
+                            if (lastRow) {
+                                lastRow.style.backgroundColor = '#dbeafe';
+                                lastRow.style.transition = 'background-color 0.5s ease';
+                                setTimeout(() => {
+                                    lastRow.style.backgroundColor = '';
+                                }, 2000);
+                            }
+                        }, 200);
                     }
-                    const lastRow = container.querySelector('table tbody tr:last-child');
-                    if (lastRow) {
-                        lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                }, 100);
+                }
+                // ===== پایان اسکرول =====
                 
             } else {
                 container.innerHTML = `
@@ -1691,11 +3641,10 @@ function loadDocumentsForDeliveryDate(deliveryDate) {
                         </div>
                     </div>
                 `;
-                console.log('هیچ سندی برای این تاریخ وجود ندارد');
             }
         })
         .catch(err => {
-            console.error('خطا در fetch:', err);
+            console.error(err);
             container.innerHTML = '<div class="empty-state">خطا در دریافت اسناد</div>';
         });
 }
@@ -2083,10 +4032,9 @@ window.saveEdit = async function() {
     if (result.success) {
         showToast('ویرایش شد');
         closeEditModal();
-        
         const currentDate = document.getElementById('delivery_date')?.value || '';
         if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
-            loadDocumentsForDeliveryDate(currentDate);
+            loadDocumentsForDeliveryDate(currentDate, false);
         } else if (typeof autoSearchDocuments === 'function') {
             autoSearchDocuments();
         }
@@ -2097,6 +4045,7 @@ window.saveEdit = async function() {
         showToast(result.error || 'خطا در ویرایش', true);
     }
 }
+
 window.deleteDocument = async function(id) {
     if (!confirm('حذف شود؟')) return;
     
@@ -2112,7 +4061,7 @@ window.deleteDocument = async function(id) {
         
         const currentDate = document.getElementById('delivery_date')?.value || '';
         if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
-            loadDocumentsForDeliveryDate(currentDate);
+            loadDocumentsForDeliveryDate(currentDate, false); // ✅ false
         } else if (typeof autoSearchDocuments === 'function') {
             autoSearchDocuments();
         }
@@ -2141,7 +4090,7 @@ window.deleteDocument = async function(id) {
                     let printUrl = `print.php?delivery_date=${encodeURIComponent(group.delivery_date)}`;
                     let isArchived = group.is_archived || false;
                     let archiveBadge = isArchived ? '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:0.6rem; margin-right:8px;">تایید شده</span>' : '';
-                    html += `<div class="doc-group"><div class="group-title"><div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(group.delivery_date)} ${archiveBadge}<span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${group.count} سند</span></div><a href="${printUrl}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a></div><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead><tbody>`;
+                    html += `<div class="doc-group"><div class="group-title"><div class="group-date"><i class="fas fa-calendar-day"></i> ${escapeHtml(group.delivery_date)} ${archiveBadge}<span style="background:#eef2ff;padding:2px 8px;border-radius:20px;margin-right:8px;">${group.count} سند</span></div><a href="${printUrl}" target="_blank" class="print-btn"><i class="fas fa-print"></i> پرینت</a></div><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>شرکت</th><th>عملیات</th></tr></thead><tbody>`;
                     for (let doc of group.documents) {
                         let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
                         let actions = '';
@@ -2219,7 +4168,7 @@ async function searchAdminDocuments() {
         let data = await res.json();
         let container = document.getElementById('adminDocumentsList');
         if (data.success && data.documents && data.documents.length > 0) {
-            let html = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>تاریخ تحویل</th><th>شرکت</th><th>کاربر</th><th>عملیات</th></tr></thead><tbody>`;
+            let html = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>تاریخ تحویل</th><th>شرکت</th><th>کاربر</th><th>عملیات</th></tr></thead><tbody>`;
             for (let i = 0; i < data.documents.length; i++) {
                 let doc = data.documents[i];
                 let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
@@ -2274,77 +4223,20 @@ async function loadUserPendingDates(userId, userName) {
                 html += `<div class="archive-item" style="margin-bottom:10px;"><div class="archive-date"><i class="fas fa-calendar"></i> ${escapeHtml(item.delivery_date_persian)}<div style="font-size:0.6rem; margin-top:5px;">${hasUserApproval}</div></div><div class="archive-actions">${!item.user_approved ? `<a href="signature_upload.php?delivery_date=${encodeURIComponent(item.delivery_date)}" class="archive-btn view" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;"><i class="fas fa-pen"></i> ثبت امضا</a>` : ''}<button class="archive-btn view" onclick="window.open('print.php?user_id=${userId}&delivery_date=${encodeURIComponent(item.delivery_date)}', '_blank')"><i class="fas fa-eye"></i> مشاهده</button></div></div>`;
             }
             listContainer.innerHTML = html;
-        } else { listContainer.innerHTML = '<div class="empty-state">هیچ تاریخی برای این کاربر وجود ندارد</div>'; }
-    } catch(e) { console.error(e); }
-}
-
-function backToUsersList() { document.getElementById('usersPendingList').style.display = 'block'; document.getElementById('userDatesContainer').style.display = 'none'; }
-
-async function loadRevertRequests() {
-    let container = document.getElementById('revertRequestsList');
-    if (!container) return;
-    container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> در حال بارگذاری...</div>';
-    try {
-        let res = await fetch(`${apiUrl}?action=get_revert_requests`);
-        let data = await res.json();
-        if (data.success && data.requests && data.requests.length > 0) {
-            let html = '';
-            for (let req of data.requests) {
-                html += `<div class="archive-item" style="margin-bottom:10px; flex-wrap:wrap;"><div><div style="font-weight:bold;">${escapeHtml(req.fullname)} (${escapeHtml(req.unit_name)})</div><div style="font-size:0.65rem; color:#6c86a3; margin-top:3px;">تاریخ تحویل: ${escapeHtml(req.delivery_date_persian)}</div><div style="font-size:0.6rem; color:#f59e0b;">درخواست: ${escapeHtml(req.requested_at_persian)}</div></div><div class="archive-actions"><button class="archive-btn view" onclick="approveRevertRequest(${req.id})" style="background:#10b981; color:white;"><i class="fas fa-check"></i> تایید</button><button class="archive-btn revert" onclick="rejectRevertRequest(${req.id})"><i class="fas fa-times"></i> رد</button></div></div>`;
-            }
-            container.innerHTML = html;
-        } else { container.innerHTML = '<div class="empty-state">هیچ درخواست بازیابی در انتظاری وجود ندارد</div>'; }
-    } catch(e) { console.error(e); }
-}
-
-async function approveRevertRequest(requestId) {
-    if (!confirm('آیا از تایید این درخواست اطمینان دارید؟ با تایید، هر دو امضا حذف خواهند شد.')) return;
-    try {
-        let res = await fetch(`${apiUrl}?action=approve_revert_request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request_id: requestId }) });
-        let result = await res.json();
-        if (result.success) { showToast('✅ درخواست بازیابی تایید شد'); loadRevertRequests(); loadUsersPendingList(); loadApprovedApprovals(); }
-        else { showToast(result.error || '❌ خطا', true); }
-    } catch(e) { console.error(e); }
-}
-
-async function rejectRevertRequest(requestId) {
-    if (!confirm('آیا از رد این درخواست اطمینان دارید؟')) return;
-    try {
-        let res = await fetch(`${apiUrl}?action=reject_revert_request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request_id: requestId }) });
-        let result = await res.json();
-        if (result.success) { showToast('درخواست بازیابی رد شد'); loadRevertRequests(); }
-        else { showToast(result.error || '❌ خطا', true); }
-    } catch(e) { console.error(e); }
-}
-
-async function loadApprovedApprovals() {
-    let container = document.getElementById('approvedApprovalsList');
-    if (!container) return;
-    container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> در حال بارگذاری...</div>';
-    try {
-        let res = await fetch(`${apiUrl}?action=get_all_approved_approvals`);
-        let data = await res.json();
-        if (data.success && data.approvals && data.approvals.length > 0) {
-            let html = '';
-            for (let app of data.approvals) {
-                html += `<div class="archive-item" style="margin-bottom:10px;">
-                    <div>
-                        <div style="font-weight:bold;">${escapeHtml(app.fullname)} (${escapeHtml(app.unit_name)})</div>
-                        <div style="font-size:0.65rem;">تاریخ تحویل: ${escapeHtml(app.delivery_date)}</div>
-                        <div style="font-size:0.6rem; color:#10b981;">تایید شده در: ${escapeHtml(app.admin_approved_at_fa)}</div>
-                    </div>
-                    <div class="archive-actions">
-                        <button class="archive-btn view" onclick="window.open('print.php?user_id=${app.user_id}&delivery_date=${encodeURIComponent(app.delivery_date)}', '_blank')">
-                            <i class="fas fa-print"></i> پرینت
-                        </button>
-                    </div>
-                </div>`;
-            }
-            container.innerHTML = html;
-        } else { 
-            container.innerHTML = '<div class="empty-state">هیچ تایید نهایی ثبت نشده است</div>'; 
+        } else {
+            listContainer.innerHTML = '<div class="empty-state">هیچ تاریخی برای این کاربر وجود ندارد</div>';
+            // ✅ اگر هیچ تاریخی باقی نمانده، لیست کاربران را به‌روز کن
+            backToUsersList();
         }
     } catch(e) { console.error(e); }
+}
+
+function backToUsersList() {
+    document.getElementById('usersPendingList').style.display = 'block';
+    document.getElementById('userDatesContainer').style.display = 'none';
+    
+    // ✅ بارگذاری مجدد لیست کاربران (بدون کش)
+    loadPendingUsersList(true);
 }
 
 async function loadAdminArchive() {
@@ -2363,9 +4255,6 @@ async function loadAdminArchive() {
         } else { container.innerHTML = '<div class="empty-state">هیچ بایگانی ثبت نشده است</div>'; }
     } catch(e) { console.error(e); }
 }
-
-// ========== آمار کاربران ادمین ==========
-let currentSelectedUserId = null;
 
 function loadAdminUsersStats() {
     fetch('api/ajax.php?action=get_admin_users_stats')
@@ -2395,10 +4284,16 @@ function loadAdminUsersStats() {
                 document.getElementById('vsLastWeek').innerHTML = `<div class="compare-item" style="display: flex; justify-content: space-between; align-items: center; direction: ltr;"><span style="text-align: right; direction: rtl; flex: 1;">هفته جاری : ${data.vs_last_week.split('|')[0]}</span><span style="margin: 0 8px; color: #cbd5e1;">|</span><span style="text-align: left; flex: 1;">${data.vs_last_week.split('|')[1]}</span></div>`;
                 document.getElementById('vsLastMonth').innerHTML = `<div class="compare-item" style="display: flex; justify-content: space-between; align-items: center; direction: ltr;"><span style="text-align: right; direction: rtl; flex: 1;">ماه جاری :  ${data.vs_last_month.split('|')[0]}</span><span style="margin: 0 8px; color: #cbd5e1;">|</span><span style="text-align: left; flex: 1;">${data.vs_last_month.split('|')[1]}</span></div>`;
                 
+                // ✅ اگر کاربری وجود ندارد، پیام مناسب نمایش بده
+                if (!data.users || data.users.length === 0) {
+                    document.getElementById('adminUsersStatsList').innerHTML = '<div class="empty-state">هیچ کاربری با سند ثبت‌شده وجود ندارد</div>';
+                    return;
+                }
+                
                 let usersHtml = '<div class="user-stats-container">';
                 data.users.forEach(user => {
                     usersHtml += `
-                        <div class="user-card">
+                        <div class="user-card" onclick="showUserDocuments(${user.id}, '${escapeHtml(user.fullname)}')" style="cursor:pointer;">
                             <div class="user-card-header">
                                 <div class="user-info">
                                     <div class="user-avatar"><i class="fas fa-user"></i></div>
@@ -2511,6 +4406,111 @@ function selectUserForStats(userId, userName) {
         });
 }
 
+// ========== نمایش اسناد کاربر ==========
+function showUserDocuments(userId, userName, deliveryDate = null) {
+    console.log('🔍 showUserDocuments شروع:', { userId, userName, deliveryDate });
+    
+    const modal = document.getElementById('userDocsModal');
+    const title = document.getElementById('userDocsModalTitle');
+    const content = document.getElementById('userDocsContent');
+    
+    if (!modal) {
+        console.error('❌ مودال یافت نشد');
+        return;
+    }
+    
+    if (title) {
+        if (deliveryDate) {
+            title.textContent = 'اسناد ' + (userName || 'کاربر') + ' - تاریخ تحویل: ' + deliveryDate;
+        } else {
+            title.textContent = 'اسناد ' + (userName || 'کاربر');
+        }
+    }
+    
+    if (content) {
+        content.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> در حال بارگذاری...</div>';
+    }
+    
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    let url = 'api/ajax.php?action=get_user_documents&user_id=' + userId + '&user_name=' + encodeURIComponent(userName);
+    if (deliveryDate) {
+        url += '&delivery_date=' + encodeURIComponent(deliveryDate);
+    }
+    
+    console.log('📤 ارسال درخواست به:', url);
+    
+    fetch(url)
+        .then(res => {
+            console.log('📥 پاسخ دریافت شد، وضعیت:', res.status);
+            return res.json();
+        })
+        .then(data => {
+            console.log('📦 داده دریافت شده:', data);
+            
+            if (!content) return;
+            
+            if (data.success && data.documents && data.documents.length > 0) {
+                let html = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>شماره سند ثابت</th>
+                                <th>تاریخ سند</th>
+                                <th>شرکت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                data.documents.forEach((doc, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${escapeHtml(doc.doc_number)}</td>
+                            <td>${doc.doc_date || '—'}</td>
+                            <td>${escapeHtml(doc.company_name)}</td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+                content.innerHTML = html;
+                console.log('✅ اسناد نمایش داده شدند، تعداد:', data.documents.length);
+            } else {
+                content.innerHTML = '<div class="empty-state">هیچ سندی برای این کاربر در این تاریخ یافت نشد</div>';
+                console.log('❌ سندی یافت نشد');
+            }
+        })
+        .catch(err => {
+            console.error('❌ خطا در fetch:', err);
+            if (content) {
+                content.innerHTML = '<div class="empty-state">خطا در دریافت اطلاعات</div>';
+            }
+        });
+}
+
+// ========== بستن مودال اسناد کاربر ==========
+function closeUserDocsModal() {
+    const modal = document.getElementById('userDocsModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+}
+
+// ========== بستن مودال با کلیک خارج از آن ==========
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('userDocsModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeUserDocsModal();
+            }
+        });
+    }
+});
+
 function closeSelectedUserStats() {
     document.getElementById('selectedUserStats').style.display = 'none';
     currentSelectedUserId = null;
@@ -2528,7 +4528,7 @@ function renderAdminDocumentsList(docs) {
         return;
     }
     
-    let html = '<div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>#</th><th>کاربر</th><th>واحد</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th><th>تاریخ تحویل</th></tr></thead><tbody>';
+    let html = '<div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>#</th><th>کاربر</th><th>واحد</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>شرکت</th><th>تاریخ تحویل</th></tr></thead><tbody>';
     docs.forEach((doc, idx) => {
         html += `
             <tr>
@@ -2699,9 +4699,6 @@ function loadPendingUsersList(forceRefresh = false) {
         });
 }
 
-// ========== گزارش برهان ==========
-let reportData = [];
-
 // فرمت تاریخ شمسی
 function formatDateInput(input) {
     let raw = input.value.replace(/\D/g, '');
@@ -2714,6 +4711,8 @@ function formatDateInput(input) {
 
 // بارگذاری فیلترها از فایل CSV
 function loadReportFilters() {
+    showReportLoading(true);
+    
     fetch('api/ajax.php?action=load_report_data')
         .then(res => res.json())
         .then(data => {
@@ -2723,6 +4722,9 @@ function loadReportFilters() {
                 // پیدا کردن آخرین تاریخ موجود
                 const dates = [...new Set(reportData.map(row => row[4]))].sort();
                 const latestDate = dates[dates.length - 1];
+                
+                // ✅ نمایش بازه اولین و آخرین تاریخ موجود کنار دکمه‌های تاریخ قبلی/بعدی
+                updateReportDateRangeInfo();
                 
                 // تنظیم فیلتر تاریخ روی آخرین تاریخ
                 const dateFromInput = document.getElementById('report_filter_date_from');
@@ -2742,7 +4744,6 @@ function loadReportFilters() {
                     companySelect.innerHTML = '<option value="">همه شرکت‌ها</option>';
                     
                     companies.forEach(company => {
-                        // حذف برش کوه (هم اسم کامل و هم اسم کوتاه)
                         if (company && 
                             company !== 'شركت برش كوه آريا پارت (سهامي خاص)' && 
                             company !== 'برش كوه') {
@@ -2826,10 +4827,11 @@ function loadReportFilters() {
                 const emptyState = document.getElementById('reportEmptyState');
                 if (emptyState) emptyState.style.display = 'none';
                 
-                // بارگذاری آمار لحظه‌ای
+                // بارگذاری آمار لحظه‌ای (این تابع loadWarehouseReport را صدا می‌زند)
                 loadReportStats();
                 
             } else {
+                showReportLoading(false);
                 const emptyState = document.getElementById('reportEmptyState');
                 if (emptyState) {
                     emptyState.style.display = 'block';
@@ -2843,6 +4845,7 @@ function loadReportFilters() {
         })
         .catch(err => {
             console.error(err);
+            showReportLoading(false);
             const emptyState = document.getElementById('reportEmptyState');
             if (emptyState) {
                 emptyState.style.display = 'block';
@@ -2852,6 +4855,78 @@ function loadReportFilters() {
                 `;
             }
         });
+}
+
+
+function showReportLoading(show) {
+    const loading = document.getElementById('reportLoading');
+    const content = document.getElementById('reportContentWrapper');
+    const bar = document.getElementById('loadingBar');
+    const percent = document.getElementById('loadingPercent');
+    const steps = document.querySelectorAll('.step');
+    
+    if (show) {
+        if (loading) loading.style.display = 'flex';
+        if (content) content.style.display = 'none';
+        
+        // ریست کامل
+        loadingProgress = 0;
+        if (bar) bar.style.width = '0%';
+        if (percent) percent.textContent = '۰%';
+        
+        steps.forEach((step, index) => {
+            step.classList.remove('active', 'done');
+            if (index === 0) step.classList.add('active');
+        });
+        
+        if (loadingInterval) clearInterval(loadingInterval);
+        // شروع انیمیشن با تاخیر
+        setTimeout(() => {
+            loadingInterval = setInterval(() => {
+                if (loadingProgress < 90) {
+                    loadingProgress += Math.random() * 4 + 1;
+                    if (loadingProgress > 90) loadingProgress = 90;
+                    updateLoadingProgress(loadingProgress);
+                }
+            }, 350);
+        }, 500);
+        
+    } else {
+        if (loadingInterval) {
+            clearInterval(loadingInterval);
+            loadingInterval = null;
+        }
+        loadingProgress = 100;
+        updateLoadingProgress(100);
+        // ✅ تاخیر 600ms برای نمایش کامل 100% و سپس بسته شدن
+        setTimeout(() => {
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+        }, 600);
+    }
+}
+
+function updateLoadingProgress(value) {
+    const bar = document.getElementById('loadingBar');
+    const percent = document.getElementById('loadingPercent');
+    const steps = document.querySelectorAll('.step');
+    
+    if (bar) bar.style.width = value + '%';
+    if (percent) percent.textContent = Math.round(value) + '%';
+    
+    // به‌روزرسانی مراحل
+    const stepProgress = value / 100;
+    const totalSteps = steps.length;
+    const activeStep = Math.min(Math.floor(stepProgress * totalSteps), totalSteps - 1);
+    
+    steps.forEach((step, index) => {
+        step.classList.remove('active', 'done');
+        if (index < activeStep) {
+            step.classList.add('done');
+        } else if (index === activeStep) {
+            step.classList.add('active');
+        }
+    });
 }
 
 function populateReportFilters(data) {
@@ -2880,6 +4955,27 @@ function populateSelect(id, options) {
         select.appendChild(option);
     });
     if (currentValue) select.value = currentValue;
+}
+
+// نمایش کوچک اولین و آخرین تاریخ موجود در فایل، کنار دکمه‌های تاریخ قبلی/بعدی
+function updateReportDateRangeInfo() {
+    const el = document.getElementById('reportDateRangeInfo');
+    if (!el) return;
+    
+    if (!reportData || reportData.length === 0) {
+        el.innerHTML = '';
+        return;
+    }
+    
+    const dates = [...new Set(reportData.map(row => row[4]).filter(Boolean))].sort();
+    if (dates.length === 0) {
+        el.innerHTML = '';
+        return;
+    }
+    
+    const first = dates[0];
+    const last = dates[dates.length - 1];
+    el.innerHTML = `<i class="fas fa-calendar-week" style="margin-left:3px;"></i> بازه: ${first} تا ${last}`;
 }
 
 // ===== کش کردن فیلترهای قبلی =====
@@ -2953,7 +5049,7 @@ function resetReportFilters() {
     
     const docTypeCheckboxes = document.querySelectorAll('.doc-type-filter');
     docTypeCheckboxes.forEach(cb => {
-        cb.checked = (cb.value === 'سند حسابداري' || cb.value === 'سند خزانه');
+        cb.checked = (cb.value === 'سند حسابداري');
     });
     
     // ✅ بازنشانی کش فیلتر
@@ -2996,7 +5092,6 @@ function loadReportStats() {
     let dateInput = document.getElementById('report_stats_date');
     let date = dateInput ? dateInput.value : '';
     
-    // اگر تاریخ خالی بود، آخرین تاریخ موجود را بگیر
     if (!date && reportData.length > 0) {
         const dates = [...new Set(reportData.map(row => row[4]))].sort();
         if (dates.length > 0) {
@@ -3006,13 +5101,13 @@ function loadReportStats() {
     }
     
     if (!date) {
-        // همه را صفر کن
         document.getElementById('statNewCount').textContent = '0';
         document.getElementById('statEditCount').textContent = '0';
         document.getElementById('statDeleteCount').textContent = '0';
         document.getElementById('statTotalCount').textContent = '0';
         document.getElementById('statLoginSuccessCount').textContent = '0';
         document.getElementById('statLoginFailCount').textContent = '0';
+        showReportLoading(false);
         return;
     }
     
@@ -3029,42 +5124,56 @@ function loadReportStats() {
             }
         })
         .catch(err => console.error(err));
-    // بارگذاری گزارش ثبت جدید (حسابداری و خزانه‌داری)
+    
+    // بارگذاری گزارش ثبت جدید (کارت‌ها)
     if (typeof loadWarehouseReport === 'function') {
         loadWarehouseReport();
     }
 }
 
-// ========== بارگذاری گزارش ثبت/تایید اسناد ==========
-let reportType = 'register'; // register یا confirm
+// ===== کنترل لودینگ چرخشی کارت‌ها =====
+function showWarehouseCardLoading(show, type = 'register') {
+    const loading = document.getElementById('warehouseCardLoading');
+    const grid = document.getElementById('reportWarehouseGrid');
+    const emptyMsg = document.getElementById('reportWarehouseEmpty');
+    const text = document.getElementById('warehouseLoadingText');
+    
+    if (show) {
+        if (loading) {
+            loading.style.display = 'flex';
+            if (text) {
+                const label = type === 'register' ? 'گزارش ثبت اسناد' : 'گزارش تایید اسناد';
+                text.textContent = `در حال بارگذاری ${label}...`;
+            }
+        }
+        if (grid) grid.style.display = 'none';
+        if (emptyMsg) emptyMsg.style.display = 'none';
+    } else {
+        if (loading) loading.style.display = 'none';
+        if (grid) grid.style.display = 'flex';
+    }
+}
 
+// ========== بارگذاری گزارش ثبت/تایید اسناد ==========
 function loadWarehouseReport() {
     const container = document.getElementById('reportWarehouseContainer');
     const grid = document.getElementById('reportWarehouseGrid');
     const dateSpan = document.getElementById('reportWarehouseDate');
     const totalSpan = document.getElementById('reportWarehouseTotal');
     const emptyMsg = document.getElementById('reportWarehouseEmpty');
-    const titleSpan = document.getElementById('reportWarehouseTitle');
-    const toggleBtn = document.getElementById('toggleReportTypeBtn');
+    const loading = document.getElementById('warehouseCardLoading');
     
     const dateInput = document.getElementById('report_stats_date');
     const date = dateInput ? dateInput.value : '';
     
     if (!date) {
         if (container) container.style.display = 'none';
+        showReportLoading(false);
         return;
     }
     
-    // ✅ به‌روزرسانی عنوان و دکمه
-    if (reportType === 'register') {
-        titleSpan.textContent = 'گزارش ثبت سند';
-        toggleBtn.innerHTML = '<i class="fas fa-check-circle"></i> گزارش تایید اسناد';
-        toggleBtn.classList.remove('confirm-mode');
-    } else {
-        titleSpan.textContent = 'گزارش تایید اسناد';
-        toggleBtn.innerHTML = '<i class="fas fa-plus-circle"></i> گزارش ثبت اسناد';
-        toggleBtn.classList.add('confirm-mode');
-    }
+    // نمایش لودینگ چرخشی
+    showWarehouseCardLoading(true, reportType);
     
     fetch(`api/ajax.php?action=get_warehouse_report&date=${encodeURIComponent(date)}&type=${reportType}`)
         .then(res => res.json())
@@ -3084,12 +5193,12 @@ function loadWarehouseReport() {
                 
                 // ===== گروه‌بندی بر اساس واحد =====
                 const groups = {};
-                const unitOrder = ['تنخواه', 'خزانه', 'فاکتور', 'پیمانکارن', 'درآمد', 'سایر'];
+                const unitOrder = ['تنخواه', 'خزانه', 'فاکتور', 'پیمانکاران', 'درآمد', 'سایر'];
                 const unitIcons = {
                     'تنخواه': '💰',
                     'خزانه': '🏛️',
                     'فاکتور': '📄',
-                    'پیمانکارن': '🔧',
+                    'پیمانکاران': '🔧',
                     'درآمد': '📈',
                     'سایر': '📁'
                 };
@@ -3128,7 +5237,7 @@ function loadWarehouseReport() {
                             const userName = user.user_name;
                             
                             html += `
-                                <div class="user-card-vertical">
+                                <div class="user-card-vertical warehouse-user-card" onclick="showUserDocuments(${user.user_id}, '${escapeHtml(userName)}', '${escapeHtml(date)}')" style="cursor:pointer;">
                                     <div class="user-avatar-vertical" style="background: ${color}">
                                         ${firstChar}
                                     </div>
@@ -3159,28 +5268,69 @@ function loadWarehouseReport() {
                 }
                 if (totalSpan) totalSpan.textContent = 'مجموع: ۰ سند';
             }
+            
+            // ✅ بعد از رندر کامل، لودینگ چرخشی را مخفی کن
+            showWarehouseCardLoading(false);
+            
+            // ✅ بعد از رندر کامل کارت‌ها، لودینگ کلی گزارش را ببند
+            setTimeout(() => {
+                showReportLoading(false);
+            }, 150);
         })
         .catch(err => {
             console.error(err);
             if (container) container.style.display = 'none';
+            showWarehouseCardLoading(false);
+            showReportLoading(false);
         });
 }
 
 // ===== تغییر نوع گزارش =====
 function toggleReportType() {
-    reportType = (reportType === 'register') ? 'confirm' : 'register';
-    
     const toggleBtn = document.getElementById('toggleReportTypeBtn');
+    const btnText = document.getElementById('reportToggleBtnText');
+    const titleSpan = document.getElementById('reportWarehouseTitle');
     
-    if (reportType === 'confirm') {
-        toggleBtn.classList.add('confirm-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-plus-circle"></i> گزارش ثبت اسناد';
-    } else {
-        toggleBtn.classList.remove('confirm-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-check-circle"></i> گزارش تایید اسناد';
+    // اگر دکمه وجود نداشت، خارج شو
+    if (!toggleBtn) {
+        console.error('دکمه toggleReportTypeBtn یافت نشد');
+        return;
     }
     
-    loadWarehouseReport();
+    // تغییر نوع گزارش
+    const newType = (reportType === 'register') ? 'confirm' : 'register';
+    reportType = newType;
+    
+    // نمایش لودینگ
+    showWarehouseCardLoading(true, reportType);
+    
+    // غیرفعال کردن دکمه
+    toggleBtn.disabled = true;
+    toggleBtn.style.opacity = '0.7';
+    
+    // تغییر ظاهر دکمه و عنوان باکس با تاخیر
+    setTimeout(() => {
+        if (reportType === 'register') {
+            // حالت گزارش ثبت
+            toggleBtn.className = 'toggle-report-btn register-mode';
+            if (btnText) btnText.textContent = 'گزارش تایید اسناد';
+            if (titleSpan) titleSpan.textContent = 'گزارش ثبت سند';
+        } else {
+            // حالت گزارش تایید
+            toggleBtn.className = 'toggle-report-btn confirm-mode';
+            if (btnText) btnText.textContent = 'گزارش ثبت اسناد';
+            if (titleSpan) titleSpan.textContent = 'گزارش تایید سند';
+        }
+        
+        // بارگذاری مجدد
+        loadWarehouseReport();
+        
+        // فعال کردن دکمه
+        setTimeout(() => {
+            toggleBtn.disabled = false;
+            toggleBtn.style.opacity = '1';
+        }, 500);
+    }, 300);
 }
 
 function setReportDate(type) {
@@ -3313,6 +5463,9 @@ function loadFileUpdateTime() {
     const updateSpan = document.getElementById('reportUpdateTime');
     if (!updateSpan) return;
     
+    // نمایش حالت بارگذاری
+    updateSpan.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:4px; color:#667eea;"></i> در حال بروزرسانی...';
+    
     fetch('api/ajax.php?action=get_file_update_time')
         .then(res => res.json())
         .then(data => {
@@ -3328,9 +5481,149 @@ function loadFileUpdateTime() {
         });
 }
 
+// ========================================================================
+// ===== پایش خودکار فایل CSV گزارش برهان (بدون نیاز به رفرش/کلیک کاربر) =====
+// ========================================================================
+// هر REPORT_WATCH_INTERVAL_MS میلی‌ثانیه، فقط یک درخواست بسیار سبک به سرور
+// زده می‌شود (check_report_update) که تنها filemtime فایل را برمی‌گرداند و
+// کل CSV را پارس نمی‌کند. فقط وقتی امضای فایل واقعاً تغییر کند، درخواست
+// سنگین‌تر load_report_data برای دریافت داده‌های واقعی زده می‌شود.
+
+function checkReportFileUpdate() {
+    // ✅ اضافه کردن یک پارامتر همیشه‌متفاوت (timestamp) به URL تا هیچ لایه‌ای
+    // (کش مرورگر، کش دیسک، پروکسی/CDN میانی) این درخواست تکراری را کش نکند
+    // و همیشه واقعاً به سرور برسد.
+    fetch(`api/ajax.php?action=check_report_update&_=${Date.now()}`, { cache: 'no-store' })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+            
+            // ✅ اولین بار فقط مقدار مرجع را ثبت می‌کنیم (بدون رفرش و بدون نمایش پیام)
+            if (reportKnownSignature === null) {
+                reportKnownSignature = data.signature;
+                return;
+            }
+            
+            if (data.signature !== reportKnownSignature) {
+                reportKnownSignature = data.signature;
+                refreshReportDataFromServer();
+            }
+        })
+        .catch(err => console.error('خطا در بررسی بروزرسانی فایل گزارش:', err));
+}
+
+// نوتیفیکیشن ماندگارِ بروزرسانی خودکار گزارش برهان — برخلاف showToast معمولی،
+// این یکی خودش بسته نمی‌شود؛ کاربر باید با کلیک روی × آن را ببندد تا مطمئن
+// شویم واقعاً متوجه بروزرسانی شده است.
+function showReportUpdateNotice() {
+    let notice = document.getElementById('reportUpdateNotice');
+    
+    if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'reportUpdateNotice';
+        notice.style.cssText = `
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: white;
+            border-right: 4px solid #10b981;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.75rem;
+            max-width: 420px;
+            direction: rtl;
+        `;
+        notice.innerHTML = `
+            <i class="fas fa-check-circle" style="color:#10b981; font-size:1.15rem; flex-shrink:0;"></i>
+            <span style="flex:1; color:#1e293b; font-weight:500; line-height:1.6;">فایل گزارش برهان بروزرسانی شد و داده‌های جدید نمایش داده شد.</span>
+            <button onclick="document.getElementById('reportUpdateNotice')?.remove()" title="بستن"
+                style="background:#f1f5f9; border:none; cursor:pointer; color:#64748b; width:24px; height:24px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.7rem;">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        notice.classList.add('animate__animated', 'animate__fadeInDown');
+        document.body.appendChild(notice);
+    } else {
+        // ✅ اگر نوتیفیکیشن قبلی هنوز بسته نشده (مثلاً چند تغییر پشت سر هم رخ داده)،
+        // به‌جای انباشتن چند نوتیفیکیشن روی هم، همان یکی را با یک افکت کوچک تاکید می‌کنیم
+        notice.classList.remove('animate__fadeInDown');
+        void notice.offsetWidth; // ری‌استارت انیمیشن (reflow اجباری)
+        notice.classList.add('animate__fadeInDown');
+    }
+}
+
+function refreshReportDataFromServer() {
+    fetch('api/ajax.php?action=load_report_data')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+            
+            const reportsContent = document.getElementById('reportsContent');
+            const isReportsVisible = reportsContent && reportsContent.style.display !== 'none';
+            
+            if (isReportsVisible) {
+                reportData = data.data;
+                
+                // بازسازی گزینه‌های فیلترها با حفظ انتخاب فعلی کاربر
+                populateReportFilters(reportData);
+                
+                // ✅ بروزرسانی بازه اولین/آخرین تاریخ موجود
+                updateReportDateRangeInfo();
+                
+                // ✅ چون خودِ داده تغییر کرده (نه لزوماً مقدار فیلترها)، کش تشخیص
+                // تغییر فیلتر را باطل می‌کنیم تا applyReportFilters() واقعاً جدول
+                // را دوباره رندر کند، حتی اگر فیلترهای انتخابی کاربر عوض نشده باشند.
+                lastFilterState = '';
+                applyReportFilters();
+                
+                if (typeof loadReportStats === 'function') loadReportStats();
+                if (typeof loadFileUpdateTime === 'function') loadFileUpdateTime();
+                
+                // ✅ اطلاع‌رسانی به کاربر که تا خودش نبندد باقی می‌ماند
+                showReportUpdateNotice();
+            }
+            
+            // بروزرسانی نشانگر اعلان (دایره قرمز) روی آیتم منو، چه بخش گزارش باز باشد چه نه
+            const menuItem = document.querySelector('.menu-item[data-section="reports"]');
+            if (menuItem) {
+                const oldDot = menuItem.querySelector('.report-notification');
+                if (oldDot) oldDot.remove();
+                
+                // اگر کاربر همین الان در بخش گزارش است، اعلان لازم نیست (تازه دیده)
+                if (!isReportsVisible && data.new_count > 0) {
+                    const dot = document.createElement('span');
+                    dot.className = 'report-notification';
+                    dot.style.cssText = 'display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:6px;animation:pulse-dot 1.5s infinite;';
+                    menuItem.prepend(dot);
+                }
+            }
+        })
+        .catch(err => console.error('خطا در بروزرسانی خودکار گزارش:', err));
+}
+
+function startReportFileWatcher() {
+    if (reportWatcherInterval) return; // از اجرای موازی چند تایمر جلوگیری می‌کند
+    checkReportFileUpdate(); // یک‌بار همین الان هم بررسی کن تا امضای مرجع ثبت شود
+    reportWatcherInterval = setInterval(checkReportFileUpdate, REPORT_WATCH_INTERVAL_MS);
+}
+
+function stopReportFileWatcher() {
+    if (reportWatcherInterval) {
+        clearInterval(reportWatcherInterval);
+        reportWatcherInterval = null;
+    }
+}
+
 function showLeftContent(section) {
     // مخفی کردن همه بخش‌ها
-    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent', 'approvalsContent', 'reportsContent'];
+
+    const sections = ['statsContent', 'usersContent', 'companiesContent', 'filtersContent', 'archiveContent', 'userStatsContent', 'approvalsContent', 'reportsContent', 'db_managerContent'];
     sections.forEach(s => {
         const el = document.getElementById(s);
         if (el) el.style.display = 'none';
@@ -3384,74 +5677,102 @@ function showLeftContent(section) {
             loadReportFilters();
         }
         
-        // ✅ بارگذاری آمار لحظه‌ای
+        // بارگذاری آمار لحظه‌ای
         if (typeof loadReportStats === 'function') {
             setTimeout(function() {
                 loadReportStats();
             }, 500);
         }
+        
+        // ✅ بارگذاری زمان بروزرسانی فایل
+        if (typeof loadFileUpdateTime === 'function') {
+            setTimeout(function() {
+                loadFileUpdateTime();
+            }, 600);
+        }
+        
+        // ✅ پایشگر خودکار فایل (از بارگذاری صفحه در پس‌زمینه فعال است، همین‌جا هم
+        // اطمینان می‌دهیم که روشن باشد). چون همین الان داده‌ی تازه با loadReportFilters()
+        // گرفته شد، امضای مرجع را ریست می‌کنیم تا اولین بررسیِ بعدی پایشگر فقط
+        // مرجع را ثبت کند و یک رفرش اضافی/غیرضروری انجام ندهد.
+        reportKnownSignature = null;
+        startReportFileWatcher();
+    }
+    if (section === 'db_manager') {
+        if (typeof loadDbManagerData === 'function') {
+            loadDbManagerData();
+        }
     }
 }
 
 function showApprovalsTab(tab) {
-    // فعال کردن دکمه تب
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        btn.style.color = '#475569';
-        btn.style.borderBottom = 'none';
-    });
-    event.target.classList.add('active');
-    event.target.style.color = '#667eea';
-    event.target.style.borderBottom = '2px solid #667eea';
-    
-    // مخفی کردن همه تب‌ها
-    document.getElementById('pendingApprovalsTab').style.display = 'none';
-    document.getElementById('revertRequestsTab').style.display = 'none';
-    document.getElementById('approvedApprovalsTab').style.display = 'none';
-    
     if (tab === 'pending') {
         document.getElementById('pendingApprovalsTab').style.display = 'block';
-        // بارگذاری مجدد با جلوگیری از کش
-        loadPendingUsersList(true); // true برای forced refresh
-    } else if (tab === 'revert') {
-        document.getElementById('revertRequestsTab').style.display = 'block';
-        loadRevertRequests();
-    } else if (tab === 'approved') {
-        document.getElementById('approvedApprovalsTab').style.display = 'block';
-        loadApprovedApprovals();
+        loadPendingUsersList(true);
     }
 }
 
 async function loadUsersList() {
     let container = document.getElementById('usersList');
+    if (!container) return;
+    
     container.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+    
     try {
         let res = await fetch(`${apiUrl}?action=get_users`);
         let data = await res.json();
+        
         if (data.success && data.users) {
+            // ✅ اگر کاربری وجود ندارد، پیام مناسب نمایش بده
+            if (data.users.length === 0) {
+                container.innerHTML = '<div class="empty-state">هیچ کاربری با سند ثبت‌شده وجود ندارد</div>';
+                return;
+            }
+            
             let html = '';
+            
             for (let user of data.users) {
                 let permissionCheckbox = user.can_view_all_archives == 1 ? 'checked' : '';
-                html += `<div class="user-item">
-                    <div class="user-info">
-                        <div class="user-name">${escapeHtml(user.fullname)}</div>
-                        <div class="user-unit">${escapeHtml(user.unit_name)} | ${escapeHtml(user.username)} | کل اسناد: ${user.total_docs}</div>
-                        <div class="user-unit" style="margin-top: 5px;">
-                            <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" class="archive-permission" data-id="${user.id}" ${permissionCheckbox} onchange="toggleArchivePermission(${user.id}, this.checked)">
-                                دسترسی به بایگانی همه کاربران
-                            </label>
+                let unitStatsCheckbox = user.can_view_unit_stats == 1 ? 'checked' : '';
+                
+                html += `
+                    <div class="user-item" onclick="showUserDocuments(${user.id}, '${escapeHtml(user.fullname)}')" style="cursor:pointer;">
+                        <div class="user-info">
+                            <div class="user-name">${escapeHtml(user.fullname)}</div>
+                            <div class="user-unit">
+                                ${escapeHtml(user.unit_name)} | ${escapeHtml(user.username)} | کل اسناد: ${user.total_docs}
+                            </div>
+                            <div class="user-unit" style="margin-top: 5px;">
+                                <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 5px;" onclick="event.stopPropagation();">
+                                    <input type="checkbox" class="archive-permission" data-id="${user.id}" ${permissionCheckbox} onchange="toggleArchivePermission(${user.id}, this.checked)">
+                                    دسترسی به بایگانی همه کاربران
+                                </label>
+                                <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 5px; margin-top: 3px;" onclick="event.stopPropagation();">
+                                    <input type="checkbox" class="unit-stats-permission" data-id="${user.id}" ${unitStatsCheckbox} onchange="toggleUnitStatsPermission(${user.id}, this.checked)">
+                                    دسترسی به آمار کاربران واحد خود
+                                </label>
+                            </div>
+                        </div>
+                        <div onclick="event.stopPropagation();">
+                            <button class="action-btn edit-btn" onclick="editUser(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.fullname)}', '${escapeHtml(user.unit_name)}', ${user.require_doc_date}, ${user.can_view_unit_stats})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteUser(${user.id})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <button class="action-btn edit-btn" onclick="editUser(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.fullname)}', '${escapeHtml(user.unit_name)}', ${user.require_doc_date})"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete-btn" onclick="deleteUser(${user.id})"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                </div>`;
+                `;
             }
+            
             container.innerHTML = html;
+        } else {
+            container.innerHTML = '<div class="empty-state">هیچ کاربری یافت نشد</div>';
         }
-    } catch(e) { console.error(e); }
+    } catch(e) {
+        console.error(e);
+        container.innerHTML = '<div class="empty-state">خطا در دریافت اطلاعات</div>';
+    }
 }
 
 function loadCompaniesList() {
@@ -3477,45 +5798,6 @@ function loadCompaniesList() {
         });
 }
 
-// ========== رفرش خودکار (Polling) ==========
-let refreshInterval = null;
-
-function startAutoRefresh() {
-    if (refreshInterval) clearInterval(refreshInterval);
-    
-    refreshInterval = setInterval(function() {
-        // فقط در صورتی که کاربر در بخش آمار کاربران باشد
-        const statsContent = document.getElementById('statsContent');
-        if (statsContent && statsContent.style.display !== 'none') {
-            if (typeof loadAdminUsersStats === 'function') {
-                loadAdminUsersStats();
-            }
-        }
-        
-        // اگر در بخش مدیریت کاربران است
-        const usersContent = document.getElementById('usersContent');
-        if (usersContent && usersContent.style.display !== 'none') {
-            if (typeof loadUsersList === 'function') {
-                loadUsersList();
-            }
-        }
-    }, 5000); // هر 5 ثانیه
-}
-
-function stopAutoRefresh() {
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-    }
-}
-
-// شروع رفرش خودکار
-startAutoRefresh();
-
-// توقف رفرش هنگام بسته شدن صفحه (اختیاری)
-window.addEventListener('beforeunload', function() {
-    stopAutoRefresh();
-});
 
 function showAddUserModal() {
     document.getElementById('userModalTitle').innerText = 'افزودن کاربر جدید';
@@ -3525,10 +5807,11 @@ function showAddUserModal() {
     document.getElementById('user_unit').value = '';
     document.getElementById('user_password').value = '';
     document.getElementById('user_require_date').checked = true;
+    document.getElementById('user_can_view_unit_stats').checked = false;
     document.getElementById('userModal').classList.add('active');
 }
 
-function editUser(id, username, fullname, unit, requireDate) {
+function editUser(id, username, fullname, unit, requireDate, canViewUnitStats) {
     document.getElementById('userModalTitle').innerText = 'ویرایش کاربر';
     document.getElementById('edit_user_id').value = id;
     document.getElementById('user_username').value = username;
@@ -3536,6 +5819,7 @@ function editUser(id, username, fullname, unit, requireDate) {
     document.getElementById('user_unit').value = unit;
     document.getElementById('user_password').value = '';
     document.getElementById('user_require_date').checked = requireDate == 1;
+    document.getElementById('user_can_view_unit_stats').checked = canViewUnitStats == 1;
     document.getElementById('userModal').classList.add('active');
 }
 
@@ -3546,11 +5830,31 @@ async function saveUser() {
     let unit = document.getElementById('user_unit').value.trim();
     let password = document.getElementById('user_password').value;
     let requireDate = document.getElementById('user_require_date').checked ? 1 : 0;
+    let canViewUnitStats = document.getElementById('user_can_view_unit_stats').checked ? 1 : 0;
+    
     if (!username || !fullname || !unit) { showToast('تمامی فیلدها الزامی است', true); return; }
+    
     let url = id ? `${apiUrl}?action=update_user` : `${apiUrl}?action=add_user`;
-    let body = id ? { id, username, fullname, unit_name: unit, require_doc_date: requireDate, password } : { username, fullname, unit_name: unit, require_doc_date: requireDate, password };
+    let body = id ? { 
+        id, 
+        username, 
+        fullname, 
+        unit_name: unit, 
+        require_doc_date: requireDate, 
+        can_view_unit_stats: canViewUnitStats,
+        password 
+    } : { 
+        username, 
+        fullname, 
+        unit_name: unit, 
+        require_doc_date: requireDate, 
+        can_view_unit_stats: canViewUnitStats,
+        password 
+    };
+    
     if (!id && !password) { showToast('رمز عبور الزامی است', true); return; }
     if (id && !password) delete body.password;
+    
     let res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     let result = await res.json();
     if (result.success) { showToast(id ? 'ویرایش شد' : 'کاربر اضافه شد'); closeUserModal(); loadUsersList(); }
@@ -3577,6 +5881,33 @@ async function toggleArchivePermission(userId, isChecked) {
         let result = await res.json();
         if (result.success) {
             showToast('✅ دسترسی با موفقیت به‌روز شد');
+        } else {
+            showToast('❌ خطا: ' + (result.error || 'مشخص نیست'), true);
+        }
+    } catch(e) {
+        console.error(e);
+        showToast('❌ خطا در ارتباط با سرور', true);
+    }
+}
+
+// ========== تغییر دسترسی آمار کاربران واحد ==========
+async function toggleUnitStatsPermission(userId, isChecked) {
+    try {
+        let res = await fetch(`${apiUrl}?action=toggle_unit_stats_permission`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                user_id: userId, 
+                can_view_unit_stats: isChecked ? 1 : 0 
+            })
+        });
+        
+        let result = await res.json();
+        
+        if (result.success) {
+            showToast('✅ دسترسی با موفقیت به‌روز شد');
+            // به‌روزرسانی لیست کاربران بدون رفرش
+            loadUsersList();
         } else {
             showToast('❌ خطا: ' + (result.error || 'مشخص نیست'), true);
         }
@@ -3637,12 +5968,10 @@ window.openEditModal = function(id, number, date, description, companyId) {
     if (editNumber) editNumber.value = number;
     if (editDate) editDate.value = (date === '-' ? '' : date);
     
-    // ✅ اگر companyId معتبر نیست، مقدار 0 نده
     if (editCompany) {
         if (companyId && companyId > 0) {
             editCompany.value = companyId;
         } else {
-            // اگر companyId معتبر نبود، اولین شرکت فعال را انتخاب کن
             let options = editCompany.options;
             for (let i = 0; i < options.length; i++) {
                 if (options[i].value > 0) {
@@ -3656,55 +5985,45 @@ window.openEditModal = function(id, number, date, description, companyId) {
     let modal = document.getElementById('editModal');
     if (modal) modal.classList.add('active');
 }
-
 window.closeEditModal = function() { 
     document.getElementById('editModal').classList.remove('active'); 
 }
 
+// ========== ذخیره ویرایش ==========
 window.saveEdit = async function() {
-    let id = document.getElementById('edit_id').value;
-    let number = document.getElementById('edit_number').value.trim();
-    let date = document.getElementById('edit_date').value.trim();
-    let companyId = document.getElementById('edit_company_id').value; // ← اضافه شد
+    let id = document.getElementById('edit_id')?.value || '';
+    let number = document.getElementById('edit_number')?.value.trim() || '';
+    let date = document.getElementById('edit_date')?.value.trim() || '';
     
     if (!id) { showToast('شناسه سند یافت نشد', true); return; }
     if (!number) { showToast('شماره سند الزامی است', true); return; }
     
-    // اگر companyId 0 یا خالی بود، null ارسال کن
-    if (!companyId || companyId == 0) {
-        companyId = null;
-    }
+    let res = await fetch(`${apiUrl}?action=update_document`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, doc_number: number, doc_date: date || '-' })
+    });
+    let result = await res.json();
     
-    try {
-        let res = await fetch(`${apiUrl}?action=update_document`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: id,
-                doc_number: number,
-                doc_date: date || '-',
-                company_id: companyId // ← اضافه شد
-            })
-        });
-        
-        let result = await res.json();
-        if (result.success) {
-            showToast('ویرایش شد', false);
-            closeEditModal();
-            const currentDate = document.getElementById('delivery_date')?.value || '';
-            if (currentDate) {
-                loadDocumentsForDeliveryDate(currentDate);
-            }
-            if (typeof loadUserStats === 'function') {
-                loadUserStats();
-            }
-        } else {
-            showToast(result.error || 'خطا در ویرایش', true);
+    if (result.success) {
+        showToast('ویرایش شد');
+        closeEditModal();
+        const currentDate = document.getElementById('delivery_date')?.value || '';
+        if (currentDate && typeof loadDocumentsForDeliveryDate === 'function') {
+            loadDocumentsForDeliveryDate(currentDate, false);
+        } else if (typeof autoSearchDocuments === 'function') {
+            autoSearchDocuments();
         }
-    } catch(e) {
-        console.error(e);
-        showToast('خطا در ارتباط با سرور', true);
+        if (typeof loadUserStats === 'function') {
+            loadUserStats();
+        }
+    } else {
+        showToast(result.error || 'خطا در ویرایش', true);
     }
+}
+
+window.closeEditModal = function() { 
+    document.getElementById('editModal').classList.remove('active'); 
 }
 
 window.deleteDocument = async function(id) {
@@ -3718,14 +6037,14 @@ loadUsersList();
 
 <?php endif; ?>
 
-// ========== تابع جستجوی آنی برای کاربر عادی ==========
 function autoSearchDocuments() {
     const doc_number = document.getElementById('filter_number')?.value || '';
     const doc_date = document.getElementById('filter_date')?.value || '';
     const company_id = document.getElementById('filter_company')?.value || '';
     const delivery_date = document.getElementById('filter_delivery')?.value || '';
     
-    fetch(`api/ajax.php?action=get_documents&doc_number=${encodeURIComponent(doc_number)}&doc_date=${encodeURIComponent(doc_date)}&company_id=${encodeURIComponent(company_id)}&delivery_date=${encodeURIComponent(delivery_date)}`)
+    // ✅ ارسال include_unit=true برای نمایش اسناد هم‌واحد
+    fetch(`api/ajax.php?action=get_documents&doc_number=${encodeURIComponent(doc_number)}&doc_date=${encodeURIComponent(doc_date)}&company_id=${encodeURIComponent(company_id)}&delivery_date=${encodeURIComponent(delivery_date)}&include_unit=true`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -3734,12 +6053,83 @@ function autoSearchDocuments() {
                 if (data.groups && data.groups.length > 0) {
                     let html = '';
                     data.groups.forEach(group => {
-                        html += `<div class="doc-group"><div class="group-title"><span>${group.delivery_date}</span><span>${group.count} سند</span><button class="print-btn" onclick="viewArchiveDocument('${group.delivery_date}')">مشاهده</button></div>`;
-                        html += `<table class="data-table"><thead><tr><th>#</th><th>شماره سند</th><th>تاریخ سند</th><th>شرکت</th></tr></thead><tbody>`;
-                        group.documents.forEach((doc, idx) => {
-                            html += `<tr><td>${idx+1}</td><td>${doc.doc_number}</td><td>${doc.doc_date}</td><td>${doc.company_name}</td></tr>`;
+                        // ===== تشخیص سال کم‌تعداد (فقط کوچکترین سال) =====
+                        const yearCounts = {};
+                        const docYears = {};
+                        
+                        group.documents.forEach(doc => {
+                            const docDate = doc.doc_date;
+                            if (docDate && docDate !== '-' && docDate !== '') {
+                                const year = docDate.substring(0, 4);
+                                docYears[doc.id] = year;
+                                
+                                if (!yearCounts[year]) {
+                                    yearCounts[year] = 0;
+                                }
+                                yearCounts[year]++;
+                            }
                         });
-                        html += `</tbody></table></div>`;
+                        
+                        // پیدا کردن کمترین تعداد
+                        let minCount = Infinity;
+                        for (const [year, count] of Object.entries(yearCounts)) {
+                            if (count < minCount) {
+                                minCount = count;
+                            }
+                        }
+                        
+                        // پیدا کردن کوچکترین سالی که کمترین تعداد رو داره
+                        let minYear = null;
+                        for (const [year, count] of Object.entries(yearCounts)) {
+                            if (count === minCount) {
+                                if (minYear === null || parseInt(year) < parseInt(minYear)) {
+                                    minYear = year;
+                                }
+                            }
+                        }
+                        
+                        const hasMultipleYears = Object.keys(yearCounts).length > 1;
+                        // ===== پایان تشخیص سال =====
+                        
+                        // ✅ دکمه «مشاهده» فقط وقتی نمایش داده شود که تمام اسناد این گروه
+                        // متعلق به خود کاربر باشد؛ برای گروه‌هایی که شامل سند هم‌واحدها هستند
+                        // اصلاً رندر نمی‌شود (نه فقط مخفی/غیرفعال با CSS).
+                        const canViewGroup = group.group_owned_by_user === true;
+                        const viewBtnHtml = canViewGroup
+                            ? `<button class="print-btn" onclick="viewArchiveDocument('${group.delivery_date}')">مشاهده</button>`
+                            : '';
+
+                        html += `<div class="doc-group">
+                            <div class="group-title">
+                                <span>${group.delivery_date}</span>
+                                <span>${group.count} سند</span>
+                                ${viewBtnHtml}
+                            </div>
+                            <table class="data-table">
+                                <thead><tr><th>#</th><th>کاربر</th><th>شماره سند ثابت</th><th>تاریخ سند</th><th>شرکت</th></tr></thead>
+                                <tbody>`;
+                        
+                        group.documents.forEach((doc, idx) => {
+                            let docDate = doc.doc_date === '-' ? '—' : escapeHtml(doc.doc_date);
+                            let docYear = doc.doc_date && doc.doc_date !== '-' ? doc.doc_date.substring(0, 4) : '';
+                            
+                            // ===== هایلایت عدد سال (فقط سال minYear) =====
+                            let dateCellContent = docDate;
+                            if (hasMultipleYears && minYear !== null && docYear === minYear) {
+                                dateCellContent = docDate.replace(docYear, `<span class="year-highlight">${docYear}</span>`);
+                            }
+                            // ===== پایان هایلایت =====
+                            
+                            html += `<tr>
+                                <td>${idx+1}</td>
+                                <td>${escapeHtml(doc.user_name || 'نامشخص')}</td>
+                                <td>${escapeHtml(doc.doc_number)}</td>
+                                <td>${dateCellContent}</td>
+                                <td>${escapeHtml(doc.company_name)}</td>
+                            </tr>`;
+                        });
+                        html += `</tbody></table>`;
+                        html += `</div>`;
                     });
                     container.innerHTML = html;
                 } else {
@@ -3753,11 +6143,7 @@ function viewArchiveDocument(deliveryDate) {
     window.open(`print.php?delivery_date=${encodeURIComponent(deliveryDate)}`, '_blank');
 }
 
-// اتصال رویدادها و اجرای اولیه - یک بار
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM آماده است');
-    
-    // ========== فیلدهای جستجوی کاربر عادی ==========
     const filterNumber = document.getElementById('filter_number');
     const filterDate = document.getElementById('filter_date');
     const filterCompany = document.getElementById('filter_company');
@@ -3768,29 +6154,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (filterCompany) filterCompany.addEventListener('change', autoSearchDocuments);
     if (filterDelivery) filterDelivery.addEventListener('input', autoSearchDocuments);
     
-    // اجرای اولیه برای نمایش همه اسناد
     autoSearchDocuments();
     
-    // بارگذاری آمار کاربر
     if (document.getElementById('userStatsContainer')) {
         loadUserStats();
     }
     
-    // ========== دکمه‌های + و - برای تغییر تاریخ تحویل ==========
     const dateMinus = document.getElementById('dateMinus');
     const datePlus = document.getElementById('datePlus');
     const deliveryDateInput = document.getElementById('delivery_date');
     
     if (dateMinus && datePlus && deliveryDateInput) {
-        dateMinus.addEventListener('click', function() { changeDeliveryDate(-1); });
-        datePlus.addEventListener('click', function() { changeDeliveryDate(1); });
+        dateMinus.addEventListener('click', function() { addDaysToDelivery(-1); });
+        datePlus.addEventListener('click', function() { addDaysToDelivery(1); });
         
         if (typeof loadDocumentsForDeliveryDate === 'function') {
             loadDocumentsForDeliveryDate(deliveryDateInput.value);
         }
     }
     
-    // ========== توابع تاریخ شمسی (فقط یک بار تعریف شوند) ==========
     function getDaysInMonthJalali(year, month) {
         if (month >= 1 && month <= 6) return 31;
         if (month >= 7 && month <= 11) return 30;
@@ -3832,11 +6214,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDeliveryDate();
     let initialDate = deliveryYear + '/' + (deliveryMonth < 10 ? '0'+deliveryMonth : deliveryMonth) + '/' + (deliveryDay < 10 ? '0'+deliveryDay : deliveryDay);
     checkLockStatus(initialDate);
-
-    let minusBtn = document.getElementById('dateMinus');
-    let plusBtn = document.getElementById('datePlus');
-    if (minusBtn) minusBtn.addEventListener('click', function() { addDaysToDelivery(-1); });
-    if (plusBtn) plusBtn.addEventListener('click', function() { addDaysToDelivery(1); });
     
     const descBtn = document.getElementById('submitDescriptionBtn');
     if (descBtn) { 
@@ -3861,127 +6238,47 @@ document.addEventListener('DOMContentLoaded', function() {
         companyNumberInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('doc_number').focus(); } });
     }
     
-    // ========== بارگذاری بایگانی کاربر ==========
     if (document.getElementById('userArchiveList')) {
         loadUserArchiveList();
     }
     
-    // ========== جستجوی ادمین ==========
     if (document.getElementById('adminFiltersPanel')) {
         if (typeof bindAdminSearchEvents === 'function') bindAdminSearchEvents();
         if (typeof adminAutoSearch === 'function') adminAutoSearch();
     }
     
-    // ========== بارگذاری لیست شرکت‌ها برای ادمین ==========
     if (document.getElementById('companiesList')) {
         if (typeof loadCompaniesList === 'function') loadCompaniesList();
     }
     
-    // ========== بارگذاری آمار کاربران برای ادمین ==========
     if (document.getElementById('adminUsersStatsList')) {
         if (typeof loadAdminUsersStats === 'function') loadAdminUsersStats();
     }
     
-    // ========== بارگذاری بایگانی ادمین ==========
     if (document.getElementById('adminArchiveList')) {
         if (typeof loadAdminArchiveList === 'function') loadAdminArchiveList();
     }
     
-    // ========== بارگذاری گزارش برهان ==========
     if (document.getElementById('reportsContent')) {
         loadReportFilters();
-        loadFileUpdateTime(); // ✅ اضافه شد
+        loadFileUpdateTime();
     }
     
-    // ========== شروع بررسی خودکار گزارش برهان در پس‌زمینه ==========
+    // ✅ پایش خودکار فایل CSV گزارش برهان (جایگزین fetch سنگین هر ۵ دقیقه‌ی قبلی).
+    // این پایشگر همین الان شروع می‌شود و تا پایان نشست کاربر در پس‌زمینه فعال
+    // می‌ماند: هر ۱۵ ثانیه فقط زمان تغییر فایل (filemtime) را بررسی می‌کند - نه
+    // کل فایل CSV را - و فقط زمانی که واقعاً فایل عوض شده باشد، داده‌های تازه را
+    // می‌گیرد. اگر کاربر همان لحظه در بخش گزارش باشد، جدول/فیلترها/آمار بدون نیاز
+    // به رفرش صفحه به‌روز می‌شوند و یک پیام کوتاه نمایش داده می‌شود؛ در غیر این
+    // صورت فقط نشانگر اعلان روی منو به‌روز می‌گردد.
     if (document.querySelector('.menu-item[data-section="reports"]')) {
-        // اجرای اولیه
-        fetch('api/ajax.php?action=load_report_data')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    // به‌روزرسانی داده‌ها (اگر کاربر در صفحه گزارش باشد)
-                    const reportsContent = document.getElementById('reportsContent');
-                    if (reportsContent && reportsContent.style.display !== 'none') {
-                        reportData = data.data;
-                        populateReportFilters(reportData);
-                        applyReportFilters();
-                        // ✅ بارگذاری آمار لحظه‌ای
-                        if (typeof loadReportStats === 'function') {
-                            loadReportStats();
-                        }
-                    }
-                    
-                    // نمایش اعلان روی منو
-                    const menuItem = document.querySelector('.menu-item[data-section="reports"]');
-                    if (!menuItem) return;
-                    
-                    const oldDot = menuItem.querySelector('.report-notification');
-                    if (oldDot) oldDot.remove();
-                    
-                    if (data.new_count > 0) {
-                        const dot = document.createElement('span');
-                        dot.className = 'report-notification';
-                        dot.style.cssText = `
-                            display: inline-block;
-                            width: 10px;
-                            height: 10px;
-                            border-radius: 50%;
-                            background: #ef4444;
-                            margin-right: 6px;
-                            animation: pulse-dot 1.5s infinite;
-                        `;
-                        menuItem.prepend(dot);
-                    }
-                }
-            })
-            .catch(err => console.error(err));
-        
-        // اجرای هر ۵ دقیقه
-        setInterval(function() {
-            fetch('api/ajax.php?action=load_report_data')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        // به‌روزرسانی داده‌ها (اگر کاربر در صفحه گزارش باشد)
-                        const reportsContent = document.getElementById('reportsContent');
-                        if (reportsContent && reportsContent.style.display !== 'none') {
-                            reportData = data.data;
-                            populateReportFilters(reportData);
-                            applyReportFilters();
-                            // ✅ بارگذاری آمار لحظه‌ای
-                            if (typeof loadReportStats === 'function') {
-                                loadReportStats();
-                            }
-                        }
-                        
-                        // نمایش اعلان روی منو
-                        const menuItem = document.querySelector('.menu-item[data-section="reports"]');
-                        if (!menuItem) return;
-                        
-                        const oldDot = menuItem.querySelector('.report-notification');
-                        if (oldDot) oldDot.remove();
-                        
-                        if (data.new_count > 0) {
-                            const dot = document.createElement('span');
-                            dot.className = 'report-notification';
-                            dot.style.cssText = `
-                                display: inline-block;
-                                width: 10px;
-                                height: 10px;
-                                border-radius: 50%;
-                                background: #ef4444;
-                                margin-right: 6px;
-                                animation: pulse-dot 1.5s infinite;
-                            `;
-                            menuItem.prepend(dot);
-                        }
-                    }
-                })
-                .catch(err => console.error(err));
-        }, 5 * 60 * 1000);
+        startReportFileWatcher();
     }
 });
 </script>
+
+<!-- ===== جاوااسکریپت مدیریت دیتابیس ===== -->
+<script src="assets/js/db_manager.js"></script>
+
 </body>
 </html>

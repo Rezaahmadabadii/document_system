@@ -65,30 +65,86 @@ if (count($documents) == 0) {
     die("هیچ سندی برای این کاربر در تاریخ تحویل '$delivery_date' یافت نشد");
 }
 
-// دریافت اطلاعات کاربر
-$fullname = '';
-$unit_name = '';
-$stmt = $db->prepare("SELECT fullname, unit_name FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-$userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-if ($userInfo) {
-    $fullname = $userInfo['fullname'];
-    $unit_name = $userInfo['unit_name'];
+// ========== تشخیص سال‌ها برای هایلایت ==========
+$yearCounts = [];
+foreach ($documents as $doc) {
+    $docDate = $doc['doc_date'];
+    if ($docDate && $docDate !== '-') {
+        $year = (string) substr($docDate, 0, 4);
+        if (!isset($yearCounts[$year])) {
+            $yearCounts[$year] = 0;
+        }
+        $yearCounts[$year]++;
+    }
 }
 
-$is_admin = $_SESSION['is_admin'] ?? 0;
+$years = array_keys($yearCounts);
+$hasMultipleYears = count($years) > 1;
+$minYear = null;
+$secondMinYear = null;
 
-// دریافت اسناد کاربر بر اساس تاریخ تحویل
-$stmt = $db->prepare("SELECT d.*, c.name as company_name 
-                      FROM documents d 
-                      JOIN companies c ON d.company_id = c.id 
-                      WHERE d.user_id = ? AND d.delivery_date = ? 
-                      ORDER BY d.id ASC");
-$stmt->execute([$user_id, $delivery_date]);
-$documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+if (count($years) >= 3) {
+    // ✅ پیدا کردن سال با کمترین تعداد (و کوچک‌ترین عدد در صورت تساوی)
+    $sortedYears = [];
+    foreach ($yearCounts as $year => $count) {
+        $sortedYears[] = ['year' => $year, 'count' => $count];
+    }
+    
+    // مرتب‌سازی: اول بر اساس تعداد (صعودی)، سپس بر اساس سال عددی (صعودی)
+    usort($sortedYears, function($a, $b) {
+        if ($a['count'] != $b['count']) {
+            return $a['count'] - $b['count'];
+        }
+        return (int)$a['year'] - (int)$b['year'];
+    });
+    
+    $minYear = $sortedYears[0]['year'];
+    $secondMinYear = $sortedYears[1]['year'] ?? null;
+    
+} elseif (count($years) === 2) {
+    $counts = array_values($yearCounts);
+    $yearKeys = array_keys($yearCounts);
+    if ($counts[0] < $counts[1]) {
+        $minYear = $yearKeys[0];
+    } elseif ($counts[0] > $counts[1]) {
+        $minYear = $yearKeys[1];
+    } else {
+        $minYear = min($yearKeys);
+    }
+    $secondMinYear = null;
+    
+} elseif (count($years) === 1) {
+    $minYear = null;
+    $secondMinYear = null;
+}
+// ========== پایان تشخیص سال ==========
 
-if (count($documents) == 0) {
-    die("هیچ سندی برای این کاربر در تاریخ تحویل '$delivery_date' یافت نشد");
+function highlightYear($date, $minYear, $secondMinYearOrHasMultiple = null) {
+    if ($minYear === null || !$date || $date === '-') {
+        return $date;
+    }
+    
+    // اگر پارامتر سوم بولین (true/false) بود، یعنی hasMultipleYears هست
+    $isMultipleYears = is_bool($secondMinYearOrHasMultiple) ? $secondMinYearOrHasMultiple : ($secondMinYearOrHasMultiple !== null);
+    $secondMinYear = is_bool($secondMinYearOrHasMultiple) ? null : $secondMinYearOrHasMultiple;
+    
+    $year = (string) substr($date, 0, 4);
+    
+    // صورتی فقط در ۳ سال یا بیشتر (secondMinYear !== null)
+    if ($secondMinYear !== null && $year === (string) $minYear) {
+        return '<span class="year-highlight year-pink">' . $year . '</span>' . substr($date, 4);
+    }
+    
+    // فسفری در ۲ سال یا سال دوم در ۳ سال
+    if ($year === (string) $minYear) {
+        return '<span class="year-highlight year-green">' . $year . '</span>' . substr($date, 4);
+    }
+    
+    if ($secondMinYear !== null && $year === (string) $secondMinYear) {
+        return '<span class="year-highlight year-green">' . $year . '</span>' . substr($date, 4);
+    }
+    
+    return $date;
 }
 
 // محاسبه آمار هر شرکت
@@ -169,6 +225,7 @@ $admin_approved = $stmt->fetchColumn();
 $has_user_approval = file_exists($user_signature_file) && !empty($user_approved);
 $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approved);
 // =========================================
+
 ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
@@ -213,10 +270,66 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
         .data-table td { padding: 8px 6px; border: 1px solid #e2e8f0; text-align: center; font-size: 0.7rem; color: #1a2c3e; background: #fff; }
         .data-table tbody tr:nth-child(even) td { background: #f0f9ff; }
         .data-table tbody tr:nth-child(odd) td { background: #fff; }
-        .descriptions-section { margin-top: 25px; page-break-inside: avoid; break-inside: avoid; }
-        .descriptions-title { background: #38bdf8; color: white; padding: 6px 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .desc-item { background: #f8fafc; margin-bottom: 6px; padding: 8px 12px; border-radius: 8px; border-right: 3px solid #38bdf8; }
-        .desc-text { font-size: 0.7rem; color: #1a2c3e; line-height: 1.5; }
+        
+        /* ===== هایلایت قرمز (کوچک‌ترین سال در ۳ سال یا بیشتر) ===== */
+        .year-highlight.year-pink {
+            background-color: #fca5a5 !important;
+            color: #000000 !important;
+            padding: 0px 3px !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
+            display: inline !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* ===== هایلایت فسفری (سال دوم یا کوچک‌ترین در ۲ سال) ===== */
+        .year-highlight.year-green {
+            background-color: #00ff88 !important;
+            color: #000000 !important;
+            padding: 0px 3px !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
+            display: inline !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* ===== برای پرینت ===== */
+        @media print {
+            .year-highlight.year-pink {
+                background-color: #fca5a5 !important;
+                color: #000000 !important;
+                padding: 0px 3px !important;
+                border-radius: 12px !important;
+                font-weight: 600 !important;
+                display: inline !important;
+                border: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .year-highlight.year-green {
+                background-color: #00ff88 !important;
+                color: #000000 !important;
+                padding: 0px 3px !important;
+                border-radius: 12px !important;
+                font-weight: 600 !important;
+                display: inline !important;
+                border: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+        
+        .descriptions-section { margin-top: 25px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; page-break-inside: avoid; break-inside: avoid; }
+        .desc-title { font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .desc-title i { color: #667eea; }
+        .desc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .desc-item { background: #fffbeb; padding: 10px 14px; border-radius: 8px; border: 1px solid #fde68a; font-size: 0.65rem; color: #78350f; word-break: break-word; line-height: 1.6; display: flex; align-items: flex-start; gap: 8px; }
+        .desc-item .desc-number { font-weight: 700; color: #667eea; background: #eef2ff; padding: 1px 10px; border-radius: 20px; white-space: nowrap; font-size: 0.6rem; flex-shrink: 0; }
+        .desc-item .desc-text { flex: 1; color: #475569; }
+        
         .report-section { margin: 25px 0 15px; padding: 12px; background: #f0f9ff; border-radius: 10px; border-right: 3px solid #38bdf8; }
         .report-title { font-weight: 700; margin-bottom: 8px; font-size: 0.75rem; color: #0284c7; }
         .report-content { line-height: 1.6; font-size: 0.7rem; color: #1a2c3e; }
@@ -232,6 +345,11 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
         .btn-close { background: #64748b; color: white; margin-right: 10px; }
         .doc-count-badge { background: #fef08a; color: #854d0e; font-weight: bold; font-size: 0.9rem; padding: 3px 10px; border-radius: 20px; display: inline-block; }
         .pending-text { font-size: 0.65rem; color: #94a3b8; }
+        
+        @media (max-width: 768px) { .desc-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .desc-grid { grid-template-columns: 1fr; } }
+        
+        @media print { .descriptions-section { margin-top: 25px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; } .desc-item { background: #fffbeb; border: 1px solid #fde68a; } }
         
         /* ===== مودال ===== */
         .modal-overlay {
@@ -399,7 +517,7 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
         <div class="print-container <?php echo ($page_index > 0) ? 'page-break' : ''; ?>">
             <div class="header">
                 <h2><i class="fas fa-file-alt"></i> لیست تحویل اسناد</h2>
-                <p>بایگانی مرکزی <?php if($total_pages > 1) echo '- صفحه <span style="color:#ef4444; font-weight:bold;">' . $current_page_num . ' از ' . $total_pages . '</span>'; ?></p>
+                <p>بایگانی واحد مالی <?php if($total_pages > 1) echo '- صفحه <span style="color:#ef4444; font-weight:bold;">' . $current_page_num . ' از ' . $total_pages . '</span>'; ?></p>
             </div>
             <div class="info-row">
                 <div><strong><i class="fas fa-user"></i> تحویل‌دهنده:</strong> <?php echo htmlspecialchars($fullname); ?></div>
@@ -437,17 +555,24 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>شماره سند</th>
+                            <th>شماره سند ثابت</th>
                             <th>تاریخ سند</th>
                             <th>شرکت</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach($page['docs'] as $index => $doc): ?>
+                        <?php foreach($page['docs'] as $index => $doc): 
+                            $docDate = $doc['doc_date'];
+                            $displayDate = ($docDate && $docDate !== '-') ? $docDate : '---';
+                            
+                            // ===== هایلایت عدد سال =====
+                            $displayDate = highlightYear($displayDate, $minYear, $secondMinYear);
+                            // ← اینجا htmlspecialchars حذف شده
+                        ?>
                         <tr>
                             <td><?php echo $page['start_row'] + $index; ?></td>
                             <td><?php echo htmlspecialchars($doc['doc_number']); ?></td>
-                            <td><?php echo $doc['doc_date'] == '-' ? '---' : htmlspecialchars($doc['doc_date']); ?></td>
+                            <td><?php echo $displayDate; ?></td>
                             <td><?php echo htmlspecialchars($doc['company_name']); ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -464,17 +589,24 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>شماره سند</th>
+                                <th>شماره سند ثابت</th>
                                 <th>تاریخ سند</th>
                                 <th>شرکت</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach($page['left'] as $index => $doc): ?>
+                            <?php foreach($page['left'] as $index => $doc): 
+                                $docDate = $doc['doc_date'];
+                                $displayDate = ($docDate && $docDate !== '-') ? $docDate : '---';
+                                
+                                // ===== هایلایت عدد سال =====
+                                $displayDate = highlightYear($displayDate, $minYear, $hasMultipleYears);
+                                // ← اینجا htmlspecialchars حذف شده
+                            ?>
                             <tr>
                                 <td><?php echo $page['start_row'] + $index; ?></td>
                                 <td><?php echo htmlspecialchars($doc['doc_number']); ?></td>
-                                <td><?php echo $doc['doc_date'] == '-' ? '---' : htmlspecialchars($doc['doc_date']); ?></td>
+                                <td><?php echo $displayDate; ?></td>
                                 <td><?php echo htmlspecialchars($doc['company_name']); ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -489,17 +621,24 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>شماره سند</th>
+                                <th>شماره سند ثابت</th>
                                 <th>تاریخ سند</th>
                                 <th>شرکت</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach($page['right'] as $index => $doc): ?>
+                            <?php foreach($page['right'] as $index => $doc): 
+                                $docDate = $doc['doc_date'];
+                                $displayDate = ($docDate && $docDate !== '-') ? $docDate : '---';
+                                
+                                // ===== هایلایت عدد سال =====
+                                $displayDate = highlightYear($displayDate, $minYear, $hasMultipleYears);
+                                // ← اینجا htmlspecialchars حذف شده
+                            ?>
                             <tr>
                                 <td><?php echo $page['start_row'] + 20 + $index; ?></td>
                                 <td><?php echo htmlspecialchars($doc['doc_number']); ?></td>
-                                <td><?php echo $doc['doc_date'] == '-' ? '---' : htmlspecialchars($doc['doc_date']); ?></td>
+                                <td><?php echo $displayDate; ?></td>
                                 <td><?php echo htmlspecialchars($doc['company_name']); ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -512,19 +651,32 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
             
             <?php if($page_index == $total_pages - 1): ?>
             
-            <?php if(!empty($descriptions)): ?>
+            <?php if(!empty($descriptions)): 
+                // تعیین تعداد ستون‌ها بر اساس طول متن
+                $cols = 4;
+                $maxLength = 0;
+                foreach($descriptions as $desc) {
+                    $len = mb_strlen($desc['description']);
+                    if($len > $maxLength) $maxLength = $len;
+                }
+                if($maxLength > 80) $cols = 2;
+                else if($maxLength > 50) $cols = 3;
+            ?>
             <div class="descriptions-section">
-                <div class="descriptions-title">
-                    <i class="fas fa-align-left"></i> توضیحات اسناد
+                <div class="desc-title">
+                    <i class="fas fa-comment-dots"></i> توضیحات اسناد
+                    <span style="font-size:0.6rem; font-weight:400; color:#94a3b8; margin-right:auto;"><?php echo count($descriptions); ?> توضیح</span>
                 </div>
-                <?php foreach($descriptions as $desc): ?>
-                <div class="desc-item">
-                    <div class="desc-text">
-                        <strong><?php echo htmlspecialchars($desc['doc_number']); ?>:</strong><br>
-                        <?php echo nl2br(htmlspecialchars($desc['description'])); ?>
+                <div class="desc-grid" style="grid-template-columns: repeat(<?php echo $cols; ?>, 1fr);">
+                    <?php foreach($descriptions as $desc): ?>
+                    <div class="desc-item">
+                        <span class="desc-number"><?php echo htmlspecialchars($desc['doc_number']); ?></span>
+                        <span class="desc-text">
+                            <?php echo nl2br(htmlspecialchars($desc['description'])); ?>
+                        </span>
                     </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
             </div>
             <?php endif; ?>
             
@@ -608,7 +760,6 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
             btnNew.innerHTML = '<i class="fas fa-pen"></i> ترسیم امضای جدید';
             btnExisting.innerHTML = '<i class="fas fa-check"></i> ثبت امضای قبلی';
             btnNew.onclick = function() {
-                // تنظیم session از طریق AJAX
                 fetch('api/ajax.php?action=set_from_print')
                     .then(() => {
                         window.location.href = 'signature_upload.php?delivery_date=' + deliveryDate;
@@ -645,17 +796,14 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
     // ========== تابع دانلود عکس ==========
     async function downloadAllPagesAsImage() {
         const btn = document.getElementById('downloadImageBtn');
-        const btnText = document.getElementById('downloadBtnText');
         
         if (!btn) {
             console.error('دکمه دانلود عکس پیدا نشد');
             return;
         }
         
-        const originalText = btnText ? btnText.innerHTML : 'دانلود عکس';
         const originalBtnHTML = btn.innerHTML;
         
-        // تغییر دکمه به حالت در حال بارگذاری
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
         btn.disabled = true;
         
@@ -753,13 +901,11 @@ $has_admin_approval = file_exists($admin_signature_file) && !empty($admin_approv
 
     // ========== اتصال رویدادها (بعد از لود صفحه) ==========
     document.addEventListener('DOMContentLoaded', function() {
-        // دکمه دانلود عکس
         const imageBtn = document.getElementById('downloadImageBtn');
         if (imageBtn) {
             imageBtn.addEventListener('click', downloadAllPagesAsImage);
         }
         
-        // کلیک خارج از مودال برای بستن
         const modal = document.getElementById('signatureModal');
         if (modal) {
             modal.addEventListener('click', function(e) {

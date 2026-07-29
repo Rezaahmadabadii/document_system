@@ -1,0 +1,291 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?mso-application progid='Excel.Sheet'?>
+<Workbook xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns="urn:schemas-microsoft-com:office:spreadsheet">
+ <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
+  <Colors>
+   <Color>
+    <Index>1</Index>
+    <RGB>#f1f8fa</RGB>
+   </Color>
+   <Color>
+    <Index>2</Index>
+    <RGB>#ffffff</RGB>
+   </Color>
+   <Color>
+    <Index>3</Index>
+    <RGB>#000000</RGB>
+   </Color>
+   <Color>
+    <Index>4</Index>
+    <RGB>#566c73</RGB>
+   </Color>
+  </Colors>
+ </OfficeDocumentSettings>
+ <Styles>
+  <Style ss:ID="s1">
+   <ss:Font ss:FontName="Tahoma" ss:Size="8.25" ss:Bold="1" ss:Color="#566c73" />
+  </Style>
+  <Style ss:ID="s2">
+   <ss:Font ss:FontName="Tahoma" ss:Size="8.25" ss:Color="#000000" />
+  </Style>
+  <Style ss:ID="s3">
+   <ss:Interior ss:Color="#f1f8fa" ss:Pattern="Solid" />
+   <ss:Font ss:FontName="Tahoma" ss:Size="8.25" ss:Color="#000000" />
+  </Style>
+ </Styles>
+ <ss:Worksheet ss:Name="Branch">
+  <Table>
+   <Column ss:AutoFit="0" ss:Width="65.25" />
+   <Column ss:AutoFit="0" ss:Width="198" />
+   <Column ss:AutoFit="0" ss:Width="164.25" />
+   <Column ss:AutoFit="0" ss:Width="92.25" />
+   <Column ss:AutoFit="0" ss:Width="117.75" />
+   <Column ss:AutoFit="0" ss:Width="115.5" />
+   <Column ss:AutoFit="0" ss:Width="183" />
+   <Column ss:AutoFit="0" ss:Width="153.75" />
+   <Column ss:AutoFit="0" ss:Width="144.75" />
+   <Row>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">کد</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">عنوان</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">شرکت</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">نوع</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">نوع شعبه</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">شعبه اصلی</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">منطقه</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">تلفن</Data></Cell>
+    <Cell ss:StyleID="s1"><Data ss:Type="String">فاکس</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">شركت كيهان راه شرق (سهامي خاص)</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">شركت دنا بنيان بيرجند (سهامي خاص)</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">شركت قدرت ايمان كوير(سهامي خاص)</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">4</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">شركت بنا بام بيستون (سهامي خاص)</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">شركت برش كوه آريا پارت (سهامي خاص)</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">6</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">شعبه ششم</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">7</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">صولت پارس آمود</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">8</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">ماهان ستاره كوير</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">9</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">رايان سازه آذرخش</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مينو ساز گلستان</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">11</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">پايش مسير اقليم</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">12</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">امين راه ماژان</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">13</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">سامان ساختار هيراد</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">14</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">ارمان سپهر شريف</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">15</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">تفتان ره ساز پارس</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">16</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">احداث راه پاسارگاد</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">17</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">ساختار بناي هونام</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">18</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">تحكيم ابتكار هخامنش</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">19</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">كيهان ريل تهران</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s3"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">راه و ساختمان آناهيتا</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s3"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+    <Cell ss:StyleID="s3" />
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s2"><Data ss:Type="Number">21</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">شركت باراد معدن فلات شرق</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">.</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">مستقل</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="String">خصوصي</Data></Cell>
+    <Cell ss:StyleID="s2"><Data ss:Type="Boolean">0</Data></Cell>
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+    <Cell ss:StyleID="s2" />
+   </Row>
+  </Table>
+ </ss:Worksheet>
+</Workbook>

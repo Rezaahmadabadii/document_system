@@ -3,7 +3,7 @@ error_reporting(0);
 ini_set('display_errors', 0);
 ini_set('log_errors', 0);
 
-// ========== تنظیم از پرینت (بدون نیاز به لاگین) ==========
+// ========== تنظیم از پرینت ==========
 if (isset($_GET['action']) && $_GET['action'] == 'set_from_print') {
     session_name('doc_system');
     session_start();
@@ -12,8 +12,24 @@ if (isset($_GET['action']) && $_GET['action'] == 'set_from_print') {
     exit;
 }
 
+// ========== شروع سشن ==========
 session_name('doc_system');
 session_start();
+
+// ========== دریافت action ==========
+$action = $_GET['action'] ?? ''; // ✅ اینجا تعریف شود
+
+// ========== تست سشن ==========
+if ($action == 'test_session') {
+    echo json_encode([
+        'session_id' => session_id(),
+        'user_id' => $_SESSION['user_id'] ?? 'not set',
+        'is_admin' => $_SESSION['is_admin'] ?? 'not set',
+        'fullname' => $_SESSION['fullname'] ?? 'not set'
+    ]);
+    exit;
+}
+
 require_once '../config/database.php';
 require_once '../config/jdatetime.class.php';
 
@@ -30,23 +46,253 @@ function toPersianNumber($str) {
     return str_replace($english, $persian, $str);
 }
 
-// ✅ ========== دریافت واحد کاربر از فایل JSON ==========
+// ========== دریافت واحد کاربر از فایل JSON ==========
 function getUserUnit($username) {
     $file = __DIR__ . '/../config/user_units.json';
     if (file_exists($file)) {
         $content = file_get_contents($file);
         $data = json_decode($content, true);
         if (is_array($data)) {
-            // حذف اعداد انتهایی نام کاربر
             $clean_name = preg_replace('/[0-9]+$/', '', $username);
-            // ابتدا با نام پاک شده، سپس با نام اصلی
             return $data[$clean_name] ?? $data[$username] ?? 'سایر';
         }
     }
     return 'سایر';
 }
-// =================================
 
+// ========== دریافت اطلاعات کاربر جاری ==========
+if ($action == 'get_user_info') {
+    $user_id = $_SESSION['user_id'] ?? 0;
+    
+    if (empty($user_id)) {
+        echo json_encode(['success' => false, 'error' => 'User not logged in']);
+        exit;
+    }
+    
+    $stmt = $db->prepare("SELECT id, fullname, unit_name, can_view_unit_stats FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$user) {
+        echo json_encode(['success' => false, 'error' => 'User not found']);
+        exit;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'user_id' => $user['id'],
+        'fullname' => $user['fullname'],
+        'unit_name' => $user['unit_name'],
+        'can_view_unit_stats' => $user['can_view_unit_stats'] == 1
+    ]);
+    exit;
+}
+
+// ===== دریافت کاربران هم‌واحد =====
+if ($action == 'get_users_by_unit') {
+    $unit_name = isset($_GET['unit_name']) ? trim($_GET['unit_name']) : '';
+    
+    if (empty($unit_name)) {
+        echo json_encode(['success' => false, 'error' => 'واحد مشخص نشده است']);
+        exit;
+    }
+    
+    // فقط کاربر معمولی می‌تواند هم‌واحدهای خود را ببیند (ادمین نیازی ندارد)
+    if ($is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied for admin']);
+        exit;
+    }
+    
+    try {
+        $stmt = $db->prepare("SELECT id, fullname, unit_name FROM users WHERE unit_name = ? AND is_admin = 0 AND id != ?");
+        $stmt->execute([$unit_name, $user_id]);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode([
+            'success' => true,
+            'users' => $users,
+            'unit_name' => $unit_name,
+            'current_user_id' => $user_id
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ========== بررسی دسترسی آمار کاربران واحد ==========
+if ($action == 'check_unit_stats_permission') {
+    $user_id = $_SESSION['user_id'] ?? 0;
+    
+    if (empty($user_id)) {
+        echo json_encode(['success' => false, 'can_view' => false]);
+        exit;
+    }
+    
+    $stmt = $db->prepare("SELECT can_view_unit_stats FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $can_view = $stmt->fetchColumn();
+    
+    echo json_encode([
+        'success' => true,
+        'can_view' => $can_view == 1
+    ]);
+    exit;
+}
+
+// ========== دریافت آمار کاربران واحد ==========
+if ($action == 'get_unit_users_stats') {
+    $user_id = $_SESSION['user_id'] ?? 0;
+    $type = $_GET['type'] ?? 'register';
+    $date = $_GET['date'] ?? jDateTime::date('Y/m/d');
+    
+    if (empty($user_id)) {
+        echo json_encode(['success' => false, 'error' => 'User not logged in']);
+        exit;
+    }
+    
+    // دریافت excel_name کاربر جاری
+    $stmt = $db->prepare("SELECT excel_name, can_view_unit_stats FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $user_info = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$user_info || !$user_info['can_view_unit_stats']) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $current_excel_name = $user_info['excel_name'];
+    
+    if (empty($current_excel_name)) {
+        echo json_encode(['success' => false, 'error' => 'excel_name کاربر مشخص نیست']);
+        exit;
+    }
+    
+    // دریافت واحد کاربر جاری
+    $current_unit = getUserUnit($current_excel_name);
+    
+    if (empty($current_unit)) {
+        echo json_encode(['success' => false, 'error' => 'واحد کاربر مشخص نیست']);
+        exit;
+    }
+    
+    // خواندن فایل اکسل
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    $user_counts = [];
+    $all_dates = [];
+    $last_times = [];
+    $user_ids = [];
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ','); // هدر اول
+        fgetcsv($handle, 0, ','); // هدر دوم
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 8 && !empty(trim($row[4]))) {
+                $row_date = trim($row[4]);
+                $row_time = trim($row[5]);
+                $raw_name = trim($row[3]);
+                $clean_name = preg_replace('/[0-9]+$/', '', $raw_name);
+                if (empty($clean_name)) $clean_name = $raw_name;
+                
+                // فقط کاربرانی که واحدشان با واحد کاربر جاری مطابقت دارد
+                $user_unit = getUserUnit($clean_name);
+                if ($user_unit != $current_unit) {
+                    continue;
+                }
+                
+                // جمع‌آوری همه تاریخ‌ها برای این واحد
+                if (!in_array($row_date, $all_dates)) {
+                    $all_dates[] = $row_date;
+                }
+                
+                // ذخیره آخرین زمان برای هر تاریخ
+                $current_datetime = $row_date . ' ' . $row_time;
+                if (!isset($last_times[$row_date]) || $current_datetime > $last_times[$row_date]) {
+                    $last_times[$row_date] = $current_datetime;
+                }
+                
+                // فقط برای تاریخ انتخاب شده، آمار کاربران را محاسبه کن
+                if ($row_date != $date) {
+                    continue;
+                }
+                
+                // شرط: فقط حسابداری
+                if ($row[8] != 'سند حسابداري') {
+                    continue;
+                }
+                
+                // حذف شرکت برش کوه
+                $company = trim($row[1] ?? '');
+                if ($company == 'شركت برش كوه آريا پارت (سهامي خاص)') {
+                    continue;
+                }
+                
+                // نوع گزارش: ثبت یا تایید
+                $is_valid = false;
+                if ($type == 'register') {
+                    $is_valid = (strpos($row[6], 'موجوديت جديد') !== false);
+                } else {
+                    $desc = trim($row[11] ?? '');
+                    $is_valid = (strpos($desc, 'تایید') !== false || strpos($desc, 'تاييد') !== false);
+                }
+                
+                if (!$is_valid) continue;
+                
+                if (!isset($user_counts[$clean_name])) {
+                    $user_counts[$clean_name] = 0;
+                    $user_ids[$clean_name] = null;
+                }
+                $user_counts[$clean_name]++;
+            }
+        }
+        fclose($handle);
+    }
+    
+    // ✅ دریافت user_id برای هر نام کاربر از دیتابیس
+    if (!empty($user_counts)) {
+        $names = array_keys($user_counts);
+        $placeholders = implode(',', array_fill(0, count($names), '?'));
+        $stmt = $db->prepare("SELECT id, fullname FROM users WHERE fullname IN ($placeholders)");
+        $stmt->execute($names);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($users as $user) {
+            $user_ids[$user['fullname']] = $user['id'];
+        }
+    }
+    
+    arsort($user_counts);
+    
+    $result = [];
+    foreach ($user_counts as $name => $count) {
+        $result[] = [
+            'user_name' => $name,
+            'user_id' => $user_ids[$name] ?? 0,
+            'count' => $count
+        ];
+    }
+    
+    sort($all_dates);
+    
+    echo json_encode([
+        'success' => true,
+        'users' => $result,
+        'unit' => $current_unit,
+        'type' => $type,
+        'dates' => $all_dates,
+        'last_times' => $last_times
+    ]);
+    exit;
+}
+
+// ========== بررسی لاگین ==========
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
@@ -171,46 +417,78 @@ if ($action == 'get_documents_for_display') {
     exit;
 }
 
-// ========== جستجوی اسناد (کاربر عادی) ==========
+// ========== جستجوی اسناد (کاربر عادی با نمایش اسناد هم‌واحد) ==========
 if ($action == 'get_documents') {
     $doc_number = $_GET['doc_number'] ?? '';
     $doc_date = $_GET['doc_date'] ?? '';
     $company_id = $_GET['company_id'] ?? '';
     $delivery_date = $_GET['delivery_date'] ?? '';
-    $search_user_id = $user_id;
-
-    $sql = "SELECT d.*, c.name as company_name 
+    $include_unit = isset($_GET['include_unit']) && $_GET['include_unit'] == 'true';
+    
+    // دریافت اطلاعات کاربر جاری
+    $stmt = $db->prepare("SELECT unit_name, excel_name FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $sql = "SELECT d.*, c.name as company_name, u.fullname as user_name 
             FROM documents d 
             JOIN companies c ON d.company_id = c.id 
-            WHERE d.user_id = :user_id";
-    $params = [':user_id' => $search_user_id];
-
+            JOIN users u ON d.user_id = u.id
+            WHERE 1=1";
+    
+    $params = [];
+    
+    // ===== تصمیم‌گیری درباره فیلتر کاربر =====
+    $use_unit_filter = false;
+    $unit_users = [];
+    
+    if ($include_unit && !empty($user['unit_name'])) {
+        // دریافت همه کاربران هم‌واحد
+        $stmt = $db->prepare("SELECT id FROM users WHERE unit_name = ? AND is_admin = 0");
+        $stmt->execute([$user['unit_name']]);
+        $unit_users = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // اگر هم‌واحدی وجود دارد، از فیلتر هم‌واحد استفاده کن
+        if (!empty($unit_users)) {
+            $use_unit_filter = true;
+        }
+    }
+    
+    if ($use_unit_filter && !empty($unit_users)) {
+        // نمایش اسناد همه کاربران هم‌واحد
+        $placeholders = implode(',', array_fill(0, count($unit_users), '?'));
+        $sql .= " AND d.user_id IN ($placeholders)";
+        $params = array_merge($params, $unit_users);
+    } else {
+        // ✅ فقط اسناد خود کاربر را نمایش بده
+        $sql .= " AND d.user_id = ?";
+        $params[] = $user_id;
+    }
+    
+    // اضافه کردن فیلترهای جستجو
     if (!empty($doc_number)) {
-        $sql .= " AND d.doc_number LIKE :doc_number";
-        $params[':doc_number'] = "$doc_number%";
+        $sql .= " AND d.doc_number LIKE ?";
+        $params[] = "$doc_number%";
     }
     if (!empty($doc_date)) {
         $doc_date = toEnglishNumber($doc_date);
-        $sql .= " AND d.doc_date = :doc_date";
-        $params[':doc_date'] = $doc_date;
+        $sql .= " AND d.doc_date = ?";
+        $params[] = $doc_date;
     }
     if (!empty($company_id)) {
-        $sql .= " AND d.company_id = :company_id";
-        $params[':company_id'] = $company_id;
+        $sql .= " AND d.company_id = ?";
+        $params[] = $company_id;
     }
     if (!empty($delivery_date)) {
         $delivery_date = toEnglishNumber($delivery_date);
-        $sql .= " AND d.delivery_date = :delivery_date";
-        $params[':delivery_date'] = $delivery_date;
+        $sql .= " AND d.delivery_date = ?";
+        $params[] = $delivery_date;
     }
 
     $sql .= " ORDER BY d.delivery_date DESC, d.id DESC";
 
     $stmt = $db->prepare($sql);
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-    $stmt->execute();
+    $stmt->execute($params);
     $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $groups = [];
@@ -218,24 +496,36 @@ if ($action == 'get_documents') {
         $date = toPersianNumber($doc['delivery_date']);
         if (!isset($groups[$date])) {
             $stmt_check = $db->prepare("SELECT admin_approved_at FROM delivery_approvals WHERE user_id = ? AND delivery_date = ?");
-            $stmt_check->execute([$search_user_id, $doc['delivery_date']]);
+            $stmt_check->execute([$doc['user_id'], $doc['delivery_date']]);
             $is_archived = !empty($stmt_check->fetchColumn());
 
             $groups[$date] = [
                 'delivery_date' => $date,
                 'count' => 0,
                 'is_archived' => $is_archived,
+                // ✅ تا وقتی خلافش ثابت نشود، فرض می‌کنیم گروه متعلق به خود کاربر است
+                'group_owned_by_user' => true,
                 'documents' => []
             ];
         }
+
+        $is_own_doc = ($doc['user_id'] == $user_id);
+
+        // ✅ اگر حتی یک سند از این گروه متعلق به کاربر دیگری (هم‌واحد) باشد،
+        // کل گروه دیگر «متعلق به خود کاربر» محسوب نمی‌شود
+        if (!$is_own_doc) {
+            $groups[$date]['group_owned_by_user'] = false;
+        }
+
         $groups[$date]['documents'][] = [
             'id' => $doc['id'],
+            'user_name' => $doc['user_name'],
             'doc_number' => $doc['doc_number'],
             'doc_date' => $doc['doc_date'] == '-' ? '-' : toPersianNumber($doc['doc_date']),
             'company_name' => $doc['company_name'],
             'description' => $doc['description'],
             'row_num' => count($groups[$date]['documents']),
-            'can_edit' => true
+            'can_edit' => $is_own_doc
         ];
         $groups[$date]['count']++;
     }
@@ -244,7 +534,7 @@ if ($action == 'get_documents') {
     exit;
 }
 
-// ========== ثبت سند جدید ==========
+// ========== ثبت سند جدید (با بررسی تکراری) ==========
 if ($action == 'save_document') {
     if ($is_admin) {
         echo json_encode(['success' => false, 'error' => 'Admin cannot save documents directly']);
@@ -389,7 +679,6 @@ if ($action == 'update_document') {
         $doc_date = toEnglishNumber($doc_date);
     }
     
-    // ✅ فقط شماره سند و تاریخ سند
     $stmt = $db->prepare("UPDATE documents SET doc_number = ?, doc_date = ? WHERE id = ?");
     $result = $stmt->execute([$doc_number, $doc_date, $doc_id]);
     
@@ -411,13 +700,12 @@ if ($action == 'delete_document') {
         exit;
     }
     
-    // ✅ اضافه کردن این ۴ خط - بررسی مالکیت سند
     if (!$is_admin && $doc['user_id'] != $user_id) {
         echo json_encode(['success' => false, 'error' => 'شما دسترسی به حذف این سند ندارید']);
         exit;
     }
     
-    $can_delete = $is_admin || (time() - strtotime($doc['created_at'])) <= (2 * 86400);
+    $can_delete = $is_admin || (time() - strtotime($doc['created_at'])) <= (20 * 86400);
     if (!$can_delete) {
         echo json_encode(['success' => false, 'error' => 'امکان حذف بعد از ۲ روز وجود ندارد']);
         exit;
@@ -775,6 +1063,78 @@ if ($action == 'get_user_stats') {
     exit;
 }
 
+// ========== دریافت آمار تایید ==========
+if ($action == 'get_confirm_stats') {
+    $user_id = $_SESSION['user_id'] ?? 0;
+    $date = $_GET['date'] ?? jDateTime::date('Y/m/d');
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    
+    if (!file_exists($csv_file) || $user_id == 0) {
+        echo json_encode(['success' => true, 'dates' => [], 'stats' => [], 'last_times' => []]);
+        exit;
+    }
+    
+    $stmt = $db->prepare("SELECT excel_name FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $excel_name = $stmt->fetchColumn();
+    
+    if (empty($excel_name)) {
+        echo json_encode(['success' => true, 'dates' => [], 'stats' => [], 'last_times' => []]);
+        exit;
+    }
+    
+    $stats = [];
+    $dates = [];
+    $last_times = []; // ✅ ذخیره آخرین زمان برای هر تاریخ
+    
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ',');
+        fgetcsv($handle, 0, ',');
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 8 && !empty(trim($row[4]))) {
+                $row_date = trim($row[4]);
+                $row_time = trim($row[5]);
+                $full_name = trim($row[3]);
+                $clean_name = preg_replace('/[0-9]+$/', '', $full_name);
+                $description = trim($row[11] ?? '');
+                
+                if ($row[8] == 'سند حسابداري' &&
+                    (strpos($description, 'تایید') !== false || strpos($description, 'تاييد') !== false) &&
+                    $clean_name == $excel_name) {
+                    
+                    if (!isset($stats[$row_date])) {
+                        $stats[$row_date] = 0;
+                    }
+                    $stats[$row_date]++;
+                    
+                    if (!in_array($row_date, $dates)) {
+                        $dates[] = $row_date;
+                    }
+                    
+                    // ✅ ذخیره آخرین زمان برای هر تاریخ
+                    $current_datetime = $row_date . ' ' . $row_time;
+                    if (!isset($last_times[$row_date]) || $current_datetime > $last_times[$row_date]) {
+                        $last_times[$row_date] = $current_datetime;
+                    }
+                }
+            }
+        }
+        fclose($handle);
+    }
+    
+    sort($dates);
+    
+    echo json_encode([
+        'success' => true,
+        'dates' => $dates,
+        'stats' => $stats,
+        'last_times' => $last_times // ✅ ارسال زمان‌ها برای هر تاریخ
+    ]);
+    exit;
+}
+
 // ========== آمار ادمین - دریافت کاربران ==========
 if ($action == 'get_admin_users_stats') {
     if (!$is_admin) {
@@ -787,15 +1147,13 @@ if ($action == 'get_admin_users_stats') {
     
     // ========== محاسبه خودکار هفته جاری و هفته قبل ==========
     $timestamp = shamsi_to_timestamp($today_shamsi);
-    $weekday = date('w', $timestamp); // 0=یکشنبه, 6=شنبه
-    $weekday = ($weekday + 1) % 7; // تبدیل به شنبه=0
+    $weekday = date('w', $timestamp);
+    $weekday = ($weekday + 1) % 7;
     
-    // اول هفته جاری (شنبه)
     $current_week_start_timestamp = strtotime("-$weekday days", $timestamp);
     $current_week_start = jDateTime::date('Y/m/d', $current_week_start_timestamp);
     $current_week_end = jDateTime::date('Y/m/d', strtotime('+6 days', $current_week_start_timestamp));
     
-    // هفته قبل
     $prev_week_start_timestamp = strtotime('-7 days', $current_week_start_timestamp);
     $prev_week_start = jDateTime::date('Y/m/d', $prev_week_start_timestamp);
     $prev_week_end = jDateTime::date('Y/m/d', strtotime('+6 days', $prev_week_start_timestamp));
@@ -827,17 +1185,14 @@ if ($action == 'get_admin_users_stats') {
         $yesterday_approved = 0;
     }
     
-    // محاسبه کل اسناد هفته جاری
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$current_week_start, $current_week_end]);
     $week_approved = (int)$stmt->fetchColumn();
     
-    // محاسبه کل اسناد هفته قبل
     $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE delivery_date >= ? AND delivery_date <= ?");
     $stmt->execute([$prev_week_start, $prev_week_end]);
     $prev_week_approved = (int)$stmt->fetchColumn();
     
-    // ========== محاسبه ماه جاری و ماه قبل ==========
     $current_month_start = jDateTime::date('Y/m/01');
     $current_month_end = jDateTime::date('Y/m/t');
     
@@ -852,14 +1207,13 @@ if ($action == 'get_admin_users_stats') {
     $stmt->execute([$prev_month_start, $prev_month_end]);
     $prev_month_approved = (int)$stmt->fetchColumn();
     
-    // ========== ساخت متن برای باکس کل اسناد ==========
-    $vs_yesterday = $today_approved . ' سند | لیست قبلی :  ' . $yesterday_approved;
+    $vs_yesterday = $today_approved . ' سند | لیست قبلی : ' . $yesterday_approved;
     $vs_yesterday_class = $today_approved > $yesterday_approved ? 'up' : ($today_approved < $yesterday_approved ? 'down' : 'neutral');
     
-    $vs_last_week = ($week_approved > 0 ? $week_approved . ' سند' : '⏳') . ' | هفته قبل :  ' . $prev_week_approved;
+    $vs_last_week = ($week_approved > 0 ? $week_approved . ' سند' : '⏳') . ' | هفته قبل : ' . $prev_week_approved;
     $vs_last_week_class = $week_approved > $prev_week_approved ? 'up' : ($week_approved < $prev_week_approved ? 'down' : 'neutral');
     
-    $vs_last_month = ($month_approved > 0 ? $month_approved . ' سند' : '⏳') . ' | ماه قبل :  ' . ($prev_month_approved > 0 ? $prev_month_approved : '⏳');
+    $vs_last_month = ($month_approved > 0 ? $month_approved . ' سند' : '⏳') . ' | ماه قبل : ' . ($prev_month_approved > 0 ? $prev_month_approved : '⏳');
     $vs_last_month_class = $month_approved > $prev_month_approved ? 'up' : ($month_approved < $prev_month_approved ? 'down' : 'neutral');
     
     $stmt = $db->query("SELECT id, fullname, unit_name FROM users WHERE is_admin = 0 ORDER BY fullname");
@@ -868,6 +1222,16 @@ if ($action == 'get_admin_users_stats') {
     $result = [];
     foreach ($users as $user) {
         $user_id_val = $user['id'];
+        
+        // ✅ بررسی تعداد کل اسناد کاربر
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
+        $stmt->execute([$user_id_val]);
+        $total_docs = $stmt->fetchColumn();
+        
+        // ✅ اگر کاربر سندی ندارد، رد کن
+        if ($total_docs == 0) {
+            continue;
+        }
         
         $stmt = $db->prepare("SELECT MAX(delivery_date) as last_delivery_date FROM documents WHERE user_id = ?");
         $stmt->execute([$user_id_val]);
@@ -896,36 +1260,35 @@ if ($action == 'get_admin_users_stats') {
             $last_date = null;
         }
         
-        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ?");
-        $stmt->execute([$user_id_val]);
-        $total_docs = $stmt->fetchColumn();
-        
         $stmt = $db->prepare("SELECT MIN(delivery_date) as first_date FROM documents WHERE user_id = ?");
         $stmt->execute([$user_id_val]);
         $first_date = $stmt->fetchColumn();
         if (!$first_date) $first_date = '-';
         
-        // اسناد این هفته برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $current_week_start, $current_week_end]);
         $week_count = $stmt->fetchColumn();
         
-        // اسناد هفته قبل برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $prev_week_start, $prev_week_end]);
         $prev_week_count = $stmt->fetchColumn();
         
-        // اسناد این ماه برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $current_month_start, $current_month_end]);
         $month_count = $stmt->fetchColumn();
         
-        // اسناد ماه قبل برای کاربر
         $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
         $stmt->execute([$user_id_val, $prev_month_start, $prev_month_end]);
         $prev_month_count = $stmt->fetchColumn();
         
-        // تغییرات نسبت به لیست قبل
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+        $stmt->execute([$user_id_val, $current_year_start ?? '1400/01/01', $today_shamsi]);
+        $year_count = $stmt->fetchColumn();
+        
+        $stmt = $db->prepare("SELECT COUNT(*) FROM documents WHERE user_id = ? AND delivery_date >= ? AND delivery_date <= ?");
+        $stmt->execute([$user_id_val, $prev_year_start ?? '1399/01/01', $prev_year_end ?? '1399/12/29']);
+        $prev_year_count = $stmt->fetchColumn();
+        
         if ($yesterday_count == 0 && $today_count > 0) {
             $trend_text = "▲ +{$today_count}";
             $trend_class = 'trend-up';
@@ -938,7 +1301,6 @@ if ($action == 'get_admin_users_stats') {
             $trend_class = 'trend-neutral';
         }
         
-        // تغییرات هفته
         $week_change = '⏳';
         $week_change_class = 'avg-change-neutral';
         if ($prev_week_count > 0) {
@@ -947,7 +1309,6 @@ if ($action == 'get_admin_users_stats') {
             $week_change_class = $diff > 0 ? 'avg-change-up' : ($diff < 0 ? 'avg-change-down' : 'avg-change-neutral');
         }
         
-        // تغییرات ماه
         $month_change = '⏳';
         $month_change_class = 'avg-change-neutral';
         if ($prev_month_count > 0) {
@@ -956,7 +1317,6 @@ if ($action == 'get_admin_users_stats') {
             $month_change_class = $diff > 0 ? 'avg-change-up' : ($diff < 0 ? 'avg-change-down' : 'avg-change-neutral');
         }
         
-        // تغییرات سال
         $year_change = '⏳';
         $year_change_class = 'avg-change-neutral';
         if ($prev_year_count > 0) {
@@ -1303,6 +1663,8 @@ function cleanCompanyName($name) {
     $name = preg_replace('/^شرکت\s+|^شركت\s+/', '', $name);
     // حذف متن داخل پرانتز
     $name = preg_replace('/\s*\([^)]*\)\s*$/', '', $name);
+    // حذف کلمات اضافی (سهامي خاص, تهران, بيرجند, بيستون, پارس, آمود, كوير, شرق)
+    $name = preg_replace('/\s+(سهامي خاص|تهران|بيرجند|بيستون|پارس|آمود|كوير|شرق)\s*/', '', $name);
     // حذف فاصله‌های اضافی
     $name = trim($name);
     
@@ -1363,12 +1725,45 @@ if ($action == 'get_file_update_time') {
     exit;
 }
 
-// ========== بارگذاری داده‌های گزارش برهان ==========
-if ($action == 'load_report_data') {
-    if (!$is_admin) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
+// ========== بررسی سبک تغییر فایل CSV (برای پایش خودکار بدون رفرش) ==========
+// این اکشن به‌جای خواندن و پارس کل فایل CSV، فقط زمان آخرین تغییر فایل را
+// از سیستم فایل می‌خواند (filemtime) و برمی‌گرداند؛ خیلی سبک‌تر از load_report_data
+// است و مناسب برای صدا زدن مکرر (Polling) از سمت کلاینت.
+if ($action == 'check_report_update') {
+    // ✅ جلوگیری از کش شدن این درخواست توسط مرورگر/پروکسی؛ چون این اکشن هر
+    // چند ثانیه یک‌بار Polling می‌شود، اگر کش شود جواب همیشه همان مقدار اول
+    // را برمی‌گرداند و تغییر فایل هرگز تشخیص داده نمی‌شود.
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
         exit;
     }
+
+    // ✅ پاک کردن کش stat در PHP تا مقدار filemtime همیشه واقعی و به‌روز باشد
+    // (بدون این خط، PHP ممکن است مقدار قدیمی کش‌شده را برای درخواست‌های بعدی برگرداند)
+    clearstatcache(true, $csv_file);
+
+    $mtime = filemtime($csv_file);
+    $filesize = filesize($csv_file);
+
+    echo json_encode([
+        'success' => true,
+        // ترکیب mtime و اندازه فایل به عنوان یک «امضا»ی سبک برای تشخیص تغییر،
+        // تا حتی در سیستم‌فایل‌هایی با دقت پایین mtime هم تغییر واقعی تشخیص داده شود
+        'signature' => $mtime . '_' . $filesize,
+        'mtime' => $mtime
+    ]);
+    exit;
+}
+
+// ========== بارگذاری داده‌های گزارش برهان ==========
+if ($action == 'load_report_data') {
+    // ✅ حذف شرط ادمین - دسترسی برای همه کاربران
+    // if (!$is_admin) { ... } را حذف کنید
     
     $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
     $check_file = __DIR__ . '/../storage/reports/last_check.txt';
@@ -1378,7 +1773,7 @@ if ($action == 'load_report_data') {
         exit;
     }
     
-    // خواندن زمان آخرین بررسی از فایل (مقدار پیش‌فرض: خیلی قدیمی)
+    // خواندن زمان آخرین بررسی از فایل
     $last_check = '1400/01/01 00:00:00';
     if (file_exists($check_file)) {
         $last_check = trim(file_get_contents($check_file));
@@ -1386,7 +1781,7 @@ if ($action == 'load_report_data') {
     
     $data = [];
     $new_records = [];
-    $last_record_datetime = $last_check; // مقدار پیش‌فرض
+    $last_record_datetime = $last_check;
     
     $handle = fopen($csv_file, 'r');
     if (!$handle) {
@@ -1394,25 +1789,18 @@ if ($action == 'load_report_data') {
         exit;
     }
     
-    // نادیده گرفتن هدر اول
-    fgetcsv($handle, 0, ',');
-    // خواندن هدر دوم
-    $header = fgetcsv($handle, 0, ',');
+    fgetcsv($handle, 0, ','); // هدر اول
+    $header = fgetcsv($handle, 0, ','); // هدر دوم
     
-    // خواندن همه رکوردها
     while (($row = fgetcsv($handle, 0, ',')) !== false) {
         if (count($row) > 1 && !empty(trim($row[1]))) {
             $row[1] = cleanCompanyName($row[1]);
-            
-            // تاریخ/زمان رکورد
             $record_datetime = $row[4] . ' ' . $row[5];
             
-            // ذخیره آخرین تاریخ/زمان
             if ($record_datetime > $last_record_datetime) {
                 $last_record_datetime = $record_datetime;
             }
             
-            // بررسی جدید بودن نسبت به last_check
             $is_new = ($record_datetime > $last_check);
             $row['is_new'] = $is_new;
             
@@ -1425,7 +1813,6 @@ if ($action == 'load_report_data') {
     }
     fclose($handle);
     
-    // ✅ ذخیره آخرین تاریخ/زمان موجود در فایل CSV (نه زمان سیستم)
     file_put_contents($check_file, $last_record_datetime);
     
     $_SESSION['report_new_count'] = count($new_records);
@@ -1558,7 +1945,7 @@ if ($action == 'get_warehouse_report') {
     }
     
     $date = $_GET['date'] ?? jDateTime::date('Y/m/d');
-    $type = $_GET['type'] ?? 'register'; // register = ثبت, confirm = تایید
+    $type = $_GET['type'] ?? 'register';
     $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
     
     if (!file_exists($csv_file)) {
@@ -1568,6 +1955,7 @@ if ($action == 'get_warehouse_report') {
     
     $user_counts = [];
     $user_units = [];
+    $user_ids = [];
     
     $handle = fopen($csv_file, 'r');
     if ($handle) {
@@ -1576,22 +1964,17 @@ if ($action == 'get_warehouse_report') {
         
         while (($row = fgetcsv($handle, 0, ',')) !== false) {
             if (count($row) > 8 && !empty(trim($row[4]))) {
-                // شرط: فقط حسابداری
                 if ($row[4] == $date && $row[8] == 'سند حسابداري') {
                     
-                    // حذف شرکت برش کوه
                     $company = trim($row[1] ?? '');
                     if ($company == 'شركت برش كوه آريا پارت (سهامي خاص)') {
                         continue;
                     }
                     
-                    // ✅ نوع گزارش: ثبت یا تایید
                     $is_valid = false;
                     if ($type == 'register') {
-                        // شرط ثبت: موجودیت جدید
                         $is_valid = (strpos($row[6], 'موجوديت جديد') !== false);
                     } else {
-                        // شرط تایید: توضیحات شامل "تایید" یا "تاييد" باشد
                         $desc = trim($row[11] ?? '');
                         $is_valid = (strpos($desc, 'تایید') !== false || strpos($desc, 'تاييد') !== false);
                     }
@@ -1605,6 +1988,7 @@ if ($action == 'get_warehouse_report') {
                     if (!isset($user_counts[$clean_name])) {
                         $user_counts[$clean_name] = 0;
                         $user_units[$clean_name] = getUserUnit($clean_name);
+                        $user_ids[$clean_name] = null;
                     }
                     $user_counts[$clean_name]++;
                 }
@@ -1613,12 +1997,26 @@ if ($action == 'get_warehouse_report') {
         fclose($handle);
     }
     
+    // ✅ دریافت user_id برای هر نام کاربر از دیتابیس
+    if (!empty($user_counts)) {
+        $names = array_keys($user_counts);
+        $placeholders = implode(',', array_fill(0, count($names), '?'));
+        $stmt = $db->prepare("SELECT id, fullname FROM users WHERE fullname IN ($placeholders)");
+        $stmt->execute($names);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($users as $user) {
+            $user_ids[$user['fullname']] = $user['id'];
+        }
+    }
+    
     arsort($user_counts);
     
     $result = [];
     foreach ($user_counts as $name => $count) {
         $result[] = [
             'user_name' => $name,
+            'user_id' => $user_ids[$name] ?? 0,
             'count' => $count,
             'unit' => $user_units[$name] ?? 'سایر'
         ];
@@ -1634,11 +2032,789 @@ if ($action == 'get_warehouse_report') {
     exit;
 }
 
+// ========== بارگذاری اسناد تایید شده از فایل اکسل ==========
+if ($action == 'load_confirmed_documents') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $user_names = $data['user_names'] ?? []; // ✅ آرایه از نام‌ها
+    $date_from = $data['date_from'] ?? '';
+    $date_to = $data['date_to'] ?? '';
+    $delivery_date = $data['delivery_date'] ?? '';
+    
+    if (empty($user_names) || empty($date_from) || empty($date_to) || empty($delivery_date)) {
+        echo json_encode(['success' => false, 'error' => 'نام کاربر(ان)، بازه تاریخ و تاریخ تحویل الزامی است']);
+        exit;
+    }
+    
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    $map_file = __DIR__ . '/../config/company_map.json';
+    $company_map = [];
+    if (file_exists($map_file)) {
+        $company_map = json_decode(file_get_contents($map_file), true) ?: [];
+    }
+    
+    $documents = [];
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ','); // هدر اول
+        fgetcsv($handle, 0, ','); // هدر دوم
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 8 && !empty(trim($row[4]))) {
+                $date = trim($row[4]);
+                $full_name = trim($row[3]);
+                $clean_name = preg_replace('/[0-9]+$/', '', $full_name);
+                $description = trim($row[11] ?? '');
+                
+                // ✅ بررسی اینکه آیا نام کاربر در آرایه انتخاب شده‌ها هست
+                if (in_array($clean_name, $user_names) && 
+                    $date >= $date_from && 
+                    $date <= $date_to &&
+                    $row[8] == 'سند حسابداري' &&
+                    (strpos($description, 'تایید') !== false || strpos($description, 'تاييد') !== false)) {
+                    
+                    $company_full = trim($row[1] ?? '');
+                    if ($company_full == 'برش كوه' || $company_full == 'شركت برش كوه آريا پارت (سهامي خاص)') {
+                        continue;
+                    }
+                    
+                    $company_short = $company_map[$company_full] ?? $company_full;
+                    
+                    $documents[] = [
+                        'doc_number' => trim($row[9] ?? ''),
+                        'doc_date' => trim($row[10] ?? ''),
+                        'company_name' => $company_short,
+                        'company_full' => $company_full,
+                        'delivery_date' => $delivery_date,
+                        'description' => '',
+                        'user_name' => $full_name,
+                        'date' => $date,
+                        'time' => trim($row[5] ?? '')
+                    ];
+                }
+            }
+        }
+        fclose($handle);
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'documents' => $documents,
+        'count' => count($documents)
+    ]);
+    exit;
+}
+
+// ========== دریافت لیست کاربران دارای تایید ==========
+if ($action == 'get_approved_users_list') {
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    $users = [];
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ','); // هدر اول
+        fgetcsv($handle, 0, ','); // هدر دوم
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 8 && !empty(trim($row[4]))) {
+                $desc = trim($row[11] ?? '');
+                $isAccounting = ($row[8] ?? '') == 'سند حسابداري';
+                
+                if ($isAccounting && (strpos($desc, 'تایید') !== false || strpos($desc, 'تاييد') !== false)) {
+                    $rawName = trim($row[3]);
+                    $cleanName = preg_replace('/[0-9]+$/', '', $rawName);
+                    if (!empty($cleanName)) {
+                        $users[] = $cleanName;
+                    }
+                }
+            }
+        }
+        fclose($handle);
+    }
+    
+    $users = array_unique($users);
+    sort($users);
+    
+    echo json_encode([
+        'success' => true,
+        'users' => $users
+    ]);
+    exit;
+}
+
+// ========== ذخیره اسناد بارگذاری شده ==========
+if ($action == 'save_loaded_documents') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $documents = $data['documents'] ?? [];
+    
+    if (empty($documents)) {
+        echo json_encode(['success' => false, 'error' => 'هیچ سندی برای ذخیره وجود ندارد']);
+        exit;
+    }
+    
+    $map_file = __DIR__ . '/../config/company_map.json';
+    $company_map = [];
+    if (file_exists($map_file)) {
+        $company_map = json_decode(file_get_contents($map_file), true) ?: [];
+    }
+    
+    $stmt = $db->prepare("SELECT id FROM companies WHERE name = ?");
+    
+    $saved_count = 0;
+    $errors = [];
+    
+    foreach ($documents as $doc) {
+        $company_name = $doc['company_name'] ?? '';
+        $doc_number = $doc['doc_number'] ?? '';
+        $doc_date = $doc['doc_date'] ?? '-';
+        $delivery_date = $doc['delivery_date'] ?? '';
+        
+        if (empty($doc_number) || empty($delivery_date)) {
+            continue;
+        }
+        
+        $stmt->execute([$company_name]);
+        $company_id = $stmt->fetchColumn();
+        
+        if (!$company_id) {
+            $mapped_name = array_search($company_name, $company_map);
+            if ($mapped_name) {
+                $stmt->execute([$mapped_name]);
+                $company_id = $stmt->fetchColumn();
+            }
+        }
+        
+        if (!$company_id) {
+            $errors[] = "شرکت '$company_name' برای سند '$doc_number' یافت نشد";
+            continue;
+        }
+        
+        $stmt_check = $db->prepare("SELECT COUNT(*) FROM documents 
+                                    WHERE doc_number = ? AND company_id = ? AND delivery_date = ? AND user_id = ?");
+        $stmt_check->execute([$doc_number, $company_id, $delivery_date, $user_id]);
+        $count = $stmt_check->fetchColumn();
+        
+        if ($count > 0) {
+            $errors[] = "سند '$doc_number' قبلاً ثبت شده است";
+            continue;
+        }
+        
+        // ✅ description را خالی ذخیره کن (نه توضیحات اکسل)
+        $stmt_insert = $db->prepare("INSERT INTO documents (user_id, company_id, doc_number, doc_date, delivery_date, description) 
+                                    VALUES (?, ?, ?, ?, ?, ?)");
+        $result = $stmt_insert->execute([$user_id, $company_id, $doc_number, $doc_date, $delivery_date, '']);
+        
+        if ($result) {
+            $saved_count++;
+        }
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'saved_count' => $saved_count,
+        'errors' => $errors
+    ]);
+    exit;
+}
+
+// ============================================================
+// ===== توابع مدیریت دیتابیس =====
+// ============================================================
+
+// ============================================================
+// ===== دریافت آخرین تاریخ تحویل کاربر =====
+// اکشن: get_user_last_delivery_date
+// پارامترها: user_id
+// خروجی: last_date, user_signed, admin_approved, doc_count
+// ============================================================
+// ===== دریافت آخرین تاریخ تحویل کاربر =====
+if ($action == 'get_user_last_delivery_date') {
+    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    $delivery_date = isset($_GET['delivery_date']) ? trim($_GET['delivery_date']) : null;
+    
+    if (!$user_id) {
+        echo json_encode(['success' => false, 'error' => 'کاربر نامعتبر']);
+        exit;
+    }
+    
+    try {
+        // اگر تاریخ خاصی داده نشده، آخرین تاریخ رو بگیر
+        if (!$delivery_date) {
+            // اول از documents بگیر
+            $stmt = $db->prepare("
+                SELECT delivery_date 
+                FROM documents 
+                WHERE user_id = ? 
+                ORDER BY delivery_date DESC 
+                LIMIT 1
+            ");
+            $stmt->execute([$user_id]);
+            $delivery_date = $stmt->fetchColumn();
+            
+            // اگه نبود، از delivery_approvals بگیر
+            if (!$delivery_date) {
+                $stmt = $db->prepare("
+                    SELECT delivery_date 
+                    FROM delivery_approvals 
+                    WHERE user_id = ? 
+                    ORDER BY delivery_date DESC 
+                    LIMIT 1
+                ");
+                $stmt->execute([$user_id]);
+                $delivery_date = $stmt->fetchColumn();
+            }
+        }
+        
+        if (!$delivery_date) {
+            echo json_encode([
+                'success' => true,
+                'last_date' => null,
+                'doc_count' => 0,
+                'user_signed' => false,
+                'admin_approved' => false
+            ]);
+            exit;
+        }
+        
+        // دریافت تعداد اسناد برای این تاریخ
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as doc_count 
+            FROM documents 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$user_id, $delivery_date]);
+        $doc_count = $stmt->fetchColumn();
+        
+        // دریافت وضعیت امضا/تایید از delivery_approvals
+        $stmt = $db->prepare("
+            SELECT user_approved_at, admin_approved_at 
+            FROM delivery_approvals 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$user_id, $delivery_date]);
+        $approval = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        echo json_encode([
+            'success' => true,
+            'last_date' => $delivery_date,
+            'doc_count' => (int)$doc_count,
+            'user_signed' => $approval && !empty($approval['user_approved_at']),
+            'admin_approved' => $approval && !empty($approval['admin_approved_at'])
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ============================================================
+// ===== دریافت سند بر اساس شماره سند =====
+// اکشن: get_document_by_number
+// پارامترها: user_id, delivery_date, doc_number
+// خروجی: document {id, company_name, company_id}
+// ============================================================
+// ===== دریافت سند بر اساس شماره سند =====
+if ($action == 'get_document_by_number') {
+    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    $delivery_date = isset($_GET['delivery_date']) ? trim($_GET['delivery_date']) : '';
+    $doc_number = isset($_GET['doc_number']) ? trim($_GET['doc_number']) : '';
+    
+    if (!$user_id || !$delivery_date || !$doc_number) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        $stmt = $db->prepare("
+            SELECT d.id, d.company_id, c.name as company_name
+            FROM documents d
+            LEFT JOIN companies c ON d.company_id = c.id
+            WHERE d.user_id = ? AND d.delivery_date = ? AND d.doc_number = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$user_id, $delivery_date, $doc_number]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'document' => [
+                    'id' => $result['id'],
+                    'company_id' => $result['company_id'],
+                    'company_name' => $result['company_name'] ?? 'نامشخص'
+                ]
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'سند یافت نشد']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ===== دریافت اطلاعات کامل سند برای ویرایش =====
+if ($action == 'get_document_full_info') {
+    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    $delivery_date = isset($_GET['delivery_date']) ? trim($_GET['delivery_date']) : '';
+    $doc_number = isset($_GET['doc_number']) ? trim($_GET['doc_number']) : '';
+    
+    if (!$user_id || !$delivery_date || !$doc_number) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        $stmt = $db->prepare("
+            SELECT d.id, d.company_id, d.doc_number, d.doc_date, c.name as company_name
+            FROM documents d
+            LEFT JOIN companies c ON d.company_id = c.id
+            WHERE d.user_id = ? AND d.delivery_date = ? AND d.doc_number = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$user_id, $delivery_date, $doc_number]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'document' => [
+                    'id' => $result['id'],
+                    'company_id' => $result['company_id'],
+                    'company_name' => $result['company_name'] ?? 'نامشخص',
+                    'doc_number' => $result['doc_number'],
+                    'doc_date' => $result['doc_date'] ?? '-'
+                ]
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'سند یافت نشد']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ===== به‌روزرسانی اطلاعات سند =====
+if ($action == 'update_document_info') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $doc_id = isset($input['doc_id']) ? intval($input['doc_id']) : 0;
+    $doc_number = isset($input['doc_number']) ? trim($input['doc_number']) : '';
+    $doc_date = isset($input['doc_date']) ? trim($input['doc_date']) : '-';
+    $company_id = isset($input['company_id']) ? intval($input['company_id']) : 0;
+    
+    if (!$doc_id || !$doc_number || !$company_id) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        $stmt = $db->prepare("SELECT id FROM companies WHERE id = ? AND is_active = 1");
+        $stmt->execute([$company_id]);
+        if (!$stmt->fetch()) {
+            echo json_encode(['success' => false, 'error' => 'شرکت نامعتبر']);
+            exit;
+        }
+        
+        $stmt = $db->prepare("
+            UPDATE documents 
+            SET doc_number = ?, doc_date = ?, company_id = ? 
+            WHERE id = ?
+        ");
+        $result = $stmt->execute([$doc_number, $doc_date, $company_id, $doc_id]);
+        
+        if ($result && $stmt->rowCount() > 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'اطلاعات سند با موفقیت تغییر یافت'
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'سند یافت نشد یا تغییری انجام نشد']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ============================================================
+// ===== برگشت امضای کاربر بر اساس تاریخ =====
+// اکشن: revert_user_signature_by_date
+// پارامترها: user_id, delivery_date
+// خروجی: success, message
+// ============================================================
+if ($action == 'revert_user_signature_by_date') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+    $delivery_date = isset($input['delivery_date']) ? trim($input['delivery_date']) : '';
+    
+    if (!$user_id || !$delivery_date) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        // بررسی اینکه آیا امضا وجود دارد
+        $stmt = $db->prepare("
+            SELECT user_approved_at 
+            FROM delivery_approvals 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$user_id, $delivery_date]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$result || empty($result['user_approved_at'])) {
+            echo json_encode(['success' => false, 'error' => 'این تاریخ امضا نشده است']);
+            exit;
+        }
+        
+        // برگشت امضا (حذف user_approved_at)
+        $stmt = $db->prepare("
+            UPDATE delivery_approvals 
+            SET user_approved_at = NULL 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$user_id, $delivery_date]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'امضای کاربر با موفقیت برگشت داده شد'
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ============================================================
+// ===== برگشت امضای ادمین بر اساس تاریخ =====
+// اکشن: revert_admin_signature_by_date
+// پارامترها: user_id, delivery_date
+// خروجی: success, message
+// ============================================================
+if ($action == 'revert_admin_signature_by_date') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+    $delivery_date = isset($input['delivery_date']) ? trim($input['delivery_date']) : '';
+    
+    if (!$user_id || !$delivery_date) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        // بررسی اینکه آیا تایید ادمین وجود دارد
+        $stmt = $db->prepare("
+            SELECT admin_approved_at 
+            FROM delivery_approvals 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$user_id, $delivery_date]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$result || empty($result['admin_approved_at'])) {
+            echo json_encode(['success' => false, 'error' => 'این تاریخ تایید نشده است']);
+            exit;
+        }
+        
+        // برگشت تایید ادمین (حذف admin_approved_at)
+        $stmt = $db->prepare("
+            UPDATE delivery_approvals 
+            SET admin_approved_at = NULL 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$user_id, $delivery_date]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'تایید ادمین با موفقیت برگشت داده شد'
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ============================================================
+// ===== تغییر شرکت سند =====
+// اکشن: change_document_company
+// پارامترها: doc_id, company_id
+// خروجی: success, message
+// ============================================================
+if ($action == 'change_document_company') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $doc_id = isset($input['doc_id']) ? intval($input['doc_id']) : 0;
+    $company_id = isset($input['company_id']) ? intval($input['company_id']) : 0;
+    
+    if (!$doc_id || !$company_id) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        // بررسی وجود شرکت
+        $stmt = $db->prepare("SELECT id FROM companies WHERE id = ? AND is_active = 1");
+        $stmt->execute([$company_id]);
+        if (!$stmt->fetch()) {
+            echo json_encode(['success' => false, 'error' => 'شرکت نامعتبر']);
+            exit;
+        }
+        
+        // تغییر شرکت سند
+        $stmt = $db->prepare("UPDATE documents SET company_id = ? WHERE id = ?");
+        $stmt->execute([$company_id, $doc_id]);
+        
+        if ($stmt->rowCount() > 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'نام شرکت با موفقیت تغییر یافت'
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'سند یافت نشد']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ============================================================
+// ===== تغییر تاریخ تحویل کاربر =====
+// اکشن: change_user_delivery_date
+// پارامترها: user_id, old_date, new_date
+// خروجی: success, doc_count, message
+// ============================================================
+if ($action == 'change_user_delivery_date') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+    $old_date = isset($input['old_date']) ? trim($input['old_date']) : '';
+    $new_date = isset($input['new_date']) ? trim($input['new_date']) : '';
+    
+    if (!$user_id || !$old_date || !$new_date) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    if ($old_date === $new_date) {
+        echo json_encode(['success' => false, 'error' => 'تاریخ جدید با تاریخ فعلی یکسان است']);
+        exit;
+    }
+    
+    try {
+        // بررسی تعداد اسناد
+        $stmt = $db->prepare("SELECT COUNT(*) as count FROM documents WHERE user_id = ? AND delivery_date = ?");
+        $stmt->execute([$user_id, $old_date]);
+        $doc_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        
+        if ($doc_count == 0) {
+            echo json_encode(['success' => false, 'error' => 'هیچ سندی برای این تاریخ وجود ندارد']);
+            exit;
+        }
+        
+        // بررسی اینکه تاریخ جدید قبلاً برای این کاربر وجود دارد
+        $stmt = $db->prepare("SELECT COUNT(*) as count FROM documents WHERE user_id = ? AND delivery_date = ?");
+        $stmt->execute([$user_id, $new_date]);
+        if ($stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0) {
+            echo json_encode(['success' => false, 'error' => 'تاریخ جدید قبلاً برای این کاربر وجود دارد']);
+            exit;
+        }
+        
+        // شروع تراکنش
+        $db->beginTransaction();
+        
+        // 1. به‌روزرسانی تاریخ تحویل در جدول documents
+        $stmt = $db->prepare("
+            UPDATE documents 
+            SET delivery_date = ? 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$new_date, $user_id, $old_date]);
+        
+        // 2. به‌روزرسانی تاریخ تحویل در جدول delivery_approvals
+        $stmt = $db->prepare("
+            UPDATE delivery_approvals 
+            SET delivery_date = ? 
+            WHERE user_id = ? AND delivery_date = ?
+        ");
+        $stmt->execute([$new_date, $user_id, $old_date]);
+        
+        $db->commit();
+        
+        echo json_encode([
+            'success' => true,
+            'doc_count' => $doc_count,
+            'message' => 'تاریخ تحویل با موفقیت تغییر یافت'
+        ]);
+    } catch (Exception $e) {
+        $db->rollBack();
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+// ===== به‌روزرسانی اطلاعات سند =====
+if ($action == 'update_document_info') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $doc_id = isset($input['doc_id']) ? intval($input['doc_id']) : 0;
+    $doc_number = isset($input['doc_number']) ? trim($input['doc_number']) : '';
+    $doc_date = isset($input['doc_date']) ? trim($input['doc_date']) : '-';
+    $company_id = isset($input['company_id']) ? intval($input['company_id']) : 0;
+    
+    if (!$doc_id || !$doc_number || !$company_id) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    try {
+        // بررسی وجود شرکت
+        $stmt = $db->prepare("SELECT id FROM companies WHERE id = ? AND is_active = 1");
+        $stmt->execute([$company_id]);
+        if (!$stmt->fetch()) {
+            echo json_encode(['success' => false, 'error' => 'شرکت نامعتبر']);
+            exit;
+        }
+        
+        // به‌روزرسانی سند
+        $stmt = $db->prepare("
+            UPDATE documents 
+            SET doc_number = ?, doc_date = ?, company_id = ? 
+            WHERE id = ?
+        ");
+        $result = $stmt->execute([$doc_number, $doc_date, $company_id, $doc_id]);
+        
+        if ($result && $stmt->rowCount() > 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'اطلاعات سند با موفقیت تغییر یافت'
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'سند یافت نشد یا تغییری انجام نشد']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ===== دریافت اسناد یک کاربر خاص (از فایل CSV) =====
+if ($action == 'get_user_documents') {
+    $target_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    $user_name = isset($_GET['user_name']) ? trim($_GET['user_name']) : '';
+    $delivery_date = isset($_GET['delivery_date']) ? trim($_GET['delivery_date']) : null;
+    
+    // ✅ لاگ برای دیباگ
+    error_log("get_user_documents: user_id=$target_user_id, user_name=$user_name, delivery_date=$delivery_date");
+    
+    if (!$target_user_id || empty($user_name)) {
+        echo json_encode(['success' => false, 'error' => 'اطلاعات ناقص']);
+        exit;
+    }
+    
+    $csv_file = __DIR__ . '/../storage/reports/Logs.csv';
+    $documents = [];
+    
+    if (!file_exists($csv_file)) {
+        echo json_encode(['success' => false, 'error' => 'فایل CSV یافت نشد']);
+        exit;
+    }
+    
+    $handle = fopen($csv_file, 'r');
+    if ($handle) {
+        fgetcsv($handle, 0, ','); // هدر اول
+        fgetcsv($handle, 0, ','); // هدر دوم
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($row) > 8 && !empty(trim($row[4]))) {
+                $row_date = trim($row[4]);
+                $raw_name = trim($row[3]);
+                $clean_name = preg_replace('/[0-9]+$/', '', $raw_name);
+                if (empty($clean_name)) $clean_name = $raw_name;
+                
+                if ($clean_name != $user_name) {
+                    continue;
+                }
+                
+                if ($delivery_date && $row_date != $delivery_date) {
+                    continue;
+                }
+                
+                if ($row[8] != 'سند حسابداري') {
+                    continue;
+                }
+                
+                $company = trim($row[1] ?? '');
+                if ($company == 'شركت برش كوه آريا پارت (سهامي خاص)') {
+                    continue;
+                }
+                
+                $documents[] = [
+                    'doc_number' => trim($row[9] ?? ''),
+                    'doc_date' => trim($row[10] ?? ''),
+                    'delivery_date' => $row_date,
+                    'company_name' => $company,
+                    'user_name' => $clean_name,
+                    'time' => trim($row[5] ?? '')
+                ];
+            }
+        }
+        fclose($handle);
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'documents' => $documents,
+        'count' => count($documents),
+        'delivery_date' => $delivery_date,
+        'user_name' => $user_name
+    ]);
+    exit;
+}
+
 // ============================================================
 // ========== فقط ادمین از اینجا به بعد =======================
 // ============================================================
 if (!$is_admin) {
     echo json_encode(['success' => false, 'error' => 'Access denied']);
+    exit;
+}
+
+// ===== بررسی رمز مدیریت دیتابیس =====
+if ($action == 'check_db_password') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $password = $input['password'] ?? '';
+    
+    // رمز پیش‌فرض - این رو در یک فایل جداگانه یا دیتابیس ذخیره کنید
+    $correctPassword = '001009';
+    
+    if ($password === $correctPassword) {
+        $_SESSION['db_manager_access'] = true;
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'رمز عبور اشتباه است']);
+    }
+    exit;
+}
+
+// ===== بررسی دسترسی به مدیریت دیتابیس =====
+if ($action == 'check_db_access') {
+    $hasAccess = isset($_SESSION['db_manager_access']) && $_SESSION['db_manager_access'] === true;
+    echo json_encode(['success' => true, 'hasAccess' => $hasAccess]);
+    exit;
+}
+
+// ===== پاک کردن دسترسی مدیریت دیتابیس =====
+if ($action == 'clear_db_access') {
+    unset($_SESSION['db_manager_access']);
+    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -1711,65 +2887,127 @@ if ($action == 'get_admin_stats') {
 
 // ========== دریافت کاربران ==========
 if ($action == 'get_users') {
-    $stmt = $db->query("SELECT id, username, fullname, unit_name, require_doc_date, lock_delivery_date, can_view_all_archives,
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    // ✅ اضافه کردن can_view_unit_stats به SELECT
+    $stmt = $db->query("SELECT id, username, fullname, unit_name, require_doc_date, lock_delivery_date, can_view_all_archives, can_view_unit_stats,
                         (SELECT COUNT(*) FROM documents WHERE user_id = users.id) as total_docs 
                         FROM users WHERE is_admin = 0 ORDER BY unit_name");
     $users = $stmt->fetchAll();
+    
+    // ❌ فیلتر حذف شد - همه کاربران نمایش داده می‌شوند
+    // $filteredUsers = array_filter($users, function($user) {
+    //     return $user['total_docs'] > 0;
+    // });
+    // $filteredUsers = array_values($filteredUsers);
+    
     echo json_encode(['success' => true, 'users' => $users]);
     exit;
 }
 
-// ========== افزودن کاربر ==========
+// ========== افزودن کاربر جدید ==========
 if ($action == 'add_user') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
     $data = json_decode(file_get_contents('php://input'), true);
     $username = $data['username'] ?? '';
-    $password = password_hash($data['password'] ?? '', PASSWORD_DEFAULT);
     $fullname = $data['fullname'] ?? '';
     $unit_name = $data['unit_name'] ?? '';
+    $password = $data['password'] ?? '';
     $require_doc_date = $data['require_doc_date'] ?? 1;
+    $can_view_unit_stats = $data['can_view_unit_stats'] ?? 0;
     
-    $check = $db->prepare("SELECT id FROM users WHERE username = ?");
-    $check->execute([$username]);
-    if ($check->fetch()) {
+    if (empty($username) || empty($fullname) || empty($unit_name) || empty($password)) {
+        echo json_encode(['success' => false, 'error' => 'تمامی فیلدها الزامی است']);
+        exit;
+    }
+    
+    // بررسی تکراری بودن نام کاربری
+    $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
+    $stmt->execute([$username]);
+    if ($stmt->fetchColumn() > 0) {
         echo json_encode(['success' => false, 'error' => 'نام کاربری تکراری است']);
         exit;
     }
     
-    $stmt = $db->prepare("INSERT INTO users (username, password, fullname, unit_name, require_doc_date, is_admin, can_view_all_archives) 
-                          VALUES (?, ?, ?, ?, ?, 0, 0)");
-    $result = $stmt->execute([$username, $password, $fullname, $unit_name, $require_doc_date]);
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     
-    echo json_encode(['success' => $result]);
+    $stmt = $db->prepare("INSERT INTO users (username, fullname, unit_name, password, require_doc_date, can_view_unit_stats) 
+                          VALUES (?, ?, ?, ?, ?, ?)");
+    $result = $stmt->execute([$username, $fullname, $unit_name, $hashed_password, $require_doc_date, $can_view_unit_stats]);
+    
+    if ($result) {
+        echo json_encode(['success' => true, 'message' => 'کاربر با موفقیت اضافه شد']);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'خطا در افزودن کاربر']);
+    }
     exit;
 }
 
 // ========== ویرایش کاربر ==========
 if ($action == 'update_user') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
     $data = json_decode(file_get_contents('php://input'), true);
     $id = $data['id'] ?? 0;
-    $fullname = $data['fullname'] ?? '';
     $username = $data['username'] ?? '';
+    $fullname = $data['fullname'] ?? '';
     $unit_name = $data['unit_name'] ?? '';
-    $require_doc_date = $data['require_doc_date'] ?? 0;
-    $can_view_all_archives = $data['can_view_all_archives'] ?? 0;
     $password = $data['password'] ?? '';
+    $require_doc_date = $data['require_doc_date'] ?? 1;
+    $can_view_unit_stats = $data['can_view_unit_stats'] ?? 0;
     
-    $check = $db->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
-    $check->execute([$username, $id]);
-    if ($check->fetch()) {
+    if (empty($id) || empty($username) || empty($fullname) || empty($unit_name)) {
+        echo json_encode(['success' => false, 'error' => 'تمامی فیلدها الزامی است']);
+        exit;
+    }
+    
+    // بررسی تکراری بودن نام کاربری (به جز خود کاربر)
+    $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE username = ? AND id != ?");
+    $stmt->execute([$username, $id]);
+    if ($stmt->fetchColumn() > 0) {
         echo json_encode(['success' => false, 'error' => 'نام کاربری تکراری است']);
         exit;
     }
     
+    // اگر رمز عبور جدید ارسال شده باشد، هش کنید
     if (!empty($password)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $db->prepare("UPDATE users SET username=?, fullname=?, unit_name=?, require_doc_date=?, can_view_all_archives=?, password=? WHERE id=? AND is_admin=0");
-        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $can_view_all_archives, $hashed_password, $id]);
+        $stmt = $db->prepare("UPDATE users SET 
+                              username = ?, 
+                              fullname = ?, 
+                              unit_name = ?, 
+                              password = ?, 
+                              require_doc_date = ?, 
+                              can_view_unit_stats = ? 
+                              WHERE id = ?");
+        $result = $stmt->execute([$username, $fullname, $unit_name, $hashed_password, $require_doc_date, $can_view_unit_stats, $id]);
     } else {
-        $stmt = $db->prepare("UPDATE users SET username=?, fullname=?, unit_name=?, require_doc_date=?, can_view_all_archives=? WHERE id=? AND is_admin=0");
-        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $can_view_all_archives, $id]);
+        // بدون تغییر رمز عبور
+        $stmt = $db->prepare("UPDATE users SET 
+                              username = ?, 
+                              fullname = ?, 
+                              unit_name = ?, 
+                              require_doc_date = ?, 
+                              can_view_unit_stats = ? 
+                              WHERE id = ?");
+        $result = $stmt->execute([$username, $fullname, $unit_name, $require_doc_date, $can_view_unit_stats, $id]);
     }
-    echo json_encode(['success' => $result]);
+    
+    if ($result) {
+        echo json_encode(['success' => true, 'message' => 'کاربر با موفقیت ویرایش شد']);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'خطا در ویرایش کاربر']);
+    }
     exit;
 }
 
@@ -1788,6 +3026,33 @@ if ($action == 'toggle_archive_permission') {
     $result = $stmt->execute([$can_view_all_archives, $target_user_id]);
     
     echo json_encode(['success' => $result]);
+    exit;
+}
+
+// ========== تغییر دسترسی آمار کاربران واحد ==========
+if ($action == 'toggle_unit_stats_permission') {
+    if (!$is_admin) {
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        exit;
+    }
+    
+    $data = json_decode(file_get_contents('php://input'), true);
+    $user_id = $data['user_id'] ?? 0;
+    $can_view_unit_stats = $data['can_view_unit_stats'] ?? 0;
+    
+    if (empty($user_id)) {
+        echo json_encode(['success' => false, 'error' => 'شناسه کاربر الزامی است']);
+        exit;
+    }
+    
+    $stmt = $db->prepare("UPDATE users SET can_view_unit_stats = ? WHERE id = ?");
+    $result = $stmt->execute([$can_view_unit_stats, $user_id]);
+    
+    if ($result) {
+        echo json_encode(['success' => true, 'message' => 'دسترسی با موفقیت به‌روز شد']);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'خطا در به‌روزرسانی دسترسی']);
+    }
     exit;
 }
 
